@@ -14,9 +14,11 @@ RewriteRule ^api(/.*)?$ api/index.php [L,QSA]
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
-# A missing file (ads.txt while ads are off, a stale asset) is a real 404, not the app shell.
-RewriteRule \.(txt|xml|js|css|map|json|webmanifest|png|jpe?g|webp|gif|ico|svg|woff2?|pdf)$ - [R=404,L]
-RewriteRule ^ index.html [L]
+# The app lives at "/" (hash routes). Clerk's own return paths still get the shell; anything else that is not a real file is a true 404.
+RewriteRule ^(index\.html)?$ index.html [L]
+RewriteRule ^(sso-callback|sign-in|sign-up|v1|__clerk)(/|$) index.html [L]
+ErrorDocument 404 /404.html
+RewriteRule ^ - [R=404,L]
 
 <IfModule mod_headers.c>
   # Revalidate the shell, manifest and service worker so releases update; hashed assets can cache.
@@ -31,6 +33,11 @@ RewriteRule ^ index.html [L]
   </FilesMatch>
   Header always set X-Content-Type-Options "nosniff"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  # HSTS for this hostname only (no includeSubDomains, no preload), so sibling gakinz.com sites are unaffected.
+  Header always set Strict-Transport-Security "max-age=31536000"
+  # Enforced now: the parts that cannot break sign-in. The full script/connect policy is Report-Only until the console is clean on production.
+  Header always set Content-Security-Policy "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'"
+  Header always set Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' https://*.clerk.accounts.dev https://clerk.flightdeck.gakinz.com https://challenges.cloudflare.com https://www.googletagmanager.com https://static.cloudflareinsights.com; connect-src 'self' https://*.clerk.accounts.dev https://clerk.flightdeck.gakinz.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://cloudflareinsights.com; img-src 'self' data: https://img.clerk.com https://*.google-analytics.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; font-src 'self'; frame-src https://challenges.cloudflare.com https://*.clerk.accounts.dev https://clerk.flightdeck.gakinz.com; worker-src 'self' blob:; manifest-src 'self'"
   Header always set X-Frame-Options "SAMEORIGIN"
   Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
 </IfModule>

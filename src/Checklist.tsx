@@ -17,7 +17,7 @@ const tripNameFor=(f:Saved)=>`${f.number} · ${shortDate(f.date)}`;
 
 function Ring({percent,size=64}:{percent:number;size?:number}){
  const r=size/2-6,c=2*Math.PI*r;
- return <svg className="cl-ring" width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`${percent}% packed`}><circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#e3eadf" strokeWidth="6"/><circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#214e3e" strokeWidth="6" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c*(1-percent/100)} transform={`rotate(-90 ${size/2} ${size/2})`} style={{transition:'stroke-dashoffset .4s ease'}}/><text x="50%" y="50%" textAnchor="middle" dominantBaseline="central" className="cl-ring-text">{percent}%</text></svg>
+ return <svg className="ck-ring" width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`${percent}% packed`}><circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#e3eadf" strokeWidth="6"/><circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#214e3e" strokeWidth="6" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c*(1-percent/100)} transform={`rotate(-90 ${size/2} ${size/2})`} style={{transition:'stroke-dashoffset .4s ease'}}/><text x="50%" y="50%" textAnchor="middle" dominantBaseline="central" className="ck-ring-text">{percent}%</text></svg>
 }
 
 type SyncState='local'|'syncing'|'synced'|'offline'|'error';
@@ -110,43 +110,43 @@ export default function Checklist({saved,signedIn,userId,request,onRequestDone,o
  const prog=M.progress(sections);
  const hiddenTotal=sections.reduce((n,s)=>n+s.hiddenCount,0);
 
- if(!trip)return <section className="panel cl-empty">
+ if(!trip)return <section className="panel ck-empty">
   <ListChecks size={34}/>
   <h2>Pack once. Reuse it every trip.</h2>
   <p>Start from a ready-made list of {M.view(M.emptyData(),null).reduce((n,s)=>n+s.items.length,0)} things people forget, in the order a trip actually happens: days before, clothes, bathroom bag, documents, the night before and last minute. Tick things off, add your own, hide what you never need. Your list is kept for next time{signedIn?' and follows you across your devices':' on this device (sign in to keep it across devices)'}.</p>
-  <form className="cl-start" onSubmit={e=>{e.preventDefault();commit(d=>M.addTrip(d,newName||'My next trip'));setNewName('')}}>
+  <form className="ck-start" onSubmit={e=>{e.preventDefault();commit(d=>M.addTrip(d,newName||'My next trip'));setNewName('')}}>
    <label><span>NAME THIS TRIP</span><input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="e.g. Cape Town in October" maxLength={M.LIMITS.name} aria-label="Trip name"/></label>
    <button className="cta" type="submit"><Plus size={16}/>Start my checklist</button>
   </form>
-  {saved.length>0&&<div className="cl-quick"><span>Or start from a saved flight:</span>{saved.slice(0,4).map(s=><button key={s.number+s.date} className="text-button" onClick={()=>commit(d=>M.addTrip(d,tripNameFor(s),s))}><Plane size={13}/>{tripNameFor(s)}</button>)}</div>}
-  {msg&&<p role="alert" className="cl-msg">{msg}</p>}
+  {saved.length>0&&<div className="ck-quick"><span>Or start from a saved flight:</span>{saved.slice(0,4).map(s=><button key={s.number+s.date} className="text-button" onClick={()=>commit(d=>M.addTrip(d,tripNameFor(s),s))}><Plane size={13}/>{tripNameFor(s)}</button>)}</div>}
+  {msg&&<p role="alert" className="ck-msg">{msg}</p>}
  </section>;
 
  const flightLabel=trip.flight?tripNameFor(trip.flight):'';
- return <section className="cl" aria-label="Travel checklist">
-  <div className="cl-top panel">
-   <div className="cl-tripbar" role="tablist" aria-label="Your trips">
-    {data.trips.map(t=><button key={t.id} role="tab" aria-selected={t.id===trip.id} className={t.id===trip.id?'cl-tab active':'cl-tab'} onClick={()=>{commit(d=>({...d,active:t.id}));setConfirmReset(false)}}>{t.name}</button>)}
-    {data.trips.length<M.LIMITS.trips&&<button className="cl-tab add" onClick={()=>commit(d=>M.addTrip(d,'My next trip'))} aria-label="Add a trip"><Plus size={14}/>New trip</button>}
+ return <section className="cl" aria-label="Travel checklist"><h1 className="sr-only">Travel checklist</h1>
+  <div className="ck-top panel">
+   <div className="ck-tripbar"><div className="ck-tabs" role="tablist" aria-label="Your trips">
+    {data.trips.map(t=><button key={t.id} role="tab" aria-selected={t.id===trip.id} className={t.id===trip.id?'ck-tab active':'ck-tab'} onClick={()=>{commit(d=>({...d,active:t.id}));setConfirmReset(false)}}>{t.name}</button>)}</div>
+    {data.trips.length<M.LIMITS.trips&&<button className="ck-tab add" onClick={()=>commit(d=>M.addTrip(d,'My next trip'))} aria-label="Add a trip"><Plus size={14}/>New trip</button>}
    </div>
-   <div className="cl-head">
+   <div className="ck-head">
     <Ring percent={prog.percent}/>
-    <div className="cl-title">
-     <input className="cl-name" aria-label="Trip name" value={trip.name} maxLength={M.LIMITS.name} onChange={e=>commit(d=>M.renameTrip(d,trip.id,e.target.value||' '))} onBlur={e=>{if(!e.target.value.trim())commit(d=>M.renameTrip(d,trip.id,'My next trip'))}}/>
+    <div className="ck-title">
+     <input className="ck-name" aria-label="Trip name" value={trip.name} maxLength={M.LIMITS.name} onChange={e=>commit(d=>M.renameTrip(d,trip.id,e.target.value||' '))} onBlur={e=>{if(!e.target.value.trim())commit(d=>M.renameTrip(d,trip.id,'My next trip'))}}/>
      <p aria-live="polite">{prog.done} of {prog.total} packed{prog.total>0&&prog.done===prog.total?' · all done, safe travels!':''}</p>
-     <div className="cl-flight">
+     <div className="ck-flight">
       {trip.flight?<><span className="pill"><Plane size={10}/> {flightLabel}</span><button className="text-button" onClick={()=>onTrack(trip.flight!.number,trip.flight!.date)}>Check this flight</button><button className="text-button" onClick={()=>commit(d=>M.linkFlight(d,trip.id,undefined))} aria-label="Unlink flight"><X size={12}/></button></>
-       :saved.length>0?<label className="cl-link"><Link2 size={13}/><select aria-label="Link a saved flight" value="" onChange={e=>{const s=saved.find(x=>x.number+'|'+x.date===e.target.value);if(s){commit(d=>M.linkFlight(d,trip.id,s));void loadContext(trip.id,s)}}}><option value="">Link a saved flight…</option>{saved.map(s=><option key={s.number+s.date} value={s.number+'|'+s.date}>{tripNameFor(s)}</option>)}</select></label>
-       :<span className="cl-hint">Save a flight to link it to this trip.</span>}
+       :saved.length>0?<label className="ck-link"><Link2 size={13}/><select aria-label="Link a saved flight" value="" onChange={e=>{const s=saved.find(x=>x.number+'|'+x.date===e.target.value);if(s){commit(d=>M.linkFlight(d,trip.id,s));void loadContext(trip.id,s)}}}><option value="">Link a saved flight…</option>{saved.map(s=><option key={s.number+s.date} value={s.number+'|'+s.date}>{tripNameFor(s)}</option>)}</select></label>
+       :<span className="ck-hint">Save a flight to link it to this trip.</span>}
      </div>
-     {trip.flight&&<div className="cl-ctx">
-      <label className="cl-nights"><span>Nights away</span><input type="number" min={1} max={365} inputMode="numeric" value={trip.nights??''} placeholder="optional" onChange={e=>commit(d=>M.setNights(d,trip.id,e.target.value?Number(e.target.value):null))}/></label>
+     {trip.flight&&<div className="ck-ctx">
+      <label className="ck-nights"><span>Nights away</span><input type="number" min={1} max={365} inputMode="numeric" value={trip.nights??''} placeholder="optional" onChange={e=>commit(d=>M.setNights(d,trip.id,e.target.value?Number(e.target.value):null))}/></label>
       {!trip.ctx&&<button className="text-button" disabled={ctxBusy} onClick={()=>void loadContext(trip.id,trip.flight!)}><Lightbulb size={13}/>{ctxBusy?'Reading your flight…':'Get suggestions for this flight'}</button>}
-      {trip.ctx&&<small className="cl-ctxline">{trip.ctx.dir?`${trip.ctx.dir==='overseas'?'International':trip.ctx.dir[0].toUpperCase()+trip.ctx.dir.slice(1)} flight to ${trip.ctx.destName}`:`Flight to ${trip.ctx.destName}`}{trip.ctx.tempC!=null?` · ${trip.ctx.tempC}°C there now${trip.ctx.rain?', rain':''}`:''}{trip.ctx.km?` · about ${trip.ctx.km.toLocaleString('en-GB')} km`:''}</small>}
+      {trip.ctx&&<small className="ck-ctxline">{trip.ctx.dir?`${trip.ctx.dir==='overseas'?'International':trip.ctx.dir[0].toUpperCase()+trip.ctx.dir.slice(1)} flight to ${trip.ctx.destName}`:`Flight to ${trip.ctx.destName}`}{trip.ctx.tempC!=null?` · ${trip.ctx.tempC}°C there now${trip.ctx.rain?', rain':''}`:''}{trip.ctx.km?` · about ${trip.ctx.km.toLocaleString('en-GB')} km`:''}</small>}
      </div>}
-     {ctxNote&&<p role="alert" className="cl-msg">{ctxNote}</p>}
+     {ctxNote&&<p role="alert" className="ck-msg">{ctxNote}</p>}
     </div>
-    <div className="cl-actions">
+    <div className="ck-actions">
      <button className={onlyLeft?'text-button primary':'text-button'} onClick={()=>setOnlyLeft(v=>!v)} aria-pressed={onlyLeft}>{onlyLeft?<Eye size={13}/>:<EyeOff size={13}/>}Still to pack</button>
      <button className={edit?'text-button primary':'text-button'} onClick={()=>setEdit(v=>!v)} aria-pressed={edit}><Pencil size={13}/>{edit?'Done editing':'Edit list'}</button>
      {confirmReset?<><button className="text-button danger" onClick={()=>{commit(d=>M.resetTicks(d,trip.id));setConfirmReset(false)}}>Yes, untick everything</button><button className="text-button" onClick={()=>setConfirmReset(false)}>Cancel</button></>
@@ -155,35 +155,35 @@ export default function Checklist({saved,signedIn,userId,request,onRequestDone,o
      <button className="text-button danger" onClick={()=>{if(confirm(`Delete the trip “${trip.name}”? Your list items are kept.`))commit(d=>M.removeTrip(d,trip.id))}} aria-label="Delete this trip"><Trash2 size={13}/></button>
     </div>
    </div>
-   {msg&&<p role="alert" className="cl-msg">{msg}</p>}
+   {msg&&<p role="alert" className="ck-msg">{msg}</p>}
   </div>
 
-  {summary.length>0&&<section className="panel cl-short" aria-label="Your flight in short"><h3>Your flight in short</h3><p>{summary.join(' ')}</p></section>}
-  {tips.length>0&&<section className="panel cl-tips" aria-label="Suggestions for this trip"><h3><Lightbulb size={15}/>Suggested for this trip</h3><ul>{tips.map(t=><li key={t.id}><div><strong>{t.text}</strong><small>{t.why}</small></div><button className="text-button primary" onClick={()=>commit(d=>M.dismiss(M.addItem(d,t.section,t.text),trip!.id,t.id))}><Plus size={13}/>Add</button><button className="cl-x" aria-label={`Dismiss ${t.text}`} onClick={()=>commit(d=>M.dismiss(d,trip!.id,t.id))}><X size={14}/></button></li>)}</ul><p className="cl-sec-hint">Based on your flight and the weather. These are ideas, never rules. For entry requirements use the official <a href="https://www.gov.uk/foreign-travel-advice" target="_blank" rel="noreferrer">GOV.UK travel advice</a>.</p></section>}
+  {summary.length>0&&<section className="panel ck-short" aria-label="Your flight in short"><h3>Your flight in short</h3><p>{summary.join(' ')}</p></section>}
+  {tips.length>0&&<section className="panel ck-tips" aria-label="Suggestions for this trip"><h3><Lightbulb size={15}/>Suggested for this trip</h3><ul>{tips.map(t=><li key={t.id}><div><strong>{t.text}</strong><small>{t.why}</small></div><button className="text-button primary" onClick={()=>commit(d=>M.dismiss(M.addItem(d,t.section,t.text),trip!.id,t.id))}><Plus size={13}/>Add</button><button className="ck-x" aria-label={`Dismiss ${t.text}`} onClick={()=>commit(d=>M.dismiss(d,trip!.id,t.id))}><X size={14}/></button></li>)}</ul><p className="ck-sec-hint">Based on your flight and the weather. These are ideas, never rules. For entry requirements use the official <a href="https://www.gov.uk/foreign-travel-advice" target="_blank" rel="noreferrer">GOV.UK travel advice</a>.</p></section>}
   {sections.map(sec=>{
    const items=onlyLeft?sec.items.filter(i=>!i.done):sec.items;
    if(!edit&&sec.items.length===0)return null;
-   return <details key={sec.id} className="panel cl-sec" open={sec.doneCount<sec.items.length||edit}>
-    <summary><span className="cl-sec-title">{sec.title}</span><span className="cl-sec-count" aria-label={`${sec.doneCount} of ${sec.items.length} packed`}>{sec.doneCount}/{sec.items.length}</span><span className="cl-bar" aria-hidden="true"><i style={{width:`${sec.items.length?sec.doneCount/sec.items.length*100:0}%`}}/></span>{sec.doneCount===sec.items.length&&sec.items.length>0&&<Check size={15} className="cl-sec-done"/>}</summary>
-    {sec.hint&&<p className="cl-sec-hint">{sec.hint}</p>}
-    <ul className="cl-list">
+   return <details key={sec.id} className="panel ck-sec" open={sec.doneCount<sec.items.length||edit}>
+    <summary><span className="ck-sec-title">{sec.title}</span><span className="ck-sec-count" aria-label={`${sec.doneCount} of ${sec.items.length} packed`}>{sec.doneCount}/{sec.items.length}</span><span className="ck-bar" aria-hidden="true"><i style={{width:`${sec.items.length?sec.doneCount/sec.items.length*100:0}%`}}/></span>{sec.doneCount===sec.items.length&&sec.items.length>0&&<Check size={15} className="ck-sec-done"/>}</summary>
+    {sec.hint&&<p className="ck-sec-hint">{sec.hint}</p>}
+    <ul className="ck-list">
      {items.map(it=><li key={it.id} className={it.done?'done':''}>
       {edit?<>
-       <input className="cl-edit" aria-label={`Rename ${it.text}`} defaultValue={it.text} maxLength={M.LIMITS.label} onBlur={e=>{if(e.target.value.trim()&&e.target.value!==it.text)commit(d=>M.renameItem(d,it.id,e.target.value))}} onKeyDown={e=>{if(e.key==='Enter')(e.target as HTMLInputElement).blur()}}/>
-       <button className="cl-x" aria-label={`${it.custom?'Delete':'Hide'} ${it.text}`} onClick={()=>commit(d=>M.removeItem(d,it.id))}><X size={14}/></button>
-      </>:<label className="cl-check"><input type="checkbox" checked={it.done} onChange={e=>commit(d=>M.tick(d,trip.id,it.id,e.target.checked))}/><span className="cl-box" aria-hidden="true"><Check size={13} strokeWidth={3}/></span><span className="cl-text">{it.text}</span></label>}
+       <input className="ck-edit" aria-label={`Rename ${it.text}`} defaultValue={it.text} maxLength={M.LIMITS.label} onBlur={e=>{if(e.target.value.trim()&&e.target.value!==it.text)commit(d=>M.renameItem(d,it.id,e.target.value))}} onKeyDown={e=>{if(e.key==='Enter')(e.target as HTMLInputElement).blur()}}/>
+       <button className="ck-x" aria-label={`${it.custom?'Delete':'Hide'} ${it.text}`} onClick={()=>commit(d=>M.removeItem(d,it.id))}><X size={14}/></button>
+      </>:<label className="ck-check"><input type="checkbox" checked={it.done} onChange={e=>commit(d=>M.tick(d,trip.id,it.id,e.target.checked))}/><span className="ck-box" aria-hidden="true"><Check size={13} strokeWidth={3}/></span><span className="ck-text">{it.text}</span></label>}
      </li>)}
-     {onlyLeft&&items.length===0&&sec.items.length>0&&<li className="cl-allset"><Check size={14}/>Everything here is packed</li>}
+     {onlyLeft&&items.length===0&&sec.items.length>0&&<li className="ck-allset"><Check size={14}/>Everything here is packed</li>}
     </ul>
-    <div className="cl-sec-foot">
-     {adding===sec.id?<form onSubmit={e=>{e.preventDefault();commit(d=>M.addItem(d,sec.id,addText));setAddText('');setAdding(null)}} className="cl-add"><input autoFocus aria-label={`New item in ${sec.title}`} value={addText} onChange={e=>setAddText(e.target.value)} placeholder="Add your own item" maxLength={M.LIMITS.label}/><button className="text-button primary" type="submit">Add</button><button className="text-button" type="button" onClick={()=>{setAdding(null);setAddText('')}}>Cancel</button></form>
+    <div className="ck-sec-foot">
+     {adding===sec.id?<form onSubmit={e=>{e.preventDefault();commit(d=>M.addItem(d,sec.id,addText));setAddText('');setAdding(null)}} className="ck-add"><input autoFocus aria-label={`New item in ${sec.title}`} value={addText} onChange={e=>setAddText(e.target.value)} placeholder="Add your own item" maxLength={M.LIMITS.label}/><button className="text-button primary" type="submit">Add</button><button className="text-button" type="button" onClick={()=>{setAdding(null);setAddText('')}}>Cancel</button></form>
       :<button className="text-button" onClick={()=>{setAdding(sec.id);setAddText('')}}><Plus size={13}/>Add item</button>}
      {edit&&(sec.items.length>0?<button className="text-button" onClick={()=>commit(d=>M.hideSection(d,sec.id))}>Hide whole section</button>:TEMPLATE.some(t=>t.id===sec.id)&&<button className="text-button" onClick={()=>commit(d=>M.showSection(d,sec.id))}>Show section again</button>)}
     </div>
    </details>})}
 
-  {(hiddenTotal>0)&&<p className="cl-restore">{hiddenTotal} item{hiddenTotal>1?'s':''} hidden from your list. <button className="text-button" onClick={()=>commit(d=>M.restoreAll(d))}>Restore all</button></p>}
-  {signedIn&&<p className="cl-erase">{confirmErase?<>This removes your checklist from our server and from this device. It cannot be undone. <button className="text-button danger" onClick={()=>void erase()}>Yes, delete everything</button> <button className="text-button" onClick={()=>setConfirmErase(false)}>Keep it</button></>:<button className="text-button" onClick={()=>setConfirmErase(true)}><Trash2 size={13}/>Delete my saved checklist</button>}</p>}
-  <p className="cl-note" aria-live="polite">{!signedIn?'Your list is kept on this device only. Sign in to keep it across devices. It works without a connection.':sync==='syncing'?'Saving to your account…':sync==='synced'?'Saved to your account and on this device. It works without a connection.':sync==='offline'?'You are offline. Your changes are saved on this device and will sync when you are back online.':sync==='error'?'Could not reach your account just now. Your changes are safe on this device and will sync later.':'Saved on this device.'}</p>
+  {(hiddenTotal>0)&&<p className="ck-restore">{hiddenTotal} item{hiddenTotal>1?'s':''} hidden from your list. <button className="text-button" onClick={()=>commit(d=>M.restoreAll(d))}>Restore all</button></p>}
+  {signedIn&&<p className="ck-erase">{confirmErase?<>This removes your checklist from our server and from this device. It cannot be undone. <button className="text-button danger" onClick={()=>void erase()}>Yes, delete everything</button> <button className="text-button" onClick={()=>setConfirmErase(false)}>Keep it</button></>:<button className="text-button" onClick={()=>setConfirmErase(true)}><Trash2 size={13}/>Delete my saved checklist</button>}</p>}
+  <p className="ck-note" aria-live="polite">{!signedIn?'Your list is kept on this device only. Sign in to keep it across devices. It works without a connection.':sync==='syncing'?'Saving to your account…':sync==='synced'?'Saved to your account and on this device. It works without a connection.':sync==='offline'?'You are offline. Your changes are saved on this device and will sync when you are back online.':sync==='error'?'Could not reach your account just now. Your changes are safe on this device and will sync later.':'Saved on this device.'}</p>
  </section>
 }

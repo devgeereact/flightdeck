@@ -56,10 +56,10 @@ test('each page is a proper document: title, description, canonical, one h1, ski
   }
 });
 
-test('public pages request nothing from third parties: the only script is our own consent.js', () => {
+test('public pages request nothing from third parties: the only scripts are our own files', () => {
   const b = build();
   for (const [p, h] of html(b)) {
-    for (const m of h.matchAll(/<(?:script|img|iframe|source|video|audio)\b[^>]*\bsrc="([^"]+)"/g)) assert.equal(m[1], '/consent.js', `${p}: ${m[1]}`);
+    for (const m of h.matchAll(/<(?:script|img|iframe|source|video|audio)\b[^>]*\bsrc="([^"]+)"/g)) assert.ok(['/consent.js', '/page.js', '/js/contact.js'].includes(m[1]), `${p}: ${m[1]}`);
     for (const m of h.matchAll(/<link\b[^>]*\bhref="([^"]+)"/g)) assert.ok(m[1].startsWith('/') || m[1].startsWith(base.url), `${p}: ${m[1]}`);
     assert.ok(!/@import|fonts\.googleapis|googletagmanager|google-analytics|adsbygoogle|googlesyndication/.test(h), p);
   }
@@ -101,18 +101,32 @@ test('without an owner email the contact route is the form; with one the email i
 });
 
 test('contact page: a real form with a honeypot and fill-time, posting to our own API', () => {
-  const c = build().read('contact/index.html');
-  assert.ok(c.includes('id="contact-form"') && c.includes('name="website"') && c.includes("fetch('/api/contact'") && c.includes('elapsed:Date.now()-t0') && c.includes('type="email"'));
+  const b = build();
+  const c = b.read('contact/index.html');
+  assert.ok(c.includes('id="contact-form"') && c.includes('name="website"') && c.includes('type="email"') && c.includes('<script src="/js/contact.js" defer>'));
+  const js = b.read('js/contact.js');
+  assert.ok(js.includes("fetch('/api/contact'") && js.includes('elapsed:Date.now()-t0'));
+});
+
+test('no page has an inline script or inline event handler, and a noindex 404 page exists', () => {
+  const b = build();
+  for (const f of ['contact/index.html', 'privacy/index.html', 'travel-checklist/index.html', 'guides/index.html', '404.html']) {
+    const h = b.read(f);
+    assert.ok(!/<script(?![^>]*\bsrc=)(?![^>]*ld\+json)/.test(h), f + ' has an inline script');
+    assert.ok(!/\son[a-z]+="/.test(h), f + ' has an inline handler');
+  }
+  assert.ok(b.read('404.html').includes('noindex') && !b.read('sitemap.xml').includes('404'));
 });
 
 test('the printable packing list is the app template: same sections, same items, same order', () => {
-  const h = build().read('travel-checklist/index.html');
-  assert.equal((h.match(/class="cl-sec"/g) || []).length, TEMPLATE.length);
-  assert.deepEqual([...h.matchAll(/<section class="cl-sec"><h2>([^<]+)<\/h2>/g)].map((m) => m[1]), TEMPLATE.map((s) => s.title));
+  const b = build();
+  const h = b.read('travel-checklist/index.html');
+  assert.equal((h.match(/class="ck-sec"/g) || []).length, TEMPLATE.length);
+  assert.deepEqual([...h.matchAll(/<section class="ck-sec"><h2>([^<]+)<\/h2>/g)].map((m) => m[1]), TEMPLATE.map((s) => s.title));
   const items = [...h.matchAll(/<li>([^<]+)<\/li>/g)].map((m) => m[1].replace(/&amp;/g, '&').replace(/&quot;/g, '"'));
   const expected = TEMPLATE.flatMap((s) => s.items.map((i) => i.text));
   assert.deepEqual(items.slice(0, expected.length), expected);
-  assert.ok(h.includes('window.print()') && h.includes('@media print'));
+  assert.ok(h.includes('data-print') && b.read('page.js').includes('window.print()') && h.includes('@media print'));
 });
 
 test('the guides are real articles, not thin pages', () => {

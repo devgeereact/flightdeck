@@ -21,7 +21,7 @@ function Chart({title,values,dates,kind='bars',unit=''}:{title:string;values:num
  const y=(v:number)=>T+ih-(v/max)*ih;
  const bar=(i:number,v:number)=>{const bx=L+i*slot+(slot-bw)/2,by=y(v),h=T+ih-by,r=Math.min(3,bw/2,h);return v>0?`M${bx},${T+ih}V${by+r}Q${bx},${by} ${bx+r},${by}H${bx+bw-r}Q${bx+bw},${by} ${bx+bw},${by+r}V${T+ih}Z`:''};
  return <section className="panel ad-chart">
-  <div className="ad-chart-head"><div><h3>{title}</h3><p>{nf.format(total)}{unit} in {n} days{total>0&&values[peakI]>0?` · busiest ${shortDay(dates[peakI])} (${nf.format(values[peakI])})`:''}</p></div><button className="text-button" onClick={()=>setTable(t=>!t)} aria-pressed={table}><Table2 size={13}/>{table?'Show chart':'Show as table'}</button></div>
+  <div className="ad-chart-head"><div><h2>{title}</h2><p>{nf.format(total)}{unit} in {n} days{total>0&&values[peakI]>0?` · busiest ${shortDay(dates[peakI])} (${nf.format(values[peakI])})`:''}</p></div><button className="text-button" onClick={()=>setTable(t=>!t)} aria-pressed={table}><Table2 size={13}/>{table?'Show chart':'Show as table'}</button></div>
   {table?<div className="ad-table-wrap"><table className="ad-table"><thead><tr><th>Date</th><th>{title}</th></tr></thead><tbody>{dates.map((d,i)=><tr key={d}><td>{shortDay(d)}</td><td>{nf.format(values[i])}</td></tr>)}</tbody></table></div>
   :<div className="ad-svg-wrap"><svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${title}: ${nf.format(total)} in ${n} days`} onMouseLeave={()=>setHover(null)}>
    <line x1={L} x2={W-R} y1={T+ih} y2={T+ih} stroke="#dbe3d6"/><line x1={L} x2={W-R} y1={T} y2={T} stroke="#eef2ea"/>
