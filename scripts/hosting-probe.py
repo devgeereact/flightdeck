@@ -17,7 +17,7 @@ import urllib.request
 from urllib.parse import urlsplit
 
 APP_NAME = 'Flightdeck'
-BEACON = re.compile(rb'<script[^>]*static\.cloudflareinsights\.com[^>]*></script>')
+BEACON = re.compile(rb'\n?<script[^>]*static\.cloudflareinsights\.com[^>]*></script>\n?')
 TEMPLATE = pathlib.Path(__file__).with_name('deployment-test-page.template.html')
 
 
@@ -63,7 +63,7 @@ def main():
                     with urllib.request.urlopen(request, timeout=25, context=ssl.create_default_context()) as response:
                         got = BEACON.sub(b'', response.read(65537), count=1)  # Cloudflare Web Analytics injects one script at the edge
                         info = (response.status, response.geturl() == request.full_url, len(got), len(body), response.headers.get('Content-Type'), response.headers.get('cf-mitigated'), response.headers.get('cf-cache-status'))
-                        if response.status == 200 and info[1] and got.rstrip() == body.rstrip():
+                        if response.status == 200 and info[1] and got == body:
                             break
                 except urllib.error.HTTPError as http_error:
                     info = (http_error.code, None, None, len(body), http_error.headers.get('Content-Type'), http_error.headers.get('cf-mitigated'), None)
