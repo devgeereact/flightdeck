@@ -30,6 +30,8 @@ jobs:
         env:
           # Public by design. Optional: when unset the app is built without login.
           VITE_CLERK_PUBLISHABLE_KEY: ${{ vars.VITE_CLERK_PUBLISHABLE_KEY }}
+          # GA4 Measurement ID, public by design. Loads only after the visitor opts in; when unset the app is built without analytics.
+          VITE_GA_ID: ${{ vars.VITE_GA_ID }}
         run: pnpm build
       - name: Release private PHP source (restricted key, additive rsync)
         env:
