@@ -1,6 +1,7 @@
 import {useEffect,useRef} from 'react';
 import {Plane,ArrowRight,Check} from 'lucide-react';
 import {SignInButton,SignUpButton} from '@clerk/react';
+import {registerSW} from 'virtual:pwa-register';
 import gsap from 'gsap';
 import {useGSAP} from '@gsap/react';
 import {SplitText} from 'gsap/SplitText';
@@ -18,6 +19,8 @@ const STAGES:[number,string][]=[[0,'Boarding'],[0.06,'Departed'],[0.12,'En route
 export default function Landing(){
  const root=useRef<HTMLDivElement>(null);
  useEffect(()=>{trackOnce('landing_view')},[]);
+ // Signed-out visitors have nothing to lose, so a new release is applied as soon as it is ready. Without this a returning visitor would keep seeing the old landing page from the cache until they signed in.
+ useEffect(()=>{let t:number|undefined;const update=registerSW({onNeedRefresh:()=>{void update(true)},onRegisteredSW:(_u,r)=>{if(r){r.update().catch(()=>{});t=window.setInterval(()=>{r.update().catch(()=>{})},3600000)}}});return()=>{if(t)clearInterval(t)}},[]);
  useGSAP(()=>{
   const q=gsap.utils.selector(root);
   const mm=gsap.matchMedia();
