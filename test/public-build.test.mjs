@@ -94,7 +94,7 @@ test('the legal pages say what the app really does (and nothing it does not)', (
 });
 
 test('without an owner email the contact route is the form; with one the email is shown and linked', () => {
-  assert.ok(!build().read('privacy/index.html').includes('mailto:'));
+  assert.ok(!build({ config: { ...base, contactEmail: '', ownerName: '' } }).read('privacy/index.html').includes('mailto:'));
   const withMail = build({ config: { ...base, contactEmail: 'hello@example.com', ownerName: 'Sam Example' } });
   assert.ok(withMail.read('privacy/index.html').includes('<a href="mailto:hello@example.com">hello@example.com</a>') && withMail.read('privacy/index.html').includes('Sam Example'));
   assert.ok(withMail.read('contact/index.html').includes('mailto:hello@example.com'));
