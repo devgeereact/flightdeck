@@ -1,6 +1,7 @@
 <?php
 $csp = file_get_contents(__DIR__ . '/../public/.htaccess');
-if (preg_match('/Content-Security-Policy "([^"]+)"/', $csp, $m)) { header('Content-Security-Policy: ' . $m[1]); }
+// FLIGHTDECK_NO_CSP=1 lets a test page frame the app (for phone-width checks); the real policy is always on in production.
+if (getenv('FLIGHTDECK_NO_CSP') !== '1' && preg_match('/Content-Security-Policy "([^"]+)"/', $csp, $m)) { header('Content-Security-Policy: ' . $m[1]); }
 
 // Local only: php -S 127.0.0.1:3998 php/dev-router.php
 // Provider keys come from the project's .env automatically (see php/private/src/DevEnv.php); nothing has to be exported.

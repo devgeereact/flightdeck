@@ -4,6 +4,7 @@ import {useGSAP} from '@gsap/react';
 import {DrawSVGPlugin} from 'gsap/DrawSVGPlugin';
 import {Activity,Users,Inbox,Gauge,Server,BarChart3,RefreshCw,Mail,Reply,Send,Table2,AlertTriangle,CheckCircle2,CircleSlash,ExternalLink,LineChart} from 'lucide-react';
 import {apiFetch} from './api';
+import {withMotion} from './motion';
 gsap.registerPlugin(useGSAP,DrawSVGPlugin);
 
 type Tab='overview'|'usage'|'costs'|'users'|'enquiries'|'analytics'|'system';
@@ -76,8 +77,7 @@ export default function Admin({onUnread}:{onUnread:(n:number)=>void}){
  // Motion: cards rise in, numbers count up, bars grow from the baseline and lines draw themselves. Skipped when the visitor prefers reduced motion.
  useGSAP(()=>{
   const q=gsap.utils.selector(root);
-  const mm=gsap.matchMedia();
-  mm.add('(prefers-reduced-motion: no-preference)',()=>{
+  withMotion(()=>{
    const tl=gsap.timeline({defaults:{ease:'power3.out'}});
    tl.from(q('.ad-head > *'),{autoAlpha:0,y:14,duration:.5,stagger:.08})
     .from(q('.ad-tabs button'),{autoAlpha:0,y:10,duration:.4,stagger:.04},'<.15')
@@ -109,7 +109,7 @@ export default function Admin({onUnread}:{onUnread:(n:number)=>void}){
     <Kpi label="SEARCHES" value={t.searches} sub={`${t.found+t.usualRoute} answered · ${t.notFound} not found`}/>
     <Kpi label="SUCCESS RATE" value={pct(t.successRate)} sub={t.errors?`${t.errors} provider errors`:'no provider errors'} warn={t.errors>0}/>
     <Kpi label="ACTIVE USER-DAYS" value={t.activeUserDays} sub={`peak ${t.peakUsers} a day · ${t.searchesPerActiveUserDay??'—'} searches each`}/>
-    <Kpi label="CHECKLISTS STARTED" value={t.checklistsCreated} sub={`${t.checklistsCompleted} fully packed`}/>
+    <Kpi label="PACKING LISTS STARTED" value={t.checklistsCreated} sub={`${t.checklistsCompleted} fully packed`}/>
     <Kpi label="NEW ENQUIRIES" value={t.enquiries} sub={ov.unread?`${ov.unread} unread`:'none unread'} warn={ov.unread>0}/>
     <Kpi label="APP INSTALLS" value={t.pwaInstalls} sub={`${t.landingViews} landing views · ${t.ctaClicks} sign-up clicks`}/>
    </div>
@@ -122,12 +122,12 @@ export default function Admin({onUnread}:{onUnread:(n:number)=>void}){
    <div className="ad-grid2"><Rank title="Outbound or inbound" items={ov.overview.top.direction} empty="No data yet."/><Rank title="Flight numbers people could not find" items={ov.overview.top.notFoundNumbers} empty="Nothing missing. Every search found a flight."/></div>
    <div className="ad-kpis">
     <Kpi label="LANDING VIEWS" value={t.landingViews} sub={`${t.ctaClicks} clicked sign up`}/>
-    <Kpi label="CHECKLISTS" value={t.checklistsCreated} sub={`${t.checklistsCompleted} completed · ${t.checklistSaves} saved to accounts`}/>
+    <Kpi label="PACKING LISTS" value={t.checklistsCreated} sub={`${t.checklistsCompleted} completed · ${t.checklistSaves} saved to accounts`}/>
     <Kpi label="COOKIE CHOICES" value={pct(t.consentOptIn)} sub={`${t.consentAccept} accepted · ${t.consentReject} declined`}/>
     <Kpi label="FEEDBACK OPENED" value={t.feedbackOpened} sub={`${t.enquiries} messages sent`}/>
    </div>
    <Chart title="Landing page views" values={s.landingViews} dates={dates}/>
-   <Chart title="Checklists started" values={s.checklistsCreated} dates={dates}/>
+   <Chart title="Packing lists started" values={s.checklistsCreated} dates={dates}/>
   </>)}
 
   {tab==='costs'&&(!ov?<p className="ad-loading">Loading…</p>:<>

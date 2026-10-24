@@ -148,8 +148,8 @@ test('summary: in the air and arrived, with belt only when reported', () => {
   assert.ok(air.some((x) => /in the air, about 73% of the way \(estimated\)\. Expected at the gate around 11:00 Cape Town time\./.test(x)), air.join(' | '));
   assert.ok(!air.some((x) => /Departing from/.test(x)));
   const done = summarise(f({ providerStatus: 'Arrived', progress: 100, progressBasis: 'status', actualIn: '2026-10-25T08:47:00.000Z', baggage: '9' }));
-  assert.ok(done.some((x) => /has arrived \(gate in at 10:47, Cape Town time\)/.test(x)) && done.includes('Baggage reclaim: belt 9.'));
-  assert.ok(summarise(f({ providerStatus: 'Arrived', actualIn: '2026-10-25T08:47:00.000Z', baggage: null })).some((x) => /baggage belt is not reported yet/.test(x)));
+  assert.ok(done.some((x) => /has arrived and reached the gate at 10:47, Cape Town time/.test(x)) && done.includes('Baggage belt: 9.'));
+  assert.ok(summarise(f({ providerStatus: 'Arrived', actualIn: '2026-10-25T08:47:00.000Z', baggage: null })).some((x) => /No baggage belt has been reported yet/.test(x)));
 });
 
 test('summary: a missing gate is said to be missing; the usual terminal hint is labelled unconfirmed; nothing undefined ever leaks', () => {

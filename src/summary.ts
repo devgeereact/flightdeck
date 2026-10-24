@@ -19,7 +19,7 @@ export function summarise(f: Flight): string[] {
   else if (f.usualRouteOnly) out.push('No schedule is published for this date yet, so only the usual route is known. Times appear closer to departure.');
   else if (st === 'Arrived') {
     const t = tm(f.actualIn ?? f.landing, dTz);
-    out.push(t ? `It has arrived (gate in at ${t}, ${f.destination.city || 'local'} time).` : 'It has arrived.');
+    out.push(t ? `It has arrived and reached the gate at ${t}, ${f.destination.city || 'local'} time.` : 'It has arrived.');
   } else if (st && AIR.has(st)) {
     const eta = tm(f.estimatedIn, dTz);
     out.push(`It is in the air${f.progress != null ? `, about ${f.progress}% of the way` : ''}${f.progressBasis && f.progressBasis !== 'status' ? ' (estimated)' : ''}.${eta ? ` Expected at the gate around ${eta} ${f.destination.city || 'local'} time.` : ''}`);
@@ -38,6 +38,6 @@ export function summarise(f: Flight): string[] {
     else if (f.terminalOutHint) out.push(`The usual terminal for this airline here is ${f.terminalOutHint}, but it is not confirmed. Check the airport screens.`);
     else out.push('The gate is not reported yet. Gates are often assigned only a couple of hours before departure.');
   }
-  if ((st === 'Arrived' || st === 'Approaching') && !f.cancelled) out.push(f.baggage ? `Baggage reclaim: belt ${f.baggage}.` : 'The baggage belt is not reported yet. Check the screens in the arrivals hall.');
+  if ((st === 'Arrived' || st === 'Approaching') && !f.cancelled) out.push(f.baggage ? `Baggage belt: ${f.baggage}.` : 'No baggage belt has been reported yet. Check the screens in the arrivals hall.');
   return out;
 }

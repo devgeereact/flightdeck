@@ -66,12 +66,13 @@ try {
     const found = !!d.querySelector('.flight-card') && t.includes(FLIGHT), none = t.includes('No flights found');
     check(`B1 search for ${FLIGHT} gives a flight card or an honest "not found"`, found || none, t.slice(300, 500));
     if (found) {
-      check('B2 direction is stated (outbound/inbound/domestic/international)', !!d.querySelector('.direction') && /Outbound|Inbound|Domestic|International|Probably/.test(d.querySelector('.direction').textContent), d.querySelector('.direction')?.textContent);
+      check('B2 direction is stated (outbound/inbound/domestic/international)', !!d.querySelector('.direction') && /Leaving|Arriving|Domestic|International|Probably/.test(d.querySelector('.direction').textContent), d.querySelector('.direction')?.textContent);
       const rows = [...d.querySelectorAll('.timeline-row')].map(r => ({label: r.querySelector('strong').textContent, kind: r.querySelector('small').textContent, time: r.lastElementChild.textContent}));
-      check('B3 timeline has 5 steps', rows.length === 5 && rows.map(r => r.label).join() === 'Boarding,Gate out,Take-off,Touchdown,Gate in', JSON.stringify(rows));
+      check('B3 the journey runs in order: check-in, boarding, leaves the gate, take-off, landing, reaches the gate, bags', rows.length === 7 && rows.map(r => r.label).join() === 'Check-in,Boarding,Leaves the gate,Take-off,Landing,Reaches the gate,Bags on the belt', JSON.stringify(rows));
       check('B4 timeline never claims "Actual" without a time, and every time has a kind', rows.every(r => (r.kind !== 'Actual' || r.time !== '—') && r.kind.length > 0), JSON.stringify(rows));
       check('B5 a step with no time shows a dash, not "Not available"', rows.every(r => r.time === '—' || /\d\d:\d\d/.test(r.time)), JSON.stringify(rows));
-      check('B6 provider attribution is shown', /Flight schedule data by AeroDataBox|Live aircraft positions from The OpenSky Network/.test(t));
+      [...d.querySelectorAll('.fv-tablist button')].find(b => b.textContent === 'Updates').dispatchEvent(new a.w.MouseEvent('click', {bubbles: true})); await sleep(300);
+      check('B6 provider attribution is shown (Updates tab)', /Schedule data from AeroDataBox|Live aircraft positions from The OpenSky Network/.test(a.text()));
     }
     check('B7 no runtime errors', a.errors.length === 0, a.errors.join(' | '));
     a.w.close();
@@ -83,7 +84,7 @@ try {
     f.w.document.querySelector('input[aria-label="Departure date"]').dispatchEvent(new f.w.Event('input', {bubbles: true}));
     await search(f, 'BA59'); await sleep(6000);
     const tf = f.text();
-    check('B8 far-future date: usual route + outbound shown, no invented times', tf.includes('LHR') && tf.includes('CPT') && /Outbound from London/.test(tf) && tf.includes('not published yet'), tf.slice(300, 700));
+    check('B8 far-future date: usual route + outbound shown, no invented times', tf.includes('LHR') && tf.includes('CPT') && /Leaving London/.test(tf) && tf.includes('not published yet'), tf.slice(300, 700));
     f.w.close();
   } else console.log('SKIPPED A/B: no live provider keys configured locally');
 
@@ -97,8 +98,8 @@ try {
     check('K1 checklist route shows the first-time screen, not the flight search', k.text().includes('Pack once. Reuse it every trip.') && !d.querySelector('.search-card'));
     setVal(k.w, d.querySelector('.ck-start input'), 'Cape Town in October');
     d.querySelector('.ck-start').dispatchEvent(new k.w.Event('submit', {bubbles: true, cancelable: true})); await sleep(600);
-    check('K2 starting makes a trip with all 8 sections and 101 items unticked', d.querySelectorAll('details.ck-sec').length === 8 && d.querySelectorAll('.ck-check').length === 101 && k.text().includes('0 of 101 packed'), k.text().slice(300, 600));
-    check('K3 sections run in trip order, ending with the night before and last minute', [...d.querySelectorAll('.ck-sec-title')].map(e => e.textContent).join('|') === 'Days in advance|Clothes and accessories|Bathroom bag|Accessories|Papers and documents|Mostly work related|The night before|Last minute');
+    check('K2 starting makes a trip with all 8 sections and 101 items unticked, one section open at a time', d.querySelectorAll('.ck-panels .ck-sec').length === 8 && d.querySelectorAll('.ck-check').length === 101 && k.text().includes('0 of 101 packed') && d.querySelectorAll('.ck-panels .ck-sec:not([hidden])').length === 1, k.text().slice(300, 600));
+    check('K3 sections run in trip order, ending with the night before and last minute', [...d.querySelectorAll('.ck-rail-title')].map(e => e.textContent).join('|') === 'Days in advance|Clothes and accessories|Bathroom bag|Accessories|Papers and documents|Mostly work related|The night before|Last minute');
     const passport = byText(d, '.ck-check', 'Passport');
     click(k.w, passport.querySelector('input')); await sleep(400);
     check('K4 ticking Passport updates the count and keeps it on the device', k.text().includes('1 of 101 packed') && Object.values(JSON.parse(k.w.localStorage.getItem('flightdeck-checklist')).trips[0].marks).filter(v => v > 0).length === 1);

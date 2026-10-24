@@ -73,12 +73,12 @@ export default function Landing(){
    <div className="hero-copy">
     <span className="eyebrow">YOUR JOURNEY, IN VIEW</span>
     <h1 className="hero-title" id="hero-title">Know your flight before the airport does.</h1>
-    <p className="hero-sub">Live status, gates, baggage belts and where the aircraft is right now, together in one calm place. Free to use.</p>
+    <p className="hero-sub">Live status, gates, baggage belts and where the aircraft is right now, all on one page. Free to use.</p>
     <div className="hero-cta">
      <SignUpButton mode="modal"><button className="cta" onClick={()=>{track('cta_click');ga('cta_click',{source:'hero'})}}>Create free account<ArrowRight size={17}/></button></SignUpButton>
      <SignInButton mode="modal"><button className="cta ghost">Sign in</button></SignInButton>
     </div>
-    <ul className="hero-points"><li><Check size={15}/>Outbound or inbound, clearly labelled</li><li><Check size={15}/>Real gate, terminal and baggage belt when reported</li><li><Check size={15}/>Position straight from the aircraft</li></ul>
+    <ul className="hero-points"><li><Check size={15}/>Clearly marked as leaving or arriving</li><li><Check size={15}/>Gate, terminal and baggage belt as soon as they are reported</li><li><Check size={15}/>Live position from the aircraft itself</li></ul>
    </div>
    <div className="hero-visual" aria-hidden="true">
     <div className="hero-panel">

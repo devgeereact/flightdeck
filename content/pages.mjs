@@ -17,7 +17,7 @@ export const pages = (s) => [
 <h2>The short version</h2>
 <ul>
 <li>You can use the public pages (this site's guides and the packing list) without an account and without giving us anything.</li>
-<li>To search flights and keep a checklist you create an account. We use a sign-in service (Clerk) for that, so we never see or store your password.</li>
+<li>To search flights and keep a packing list you create an account. We use a sign-in service (Clerk) for that, so we never see or store your password.</li>
 <li>We count how the app is used with simple anonymous totals on our own server. We cannot tell from them who did what.</li>
 <li>Google Analytics is used <strong>only if you accept it</strong> in the cookie choice. If you reject it, nothing is sent to Google.</li>
 <li>We do not sell your data and we do not show advertising.</li>
@@ -27,9 +27,9 @@ export const pages = (s) => [
 <table>
 <thead><tr><th>What</th><th>Why</th><th>Basis</th></tr></thead>
 <tbody>
-<tr><td><strong>Account details</strong>: your email address, and a name or picture if your sign-in method provides one. Held by our sign-in provider Clerk.</td><td>So you can sign in and so your saved flights and checklist stay yours.</td><td>Contract (providing the service you asked for)</td></tr>
+<tr><td><strong>Account details</strong>: your email address, and a name or picture if your sign-in method provides one. Held by our sign-in provider Clerk.</td><td>So you can sign in and so your saved flights and packing list stay yours.</td><td>Contract (providing the service you asked for)</td></tr>
 <tr><td><strong>Saved flights</strong>: flight numbers and dates you choose to save. Stored in your Clerk profile.</td><td>So they follow you across devices.</td><td>Contract</td></tr>
-<tr><td><strong>Travel checklist</strong>: your trip names, ticks and the items you add or hide. Stored on our server under a scrambled (hashed) version of your account id.</td><td>So your list is there next time and on your other devices.</td><td>Contract</td></tr>
+<tr><td><strong>Packing list</strong>: your trip names, ticks and the items you add or hide. Stored on our server under a scrambled (hashed) version of your account id.</td><td>So your list is there next time and on your other devices.</td><td>Contract</td></tr>
 <tr><td><strong>Flight searches</strong>: the flight number and date you type are sent to our server, which asks flight-data providers about that flight.</td><td>To show you the flight.</td><td>Contract</td></tr>
 <tr><td><strong>Anonymous usage totals</strong>: counts such as searches per day, which airline codes and routes are searched, and how many different signed-in people used the app on a day. The "different people" figure uses a one-way scrambled code that changes every day, so one person cannot be followed from day to day, and the code is replaced by a plain number after two days.</td><td>To run and improve the service, and to keep within the limits of the paid data we use.</td><td>Legitimate interests (running a service safely and sustainably)</td></tr>
 <tr><td><strong>Messages you send us</strong> through the contact form or the Feedback button: your message, and your name and email if you give them.</td><td>To read and answer you.</td><td>Legitimate interests / your request</td></tr>
@@ -51,7 +51,7 @@ export const pages = (s) => [
 <h2>How long we keep it</h2>
 <ul>
 <li>Account details and saved flights: until you delete your account.</li>
-<li>Checklist: until you delete it (the checklist page has a button for this) or ask us to.</li>
+<li>Packing list: until you delete it (the packing list page has a button for this) or ask us to.</li>
 <li>Anonymous usage totals: up to 400 days, then deleted.</li>
 <li>Messages: for as long as needed to answer you and keep a record of the conversation. We delete them on request.</li>
 </ul>
@@ -76,7 +76,7 @@ export const pages = (s) => [
 <thead><tr><th>Name</th><th>What it is for</th><th>How long</th></tr></thead>
 <tbody>
 <tr><td>Clerk sign-in cookies (for example <code>__session</code>, <code>__client_uat</code>)</td><td>Keep you signed in and prove who you are to our server.</td><td>While you are signed in, up to about a week</td></tr>
-<tr><td><code>flightdeck-saved</code>, <code>flightdeck-checklist</code> (browser storage)</td><td>Keep your saved flights and checklist on this device so they work offline.</td><td>Until you sign out (if tied to an account) or clear your browser data</td></tr>
+<tr><td><code>flightdeck-saved</code>, <code>flightdeck-checklist</code> (browser storage)</td><td>Keep your saved flights and packing list on this device so they work offline.</td><td>Until you sign out (if tied to an account) or clear your browser data</td></tr>
 <tr><td><code>fd-consent</code> (browser storage)</td><td>Remembers your cookie choice.</td><td>Until you change it or clear your browser data</td></tr>
 <tr><td>App files (service worker cache)</td><td>Lets the app load quickly and work without a connection.</td><td>Until the app updates</td></tr>
 </tbody></table>
@@ -102,7 +102,7 @@ export const pages = (s) => [
 <p>These terms apply when you use Flightdeck at ${s.url}. Last reviewed ${s.lastReviewed}. By using it you agree to them. If you do not agree, please do not use it.</p>
 
 <h2>What Flightdeck is</h2>
-<p>Flightdeck helps you follow a flight and get ready for a trip: status and times, gates and baggage belts when they are reported, the aircraft's position when it can be seen, the weather at the destination, and a packing checklist. It is provided free of charge, as it is, for your own personal use.</p>
+<p>Flightdeck helps you follow a flight and get ready for a trip: status and times, gates and baggage belts when they are reported, the aircraft's position when it can be seen, the weather at the destination, and a packing list. It is provided free of charge, as it is, for your own personal use.</p>
 
 <h2>Flight information can be wrong or late</h2>
 <p>The information comes from third-party providers and can be delayed, incomplete or wrong, and airlines and airports change gates, times and terminals at short notice. Where a detail is not reported we show that it is not reported rather than guess. <strong>Always follow the instructions of your airline and the airport, and check airport screens.</strong> Do not rely on Flightdeck for decisions where being wrong would cause you harm or loss, such as when to leave for the airport.</p>
@@ -123,7 +123,7 @@ export const pages = (s) => [
 <p>We may limit or suspend access if the service is being abused.</p>
 
 <h2>Our content and your content</h2>
-<p>The design, text and code of Flightdeck belong to the site owner or its licensors. Flight, aircraft and weather data belong to their providers (see <a href="/about/">About</a>). What you add, such as checklist items and messages, stays yours; you let us store and show it back to you so the service can work.</p>
+<p>The design, text and code of Flightdeck belong to the site owner or its licensors. Flight, aircraft and weather data belong to their providers (see <a href="/about/">About</a>). What you add, such as packing list items and messages, stays yours; you let us store and show it back to you so the service can work.</p>
 
 <h2>What we cannot promise</h2>
 <p>We aim to keep Flightdeck running and accurate but we do not guarantee it will always be available or error-free, and features may change or end. Nothing in these terms limits any right you have that cannot be limited by law, including liability for death or personal injury caused by negligence, or for fraud. Subject to that, we are not responsible for losses that come from relying on information shown in the app, for missed flights, or for losses we could not reasonably have foreseen.</p>
@@ -137,7 +137,7 @@ export const pages = (s) => [
   {
     slug: 'about', kind: 'legal', title: 'About Flightdeck', description: 'What Flightdeck is, where its data comes from, and how it avoids guessing.',
     body: `
-<p>Flightdeck is a calm place to follow a flight and get ready for a trip. It was built to answer the questions people actually have at the airport and the night before: is it on time, which terminal, what gate, where is the plane, what should I pack.</p>
+<p>Flightdeck helps you follow a flight and get ready for a trip. It answers the questions people ask at the airport and the night before: is it on time, which terminal, which gate, where is the plane, what should I pack.</p>
 
 <h2>It does not guess</h2>
 <p>Many flight details are simply not available for every flight, especially gates and baggage belts, which airlines and airports often assign late. When a detail is not reported, Flightdeck says so. Times are labelled <em>scheduled</em>, <em>estimated</em> or <em>actual</em>, and anything we work out ourselves, such as how far along the journey is, is labelled as an estimate.</p>
@@ -189,14 +189,14 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 
   /* ----------------------------------------------------------------- packing list (built from the app's template) */
   {
-    slug: 'travel-checklist', kind: 'checklist', title: 'Printable travel checklist', description: 'A free printable travel checklist: clothes, bathroom bag, accessories, documents, the night before and last minute. Tick it on paper or keep it in Flightdeck.',
+    slug: 'travel-checklist', kind: 'checklist', title: 'Printable packing list', description: 'A free printable packing list: clothes, bathroom bag, accessories, documents, the night before and last minute. Tick it on paper or keep it in Flightdeck.',
     // body is produced by the build script from src/checklistTemplate.ts so the app and this page can never disagree
     body: null,
   },
 
   /* ------------------------------------------------------------------ guides */
   {
-    slug: 'guides/flight-status-explained', kind: 'guide', category: 'reading', takeaways: ["Scheduled is the plan, estimated is the current prediction, and actual is what happened.", "Gate out and gate in include taxiing, so they are longer than the time in the air.", "A delay can differ between departure and arrival, and times are in each airport's own time zone."], title: 'Flight status explained: scheduled, estimated and actual times', description: 'What gate out, take-off, touchdown and gate in mean, why times change, and how to read a flight status without being misled.',
+    slug: 'guides/flight-status-explained', kind: 'guide', category: 'reading', takeaways: ["Scheduled is the plan, estimated is the current prediction, and actual is what happened.", "Leaving the gate and reaching the gate include taxiing, so they are longer than the time in the air.", "A delay can differ between departure and arrival, and times are in each airport's own time zone."], title: 'Flight status explained: scheduled, estimated and actual times', description: 'What check-in, boarding, leaving the gate, take-off, landing and reaching the gate mean, why times change, and how to read a flight status without being misled.',
     body: `
 <p>A flight status page can look like a jumble of times. They each mean something specific, and knowing which is which tells you what is really happening.</p>
 <h2>The three kinds of time</h2>
@@ -205,16 +205,18 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <li><strong>Estimated</strong> is the best current prediction. It moves as the flight is delayed or runs early. An estimate is not a promise.</li>
 <li><strong>Actual</strong> is what happened. It only exists once the event is over.</li>
 </ul>
-<h2>The five moments of a flight</h2>
+<h2>The moments of a flight, in order</h2>
 <ol>
-<li><strong>Boarding</strong>: when passengers are called to the aircraft. Many airlines and airports do not publish this time.</li>
-<li><strong>Gate out</strong> (also called off-blocks): the aircraft leaves its parking position at the gate. This is the time most airlines use for departure punctuality.</li>
-<li><strong>Take-off</strong>: the wheels leave the runway. It is usually some minutes after gate out because aircraft taxi and queue.</li>
-<li><strong>Touchdown</strong>: the wheels meet the runway at the destination.</li>
-<li><strong>Gate in</strong> (on-blocks): the aircraft is parked at the arrival gate. Doors open a little later, and baggage takes longer again.</li>
+<li><strong>Check-in</strong>: bag drop and security. Airlines publish when it opens and closes, and the airport screens show which desk to use.</li>
+<li><strong>Boarding</strong>: passengers are called to the aircraft. Many airlines and airports do not publish this time.</li>
+<li><strong>Leaving the gate</strong> (airlines call it gate out or off-blocks): the aircraft pushes back from its parking stand. Airlines use this time to measure departure punctuality.</li>
+<li><strong>Take-off</strong>: the wheels leave the runway. This is usually some minutes after the aircraft leaves the gate, because it has to taxi and queue.</li>
+<li><strong>Landing</strong>: the wheels touch the runway at the destination.</li>
+<li><strong>Reaching the gate</strong> (gate in or on-blocks): the aircraft parks at the arrival stand. The doors open a little later.</li>
+<li><strong>Bags on the belt</strong>: baggage takes longer again, and the belt number is often only shown shortly before or after landing.</li>
 </ol>
 <h2>Why the numbers differ</h2>
-<p>The gap between take-off and touchdown is the time in the air. The gap between gate out and gate in is longer, because it includes taxiing at both ends. So an "11 hour flight" in the timetable is usually a little more than the time actually airborne.</p>
+<p>The gap between take-off and landing is the time in the air. The gap between leaving the gate and reaching the gate is longer, because it includes taxiing at both ends. So an "11 hour flight" in the timetable is usually a little more than the time actually airborne.</p>
 <h2>Reading a delay properly</h2>
 <ul>
 <li>A delay is the difference between scheduled and estimated (or actual) time. It can differ between departure and arrival: a flight can leave late and make up time in the air, or the reverse.</li>
@@ -222,7 +224,7 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <li>Local times: departure and arrival times are in each airport's own time zone, so a flight can appear to land before it left.</li>
 </ul>
 <h2>How Flightdeck handles this</h2>
-<p>Flightdeck labels every time as scheduled, estimated or actual. Steps that have not happened show as not yet reported instead of a guessed time, and anything it works out itself, such as how far along the journey is, is marked as an estimate. <a href="/">Track a flight</a>.</p>`,
+<p>Flightdeck marks every time as scheduled, estimated or actual. A step with no time shows as not reported rather than a guess, and anything Flightdeck works out itself, such as how far along the flight is, is marked as an estimate. <a href="/">Track a flight</a>.</p>`,
   },
   {
     slug: 'guides/outbound-and-inbound-flights', kind: 'guide', category: 'reading', takeaways: ["Use the route, not the flight number, to tell outbound from inbound.", "Odd and even numbering is a habit some airlines follow, not a rule.", "Outbound: check documents, terminal and bag drop. Inbound: check the belt, onward travel and customs."], title: 'Outbound and inbound flights: how to tell, and why it matters', description: 'How to tell whether a flight is leaving the UK or coming home, why flight numbers are only a hint, and what to check at each end.',
@@ -247,7 +249,7 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <p>Flightdeck shows a clear outbound / inbound label on each flight and, when the provider reports it, the terminal, gate and baggage belt. <a href="/">Track a flight</a>.</p>`,
   },
   {
-    slug: 'guides/what-to-do-if-your-flight-is-delayed-or-cancelled', kind: 'guide', category: 'trouble', takeaways: ["Confirm the facts on the airport screens and the airline's app first.", "Contact the airline early, keep every receipt and note, and stay near the gate.", "For your rights, use official sources such as the CAA passenger advice."], title: 'What to do if your flight is delayed or cancelled', description: 'A calm checklist for the first hour of a delay or cancellation, and where to find your rights from official sources.',
+    slug: 'guides/what-to-do-if-your-flight-is-delayed-or-cancelled', kind: 'guide', category: 'trouble', takeaways: ["Confirm the facts on the airport screens and the airline's app first.", "Contact the airline early, keep every receipt and note, and stay near the gate.", "For your rights, use official sources such as the CAA passenger advice."], title: 'What to do if your flight is delayed or cancelled', description: 'A calm packing list for the first hour of a delay or cancellation, and where to find your rights from official sources.',
     body: `
 <p>A delay or cancellation is stressful, and the first hour matters most. This is a practical order of things to do. For your legal rights, always use the official sources linked below, because the rules depend on where you are flying from and to, which airline operates the flight, the length of the delay and the reason for it.</p>
 <h2>In the first few minutes</h2>
@@ -270,12 +272,12 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <h2>Your rights, from official sources</h2>
 <p>In the UK, rules on delays, cancellations and denied boarding are explained by the Civil Aviation Authority: <a href="https://www.caa.co.uk/passengers/" rel="noopener">CAA passenger advice</a>. If you booked a package holiday, your tour operator has its own responsibilities. If you paid by credit card, or have travel insurance, check those as well, because they can offer extra protection.</p>
 <h2>Tell the people waiting for you</h2>
-<p>Let whoever is meeting you know the new time. Flightdeck can show a flight's estimated arrival when the provider has one, and your trip checklist stays available offline while you wait.</p>`,
+<p>Let whoever is meeting you know the new time. Flightdeck can show a flight's estimated arrival when the provider has one, and your trip packing list stays available offline while you wait.</p>`,
   },
   {
     slug: 'guides/pack-your-cabin-bag-for-a-long-flight', kind: 'guide', category: 'prepare', takeaways: ["Keep documents, phone, money and medicines on you, never in the hold.", "Pack a change of underwear and a wash kit in case your bag arrives late.", "Rules on liquids and batteries change, so check your airline and airport before you go."], title: 'Pack your cabin bag for a long flight', description: 'What to keep in the cabin bag on a long flight, what to put in the hold, and what to carry in your pocket.',
     body: `
-<p>On a long flight your cabin bag is the one thing you can reach. Packing it with intent turns a long journey into a comfortable one. Use this as a starting point and adjust it to your own needs. The <a href="/travel-checklist/">printable travel checklist</a> covers the rest of the trip.</p>
+<p>On a long flight your cabin bag is the one thing you can reach. Pack it well and a long flight is much easier. Treat this as a starting point and change it to suit you. The <a href="/travel-checklist/">printable packing list</a> covers the rest of the trip.</p>
 <h2>Keep with you at all times</h2>
 <ul>
 <li>Passport, ticket or boarding pass, and any visas or entry paperwork.</li>
@@ -296,7 +298,7 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <h2>Check the rules before you go</h2>
 <p>Rules for liquids, batteries and sharp objects differ between airports and countries, and they change. Check your airline's baggage page and the security guidance of your departure airport shortly before you travel, and follow the instructions of security staff on the day.</p>
 <h2>Put it on the list</h2>
-<p>Add what you always forget to your own checklist in Flightdeck and it will be there on every trip.</p>`,
+<p>Add what you always forget to your own packing list in Flightdeck and it will be there on every trip.</p>`,
   },
   {
     slug: 'guides/baggage-reclaim-and-missing-bags', kind: 'guide', category: 'trouble', takeaways: ["The belt is often only known near landing, and it can change.", "If a bag does not arrive, report it before leaving the baggage hall and get a reference number.", "Report damage at the airport and photograph it, because deadlines can be short."], title: 'Baggage reclaim and what to do about a missing bag', description: 'How baggage reclaim works, why the belt is often not known until you land, and the steps to take if your bag does not arrive.',
@@ -386,7 +388,7 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <li>Check the baggage belt on the arrivals screens or the airline's app. Belt numbers are often shown only after landing.</li>
 <li>If a bag does not arrive, report it at the airline's desk before leaving the baggage hall. See <a href="/guides/baggage-reclaim-and-missing-bags/">baggage reclaim and missing bags</a>.</li>
 </ul>
-<h2>A short checklist for the night before</h2>
+<h2>A short packing list for the night before</h2>
 <p>Passports, chargers, medication, house keys and a final check of the flight. The full list is on the <a href="/travel-checklist/">printable packing list</a>.</p>`,
   },
 
@@ -395,7 +397,7 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 export const guideCategories = [
   { id: 'reading', title: 'Understand your flight', blurb: 'Read times, numbers and directions the way the airline means them.' },
   { id: 'prepare', title: 'Prepare and pack', blurb: 'Get ready before you leave, and know the order of the day.' },
-  { id: 'trouble', title: 'When things go wrong', blurb: 'Calm checklists for delays, cancellations and bags that do not arrive.' },
+  { id: 'trouble', title: 'When things go wrong', blurb: 'Clear steps for delays, cancellations and bags that do not arrive.' },
 ];
 
 export const guideIndex = {
