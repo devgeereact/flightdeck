@@ -23,6 +23,15 @@ final class App
             return;
         }
 
+        $auth = new ClerkAuth($config['clerk_issuer'] ?? null, $store, null, is_array($config['clerk_authorized_parties'] ?? null) ? $config['clerk_authorized_parties'] : []);
+        if ($auth->enabled() && ($route === '/flights' || $route === '/weather')) {
+            $token = ClerkAuth::tokenFrom($_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? null, $_SERVER['HTTP_X_SESSION_TOKEN'] ?? null);
+            $verdict = $auth->check($token);
+            if (!$verdict['ok']) {
+                Http::json($verdict['status'], ['error' => $verdict['error']]);
+                return;
+            }
+        }
         $opensky = new OpenSky($config['opensky_client_id'] ?? null, $config['opensky_client_secret'] ?? null, $store);
         $adb = new AeroDataBox($config, $store);
         $routes = new RouteLookup($store);
@@ -32,6 +41,7 @@ final class App
                     'liveAvailable' => $opensky->configured() || $adb->configured(),
                     'provider' => $adb->configured() ? 'AeroDataBox + OpenSky Network' : 'OpenSky Network',
                     'providers' => ['opensky' => $opensky->configured(), 'aerodatabox' => $adb->configured(), 'routes' => true],
+                    'signInRequired' => $auth->enabled(),
                 ]);
                 return;
             case '/flights':

@@ -5,6 +5,7 @@ declare(strict_types=1);
 ini_set('display_errors', '0');
 require __DIR__ . '/Http.php';
 require __DIR__ . '/DevEnv.php';
+require __DIR__ . '/ClerkAuth.php';
 require __DIR__ . '/CloudflareIps.php';
 require __DIR__ . '/Store.php';
 require __DIR__ . '/Geo.php';
@@ -41,6 +42,13 @@ $config['opensky_client_secret'] = $config['opensky_client_secret'] ?? $env('OPE
 $config['aerodatabox_key'] = $config['aerodatabox_key'] ?? $env('AERODATABOX_KEY', 'RAPID_API_KEY', 'RAPIDAPI_KEY');
 if (($config['opensky_client_id'] ?? '') === '' || ($config['opensky_client_secret'] ?? '') === '') {
     $config['opensky_client_id'] = $config['opensky_client_secret'] = null;
+}
+
+// Sign-in enforcement: on when the Clerk issuer is known (explicit config, CLERK_ISSUER, or derived from the Clerk publishable key).
+// FLIGHTDECK_AUTH=off switches it off for local automated tests only.
+$config['clerk_issuer'] = $config['clerk_issuer'] ?? $env('CLERK_ISSUER') ?? \Flightdeck\ClerkAuth::issuerFromPublishableKey($env('CLERK_PUBLISHABLE_KEY', 'VITE_CLERK_PUBLISHABLE_KEY'));
+if (getenv('FLIGHTDECK_AUTH') === 'off') {
+    $config['clerk_issuer'] = null;
 }
 
 \Flightdeck\App::run($config, $privateDir);

@@ -1,13 +1,14 @@
 <?php
 declare(strict_types=1);
 // Mirrors server/flight.test.ts. Run: php php/tests/run.php
-foreach (['Http', 'DevEnv', 'Store', 'CloudflareIps', 'Geo', 'Flight', 'OpenSky', 'RouteLookup', 'AeroDataBox'] as $f) {
+foreach (['Http', 'DevEnv', 'ClerkAuth', 'Store', 'CloudflareIps', 'Geo', 'Flight', 'OpenSky', 'RouteLookup', 'AeroDataBox'] as $f) {
     require __DIR__ . '/../private/src/' . $f . '.php';
 }
 
 use Flightdeck\AeroDataBox;
 use Flightdeck\AeroDataBoxError;
 use Flightdeck\CloudflareIps;
+use Flightdeck\ClerkAuth;
 use Flightdeck\DevEnv;
 use Flightdeck\Flight;
 use Flightdeck\Geo;
@@ -267,7 +268,64 @@ $p = DevEnv::parse("# c\nA=1\nB = \"two words\" \nC='x'\nEMPTY=\nbad line\n  D=4
 check('devenv: parses plain, quoted, spaced and CRLF lines; skips empty and junk', $p === ['A' => '1', 'B' => 'two words', 'C' => 'x', 'D' => '4'], json_encode($p));
 check('devenv: never reads a .env on the real server layout', DevEnv::forPrivateDir('/home/someone/flightdeck-private') === [] && DevEnv::forPrivateDir('/srv/app/private') === []);
 check('devenv: reads the project .env only for php/private', is_array(DevEnv::forPrivateDir(dirname(__DIR__) . '/private')));
-foreach ([$tmp, $tmp . '-b', $tmp . '-c', $tmp . '-d', $tmp . '-e', $tmp . '-f', $tmp . '-g'] as $dir) {
+// ---- Clerk session-token verification (real RSA keys, real signatures) ----
+$b64 = static function (string $x): string {
+    return rtrim(strtr(base64_encode($x), '+/', '-_'), '=');
+};
+$rsa = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+$rsaOther = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+$det = openssl_pkey_get_details($rsa);
+$jwks = json_encode(['keys' => [['kty' => 'RSA', 'alg' => 'RS256', 'use' => 'sig', 'kid' => 'k1', 'n' => $b64($det['rsa']['n']), 'e' => $b64($det['rsa']['e'])]]]);
+$iss = 'https://clerk.example.com';
+$nowSec = 1800000000;
+$mint = static function (array $claims, array $hdr = [], $priv = null) use ($b64, $rsa) {
+    $hdr = $hdr + ['alg' => 'RS256', 'typ' => 'JWT', 'kid' => 'k1'];
+    $h = $b64(json_encode($hdr));
+    $p = $b64(json_encode($claims));
+    openssl_sign("$h.$p", $sig, $priv ?? $rsa, OPENSSL_ALGO_SHA256);
+    return "$h.$p." . $b64($sig);
+};
+$good = ['iss' => $iss, 'sub' => 'user_1', 'exp' => $nowSec + 60, 'nbf' => $nowSec - 10, 'azp' => 'https://flightdeck.gakinz.com'];
+$fetches = 0;
+$jwksUp = static function () use (&$fetches, $jwks) {
+    $fetches++;
+    return [200, $jwks];
+};
+$authStore = new Store($tmp . '-h');
+$auth = new ClerkAuth($iss, $authStore, $jwksUp);
+$r1 = $auth->check($mint($good), $nowSec);
+check('auth: a validly signed, current token is accepted and names the user', $r1['ok'] && $r1['sub'] === 'user_1');
+$auth->check($mint($good), $nowSec);
+check('auth: the public key set is fetched once and cached', $fetches === 1);
+check('auth: no token, junk and oversized tokens are 401', !$auth->check(null, $nowSec)['ok'] && $auth->check(null, $nowSec)['status'] === 401 && $auth->check('not.a.jwt!', $nowSec)['status'] === 401 && $auth->check(str_repeat('a', 5000) . '.b.c', $nowSec)['status'] === 401);
+check('auth: expired token rejected', $auth->check($mint(['exp' => $nowSec - 60] + $good), $nowSec)['status'] === 401);
+check('auth: not-yet-valid token rejected', $auth->check($mint(['nbf' => $nowSec + 600] + $good), $nowSec)['status'] === 401);
+check('auth: wrong issuer rejected', $auth->check($mint(['iss' => 'https://evil.example.com'] + $good), $nowSec)['status'] === 401);
+check('auth: missing subject rejected', $auth->check($mint(['sub' => ''] + $good), $nowSec)['status'] === 401);
+check('auth: token signed by a different key is rejected (forgery)', $auth->check($mint($good, [], $rsaOther), $nowSec)['status'] === 401);
+$tamper = explode('.', $mint($good));
+$tamper[1] = $b64(json_encode(['sub' => 'user_admin'] + $good));
+check('auth: a token whose payload was edited after signing is rejected', $auth->check(implode('.', $tamper), $nowSec)['status'] === 401);
+check('auth: alg "none" and HS256 (key confusion) are rejected', $auth->check($b64('{"alg":"none","typ":"JWT","kid":"k1"}') . '.' . $b64(json_encode($good)) . '.', $nowSec)['status'] === 401 && $auth->check($mint($good, ['alg' => 'HS256']), $nowSec)['status'] === 401);
+$unknown = $auth->check($mint($good, ['kid' => 'rotated']), $nowSec);
+check('auth: unknown key id is refused after one rate-limited refresh', $unknown['status'] === 401 && $fetches === 2 && $auth->check($mint($good, ['kid' => 'rotated']), $nowSec)['status'] === 401 && $fetches === 2);
+$parties = new ClerkAuth($iss, new Store($tmp . '-i'), $jwksUp, ['https://flightdeck.gakinz.com']);
+check('auth: authorized-party (azp) is enforced when configured', $parties->check($mint($good), $nowSec)['ok'] && !$parties->check($mint(['azp' => 'https://evil.example.com'] + $good), $nowSec)['ok']);
+$down = new ClerkAuth($iss, new Store($tmp . '-j'), static function () {
+    return [0, ''];
+});
+check('auth: keys unreachable -> fail CLOSED with 503, never allow', !$down->check($mint($good), $nowSec)['ok'] && $down->check($mint($good), $nowSec)['status'] === 503);
+$stale = new Store($tmp . '-k');
+(new ClerkAuth($iss, $stale, $jwksUp))->check($mint($good), $nowSec);
+$flaky = new ClerkAuth($iss, $stale, static function () {
+    return [500, ''];
+});
+check('auth: cached keys keep working while Clerk is briefly down', $flaky->check($mint($good), $nowSec)['ok']);
+check('auth: disabled (no issuer) lets everything through; bad issuer config disables nothing silently into http', (new ClerkAuth(null, $authStore))->check(null)['ok'] && !(new ClerkAuth('http://clerk.example.com', $authStore))->enabled() && !(new ClerkAuth('', $authStore))->enabled());
+check('auth: issuer derived from real Clerk publishable keys', ClerkAuth::issuerFromPublishableKey('pk_test_ZGV2b3RlZC1tYXN0b2Rvbi03NTk5LmNsZXJrLmFjY291bnRzLmRldiQ') === 'https://devoted-mastodon-7599.clerk.accounts.dev' && ClerkAuth::issuerFromPublishableKey('pk_live_Y2xlcmsuZmxpZ2h0ZGVjay5nYWtpbnouY29tJA') === 'https://clerk.flightdeck.gakinz.com' && ClerkAuth::issuerFromPublishableKey('sk_live_abc') === null && ClerkAuth::issuerFromPublishableKey(null) === null);
+check('auth: bearer parsing', ClerkAuth::tokenFrom('Bearer abc.def.ghi', null) === 'abc.def.ghi' && ClerkAuth::tokenFrom('bearer  x.y.z', null) === 'x.y.z' && ClerkAuth::tokenFrom(null, 'p.q.r') === 'p.q.r' && ClerkAuth::tokenFrom('Basic dXNlcjpwYXNz', null) === null && ClerkAuth::tokenFrom('', '') === null);
+
+foreach ([$tmp, $tmp . '-b', $tmp . '-c', $tmp . '-d', $tmp . '-e', $tmp . '-f', $tmp . '-g', $tmp . '-h', $tmp . '-i', $tmp . '-j', $tmp . '-k'] as $dir) {
     exec('rm -rf ' . escapeshellarg($dir));
 }
 

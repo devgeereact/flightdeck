@@ -4,6 +4,10 @@ Options -Indexes
 AddType application/manifest+json .webmanifest
 RewriteEngine On
 
+# Some hosts strip the Authorization header before PHP sees it; hand it through.
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
 RewriteCond %{REQUEST_URI} !^/api/index\.php$
 RewriteRule ^api(/.*)?$ api/index.php [L,QSA]
 

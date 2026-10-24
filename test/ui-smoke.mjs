@@ -16,7 +16,7 @@ execFileSync('pnpm', ['exec', 'vite', 'build', '--config', 'vite.ui-test.config.
 const code = fs.readFileSync(path.join(root, '.ui-test-build/app.js'), 'utf8');
 
 // provider keys come from .env into the server's environment only; nothing is printed
-const env = {...process.env, FLIGHTDECK_PRIVATE: path.join(root, 'php/private')};
+const env = {...process.env, FLIGHTDECK_PRIVATE: path.join(root, 'php/private'), FLIGHTDECK_AUTH: 'off'}; // jsdom has no Clerk session
 try {
   for (const line of fs.readFileSync(path.join(root, '.env'), 'utf8').split('\n')) {
     const m = line.match(/^([A-Za-z_]+)=(.*)$/);

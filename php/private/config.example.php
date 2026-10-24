@@ -7,6 +7,10 @@ return [
     'aerodatabox_key' => '',
     'aerodatabox_monthly_units' => 360, // each flight lookup costs 2 units; stops before the 400 allowance
     'aerodatabox_hourly_calls' => 12,   // global cap so searches by strangers cannot burn the allowance
+    // Only signed-in Clerk users may call /api/flights and /api/weather. Set to the Clerk Frontend API URL (the token issuer), e.g.
+    // 'https://clerk.flightdeck.gakinz.com'. Left empty the lookups are open. Turn it on only AFTER the app that sends the token is live.
+    'clerk_issuer' => '',
+    'clerk_authorized_parties' => [], // optional: allowed site origins (the token's azp), e.g. ['https://flightdeck.gakinz.com']
     'home_country_code' => 'GB', // flights are labelled Outbound/Inbound relative to this country
     // Per-visitor rate limits behind Cloudflare. The CF-Connecting-IP header is only trusted when the connection really comes from a Cloudflare range.
     'trust_cf_connecting_ip' => false,
