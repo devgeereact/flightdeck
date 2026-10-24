@@ -91,7 +91,7 @@ try {
   {
     const click = (w, el) => el.dispatchEvent(new w.MouseEvent('click', {bubbles: true, cancelable: true}));
     const setVal = (w, el, v) => { Object.getOwnPropertyDescriptor(w.HTMLInputElement.prototype, 'value').set.call(el, v); el.dispatchEvent(new w.Event('input', {bubbles: true})); };
-    const byText = (d, sel, t) => [...d.querySelectorAll(sel)].find(e => e.textContent.trim() === t || e.textContent.trim().startsWith(t));
+    const byText = (d, sel, t) => [...d.querySelectorAll(sel)].find(e => { const x = (e.querySelector && e.querySelector('.ck-sec-title') ? e.querySelector('.ck-sec-title').textContent : e.textContent).trim(); return x === t || x.startsWith(t); });
     const k = await boot({hash: '#/checklist'}); await sleep(1500);
     let d = k.w.document;
     check('K1 checklist route shows the first-time screen, not the flight search', k.text().includes('Pack once. Reuse it every trip.') && !d.querySelector('.search-card'));

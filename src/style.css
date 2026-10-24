@@ -110,7 +110,7 @@
 .ad-flags{list-style:none;margin:12px 0;padding:0;display:grid;gap:2px}.ad-flags li{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid #f0f3ec;font-size:13px}.ad-flags li span{flex:1}.ad-flags .ok{color:#4f8a5b}.ad-flags .off{color:#a8b3a9}.ad-flags strong{font-size:11px;color:#5d6e64}
 @media print{.fb-fab,.fb-dialog{display:none!important}}
 @media(max-width:700px){main{padding-bottom:72px}}
-.app>main>footer,footer{padding:26px 0 34px;flex-wrap:wrap;row-gap:12px}footer>span:nth-child(2){flex:1 1 260px;text-align:center;font-size:11.5px;color:#5d6e64}
+footer>span:nth-child(2){flex:1 1 260px;text-align:center;font-size:11.5px;color:#5d6e64}
 .foot-links{display:flex;gap:2px 4px;flex-wrap:wrap;justify-content:flex-end;font-size:12.5px;font-weight:600}.foot-links a,.land-foot a{color:#5d6e64;text-decoration:none;padding:7px 11px;border-radius:8px}.foot-links a:hover,.land-foot a:hover{background:#edf2e8;color:#244b38}
 .land-foot{display:flex;gap:2px 4px;flex-wrap:wrap;justify-content:center;padding:18px clamp(20px,5vw,64px) 30px;font-size:12.5px;font-weight:600}
 @media(max-width:700px){.foot-links{justify-content:flex-start;margin-left:-11px}footer>span:nth-child(2){text-align:left}}
@@ -123,3 +123,23 @@
 
 .sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.ck-tabs{display:flex;gap:8px;flex-wrap:wrap}
 .ad-chart-head h2{font-size:16px;margin:0}
+
+.land-foot{padding:0 clamp(20px,5vw,64px);max-width:1200px;margin:0 auto}.land-foot .sf{margin-top:24px}
+
+/* Packing list cards: same look as the public packing list; each card is only as tall as its items (no stretching, no empty space). */
+.ck-board{columns:2 400px;column-gap:20px;margin-bottom:12px}
+.ck-board>.ck-sec{display:block;break-inside:avoid;margin:0 0 20px;padding:0}
+.ck-board>.ck-sec>summary{padding:20px 24px 8px;gap:12px}
+.ck-n{display:grid;place-items:center;min-width:28px;height:28px;border-radius:9px;background:#173e34;color:#d6eb9e;font:800 13px Manrope,system-ui,sans-serif;flex-shrink:0}
+.ck-board .ck-sec-title{font:700 18px/1.3 Manrope,system-ui,sans-serif;color:#133c35;letter-spacing:-.02em}
+.ck-board .ck-sec-count{background:#f1f4ee;border-radius:20px;padding:3px 10px;font:600 12px 'DM Sans',system-ui,sans-serif;color:#5d6e64}
+.ck-board .ck-bar{display:none}
+.ck-board .ck-sec-hint{padding:0 24px 6px 64px;font-size:13px;color:#5d6e64;margin:0}
+.ck-board .ck-list{grid-template-columns:1fr;gap:0;padding:4px 24px 8px}
+.ck-board .ck-list li{border-radius:0;border-bottom:1px solid #f0f3ec}.ck-board .ck-list li:last-child{border-bottom:0}
+.ck-board .ck-check{padding:9px 0;font-size:14.5px;gap:12px}
+.ck-board .ck-box{width:19px;height:19px;border:1.6px solid #7f9a89;border-radius:5px}
+.ck-board .ck-sec-foot{padding:4px 24px 20px}
+@media(max-width:700px){.ck-board{columns:1}.ck-board>.ck-sec>summary{padding:16px 18px 6px}.ck-board .ck-list,.ck-board .ck-sec-foot{padding-left:18px;padding-right:18px}.ck-board .ck-sec-hint{padding-left:58px}}
+@media print{.ck-board{columns:2;column-gap:10px}.ck-board>.ck-sec{margin-bottom:8px}.ck-board .ck-sec-title{font-size:12pt}.ck-board .ck-check{padding:2px 0;font-size:10pt}.ck-board>.ck-sec>summary{padding:6px 8px 2px}.ck-board .ck-list,.ck-board .ck-sec-foot{padding-left:8px;padding-right:8px}.ck-n{display:none}}
+.app .sf{padding-bottom:84px}@media(max-width:700px){.app .sf{padding-bottom:96px}}

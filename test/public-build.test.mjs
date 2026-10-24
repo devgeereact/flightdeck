@@ -21,7 +21,7 @@ function build({ config = base, env = {} } = {}) {
   const read = (rel) => fs.readFileSync(path.join(dist, rel), 'utf8');
   return { dist, files: files(), read, out, exists: (rel) => fs.existsSync(path.join(dist, rel)) };
 }
-const PAGES = ['privacy', 'cookies', 'terms', 'about', 'contact', 'travel-checklist', 'guides', 'guides/flight-status-explained', 'guides/outbound-and-inbound-flights', 'guides/what-to-do-if-your-flight-is-delayed-or-cancelled', 'guides/pack-your-cabin-bag-for-a-long-flight', 'guides/baggage-reclaim-and-missing-bags'];
+const PAGES = ['privacy', 'cookies', 'terms', 'about', 'contact', 'travel-checklist', 'guides', 'guides/flight-status-explained', 'guides/outbound-and-inbound-flights', 'guides/what-to-do-if-your-flight-is-delayed-or-cancelled', 'guides/pack-your-cabin-bag-for-a-long-flight', 'guides/baggage-reclaim-and-missing-bags', 'guides/flight-numbers-airline-codes-and-codeshares', 'guides/departure-day-airport-timeline'];
 const html = (b) => PAGES.map((p) => [p, b.read(p + '/index.html')]);
 
 test('the app and the public pages load no third-party fonts or styles: fonts are served from our own /fonts/', () => {
@@ -67,12 +67,13 @@ test('public pages request nothing from third parties: the only scripts are our 
 
 test('outbound links are explicit and safe (noopener); every internal link points at a real page', () => {
   const b = build();
-  const known = new Set(['/', '/icon.svg', '#', ...PAGES.map((p) => `/${p}/`)]);
+  const known = new Set(['/', '/#/checklist', '/icon.svg', '#', ...PAGES.map((p) => `/${p}/`)]);
   for (const [p, h] of html(b)) {
     for (const m of h.matchAll(/<a\b[^>]*\bhref="([^"]+)"[^>]*>/g)) {
       const href = m[1];
       if (/^https?:/.test(href)) { if (!href.startsWith(base.url)) assert.match(m[0], /rel="noopener"/, `${p}: ${href}`); continue; }
-      if (href.startsWith('mailto:') || href.startsWith('#')) continue;
+      if (href.startsWith('mailto:')) continue;
+      if (href.startsWith('#')) { if (href.length > 1) assert.ok(h.includes(`id="${href.slice(1)}"`), `${p}: anchor ${href} has no target`); continue; }
       assert.ok(known.has(href), `${p}: broken internal link ${href}`);
     }
   }
@@ -122,7 +123,7 @@ test('the printable packing list is the app template: same sections, same items,
   const b = build();
   const h = b.read('travel-checklist/index.html');
   assert.equal((h.match(/class="ck-sec"/g) || []).length, TEMPLATE.length);
-  assert.deepEqual([...h.matchAll(/<section class="ck-sec"><h2>([^<]+)<\/h2>/g)].map((m) => m[1]), TEMPLATE.map((s) => s.title));
+  assert.deepEqual([...h.matchAll(/<section class="ck-sec" id="[^"]+" aria-labelledby="[^"]+"><h2 id="[^"]+"><span class="ck-n" aria-hidden="true">\d+<\/span>([^<]+)<span/g)].map((m) => m[1]), TEMPLATE.map((s) => s.title));
   const items = [...h.matchAll(/<li>([^<]+)<\/li>/g)].map((m) => m[1].replace(/&amp;/g, '&').replace(/&quot;/g, '"'));
   const expected = TEMPLATE.flatMap((s) => s.items.map((i) => i.text));
   assert.deepEqual(items.slice(0, expected.length), expected);
@@ -135,7 +136,7 @@ test('the guides are real articles, not thin pages', () => {
     const text = b.read(p + '/index.html').replace(/<style>[\s\S]*?<\/style>/g, '').replace(/<script[\s\S]*?<\/script>/g, '').replace(/<[^>]+>/g, ' ');
     assert.ok(text.split(/\s+/).filter(Boolean).length > 380, `${p} is too short`);
   }
-  assert.equal([...b.read('guides/index.html').matchAll(/<li><a href="\/guides\//g)].length, 5);
+  assert.equal([...b.read('guides/index.html').matchAll(/<li><a href="\/guides\/[a-z]/g)].length, 7);
 });
 
 test('ADS DEFAULT OFF: the default build contains no ad code, no ads.txt, nothing from Google ads', () => {
@@ -164,7 +165,7 @@ test('ADS OPEN: ads only on guides and the packing list, never on legal, contact
   const b = build({ config: { ...base, ads: { enabled: true, licenceCleared: true, cmpReady: true, pubId: 'pub-1234567890123456', slots } } });
   assert.equal(b.read('ads.txt'), 'google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0\n');
   const withAds = PAGES.filter((p) => /adsbygoogle/.test(b.read(p + '/index.html')));
-  assert.deepEqual(withAds.sort(), ['guides/baggage-reclaim-and-missing-bags', 'guides/flight-status-explained', 'guides/outbound-and-inbound-flights', 'guides/pack-your-cabin-bag-for-a-long-flight', 'guides/what-to-do-if-your-flight-is-delayed-or-cancelled', 'travel-checklist'].sort());
+  assert.deepEqual(withAds.sort(), [...PAGES.filter((x) => x.startsWith('guides/')), 'travel-checklist'].sort());
   assert.equal(b.read('index.html'), '<!doctype html><title>app</title>');
   assert.ok(b.read('travel-checklist/index.html').includes('data-ad-slot="0987654321"'));
   assert.ok(b.read('guides/flight-status-explained/index.html').includes('data-ad-slot="1234567890"'));
@@ -179,4 +180,31 @@ test('Google Analytics ID: injected as a meta tag on every page when valid, igno
     const b = build({ env: { VITE_GA_ID: bad } });
     for (const [p, h] of html(b)) assert.ok(h.includes('<meta name="fd-ga-id" content="">'), `${p} ${bad}`);
   }
+});
+
+test('one shared link list: the same footer on every page, header links match, active page is marked', async () => {
+  const { FOOTER_GROUPS, HEADER_LINKS } = await import('../src/siteNav.ts');
+  const b = build();
+  const want = FOOTER_GROUPS.flatMap((g) => g.links.map((l) => l.href));
+  for (const [p, h] of html(b)) {
+    const foot = h.slice(h.indexOf('<footer'), h.indexOf('</footer>'));
+    assert.deepEqual([...foot.matchAll(/<li><a href="([^"]+)"/g)].map((m) => m[1]).filter((x) => x !== '#'), want, p + ' footer');
+    assert.ok(foot.includes('data-fd-cookie-settings'), p + ' has the cookie settings link');
+    const head = h.slice(h.indexOf('<header'), h.indexOf('</header>'));
+    assert.deepEqual([...head.matchAll(/<a href="([^"]+)"( aria-current="page")?>(?!Open)/g)].map((m) => m[1]).filter((x) => x !== '/'), HEADER_LINKS.map((l) => l.href), p + ' header');
+  }
+  assert.ok(b.read('travel-checklist/index.html').includes('href="/travel-checklist/" aria-current="page"'));
+  assert.ok(b.read('guides/departure-day-airport-timeline/index.html').includes('href="/guides/" aria-current="page"'));
+});
+
+test('guide pages have breadcrumbs, reading time, an On this page menu and related guides; the index groups every guide', () => {
+  const b = build();
+  for (const p of PAGES.filter((x) => x.startsWith('guides/'))) {
+    const h = b.read(p + '/index.html');
+    assert.ok(h.includes('class="pub-crumbs"') && /\d+ min read/.test(h) && h.includes('class="pub-toc"') && h.includes('aria-label="More guides"'), p);
+    for (const m of h.matchAll(/href="#([^"]+)"/g)) assert.ok(h.includes(`id="${m[1]}"`) || m[1] === '', `${p}: toc target ${m[1]}`);
+  }
+  const idx = b.read('guides/index.html');
+  for (const p of PAGES.filter((x) => x.startsWith('guides/'))) assert.ok(idx.includes(`href="/${p}/"`), `index lacks ${p}`);
+  assert.equal((idx.match(/class="pub-cat"/g) || []).length, 3);
 });

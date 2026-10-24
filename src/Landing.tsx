@@ -6,7 +6,8 @@ import {useGSAP} from '@gsap/react';
 import {SplitText} from 'gsap/SplitText';
 import {MotionPathPlugin} from 'gsap/MotionPathPlugin';
 import {DrawSVGPlugin} from 'gsap/DrawSVGPlugin';
-import {track,trackOnce,ga,cookieSettingsAvailable} from './track';
+import {track,trackOnce,ga} from './track';
+import SiteFooter from './SiteFooter';
 gsap.registerPlugin(useGSAP,SplitText,MotionPathPlugin,DrawSVGPlugin);
 
 // One calm hero: headline, two actions, and an illustrative flight drawn in the app's own look.
@@ -86,6 +87,6 @@ export default function Landing(){
     </div>
    </div>
   </section>
-  <nav className="land-foot" aria-label="Legal and help"><a href="/travel-checklist/">Free packing list</a><a href="/privacy/">Privacy</a><a href="/cookies/">Cookies</a><a href="/terms/">Terms</a><a href="/about/">About</a><a href="/contact/">Contact</a>{cookieSettingsAvailable()&&<a href="#" data-fd-cookie-settings>Cookie settings</a>}</nav>
+  <div className="land-foot"><SiteFooter/></div>
  </div>
 }

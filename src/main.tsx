@@ -5,8 +5,9 @@ import type {Airport,Flight,FlightResponse} from './types';
 import {destinations} from './destinations';
 import {apiFetch,setTokenGetter} from './api';
 import {getOwner as checklistOwner,clearLocal as clearChecklist} from './checklistStore';
-import {track,ga,gaPageview,cookieSettingsAvailable} from './track';
+import {track,ga,gaPageview} from './track';
 import Feedback from './Feedback';
+import SiteFooter from './SiteFooter';
 import {summarise} from './summary';
 import {registerSW} from 'virtual:pwa-register';
 import {ClerkProvider,Show,SignInButton,SignUpButton,UserButton,useAuth,useUser} from '@clerk/react';
@@ -105,7 +106,7 @@ useEffect(()=>{if(!CLERK_KEY||!userId){setMe({isAdmin:false,unread:null});return
  <Destination airport={flight.destination}/></>}
  </>}
  <Feedback/>
- <footer><a className="brand" href="#">flightdeck<span className="brand-dot">.</span></a><span>Flight details can change. Always follow airline and airport instructions.</span><nav className="foot-links" aria-label="Legal and help"><a href="/travel-checklist/">Packing list</a><a href="/privacy/">Privacy</a><a href="/cookies/">Cookies</a><a href="/terms/">Terms</a><a href="/about/">About</a><a href="/contact/">Contact</a>{cookieSettingsAvailable()&&<a href="#" data-fd-cookie-settings>Cookie settings</a>}</nav></footer></main></div>
+ <SiteFooter inApp/></main></div>
 }
 function Detail({label,value}:{label:string;value:string|null}){return <div className="detail"><span>{label}</span><strong>{value||'Not reported'}</strong></div>}
 function TimeBlock({label,value,airport}:{label:string;value:string|null;airport:Airport}){return <div><span>{label}</span><strong>{time(value,airport.timezone)}<small>{day(value,airport.timezone)}</small></strong><small>{airport.timezone||'UTC · airport timezone unavailable'}</small></div>}

@@ -160,11 +160,11 @@ export default function Checklist({saved,signedIn,userId,request,onRequestDone,o
 
   {summary.length>0&&<section className="panel ck-short" aria-label="Your flight in short"><h3>Your flight in short</h3><p>{summary.join(' ')}</p></section>}
   {tips.length>0&&<section className="panel ck-tips" aria-label="Suggestions for this trip"><h3><Lightbulb size={15}/>Suggested for this trip</h3><ul>{tips.map(t=><li key={t.id}><div><strong>{t.text}</strong><small>{t.why}</small></div><button className="text-button primary" onClick={()=>commit(d=>M.dismiss(M.addItem(d,t.section,t.text),trip!.id,t.id))}><Plus size={13}/>Add</button><button className="ck-x" aria-label={`Dismiss ${t.text}`} onClick={()=>commit(d=>M.dismiss(d,trip!.id,t.id))}><X size={14}/></button></li>)}</ul><p className="ck-sec-hint">Based on your flight and the weather. These are ideas, never rules. For entry requirements use the official <a href="https://www.gov.uk/foreign-travel-advice" target="_blank" rel="noreferrer">GOV.UK travel advice</a>.</p></section>}
-  {sections.map(sec=>{
+  <div className="ck-board">{sections.map((sec,si)=>{
    const items=onlyLeft?sec.items.filter(i=>!i.done):sec.items;
    if(!edit&&sec.items.length===0)return null;
    return <details key={sec.id} className="panel ck-sec" open={sec.doneCount<sec.items.length||edit}>
-    <summary><span className="ck-sec-title">{sec.title}</span><span className="ck-sec-count" aria-label={`${sec.doneCount} of ${sec.items.length} packed`}>{sec.doneCount}/{sec.items.length}</span><span className="ck-bar" aria-hidden="true"><i style={{width:`${sec.items.length?sec.doneCount/sec.items.length*100:0}%`}}/></span>{sec.doneCount===sec.items.length&&sec.items.length>0&&<Check size={15} className="ck-sec-done"/>}</summary>
+    <summary><span className="ck-n" aria-hidden="true">{si+1}</span><span className="ck-sec-title">{sec.title}</span><span className="ck-sec-count" aria-label={`${sec.doneCount} of ${sec.items.length} packed`}>{sec.doneCount}/{sec.items.length}</span><span className="ck-bar" aria-hidden="true"><i style={{width:`${sec.items.length?sec.doneCount/sec.items.length*100:0}%`}}/></span>{sec.doneCount===sec.items.length&&sec.items.length>0&&<Check size={15} className="ck-sec-done"/>}</summary>
     {sec.hint&&<p className="ck-sec-hint">{sec.hint}</p>}
     <ul className="ck-list">
      {items.map(it=><li key={it.id} className={it.done?'done':''}>
@@ -180,7 +180,7 @@ export default function Checklist({saved,signedIn,userId,request,onRequestDone,o
       :<button className="text-button" onClick={()=>{setAdding(sec.id);setAddText('')}}><Plus size={13}/>Add item</button>}
      {edit&&(sec.items.length>0?<button className="text-button" onClick={()=>commit(d=>M.hideSection(d,sec.id))}>Hide whole section</button>:TEMPLATE.some(t=>t.id===sec.id)&&<button className="text-button" onClick={()=>commit(d=>M.showSection(d,sec.id))}>Show section again</button>)}
     </div>
-   </details>})}
+   </details>})}</div>
 
   {(hiddenTotal>0)&&<p className="ck-restore">{hiddenTotal} item{hiddenTotal>1?'s':''} hidden from your list. <button className="text-button" onClick={()=>commit(d=>M.restoreAll(d))}>Restore all</button></p>}
   {signedIn&&<p className="ck-erase">{confirmErase?<>This removes your checklist from our server and from this device. It cannot be undone. <button className="text-button danger" onClick={()=>void erase()}>Yes, delete everything</button> <button className="text-button" onClick={()=>setConfirmErase(false)}>Keep it</button></>:<button className="text-button" onClick={()=>setConfirmErase(true)}><Trash2 size={13}/>Delete my saved checklist</button>}</p>}

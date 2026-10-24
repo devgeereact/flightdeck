@@ -196,7 +196,7 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 
   /* ------------------------------------------------------------------ guides */
   {
-    slug: 'guides/flight-status-explained', kind: 'guide', title: 'Flight status explained: scheduled, estimated and actual times', description: 'What gate out, take-off, touchdown and gate in mean, why times change, and how to read a flight status without being misled.',
+    slug: 'guides/flight-status-explained', kind: 'guide', category: 'reading', takeaways: ["Scheduled is the plan, estimated is the current prediction, and actual is what happened.", "Gate out and gate in include taxiing, so they are longer than the time in the air.", "A delay can differ between departure and arrival, and times are in each airport's own time zone."], title: 'Flight status explained: scheduled, estimated and actual times', description: 'What gate out, take-off, touchdown and gate in mean, why times change, and how to read a flight status without being misled.',
     body: `
 <p>A flight status page can look like a jumble of times. They each mean something specific, and knowing which is which tells you what is really happening.</p>
 <h2>The three kinds of time</h2>
@@ -225,7 +225,7 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <p>Flightdeck labels every time as scheduled, estimated or actual. Steps that have not happened show as not yet reported instead of a guessed time, and anything it works out itself, such as how far along the journey is, is marked as an estimate. <a href="/">Track a flight</a>.</p>`,
   },
   {
-    slug: 'guides/outbound-and-inbound-flights', kind: 'guide', title: 'Outbound and inbound flights: how to tell, and why it matters', description: 'How to tell whether a flight is leaving the UK or coming home, why flight numbers are only a hint, and what to check at each end.',
+    slug: 'guides/outbound-and-inbound-flights', kind: 'guide', category: 'reading', takeaways: ["Use the route, not the flight number, to tell outbound from inbound.", "Odd and even numbering is a habit some airlines follow, not a rule.", "Outbound: check documents, terminal and bag drop. Inbound: check the belt, onward travel and customs."], title: 'Outbound and inbound flights: how to tell, and why it matters', description: 'How to tell whether a flight is leaving the UK or coming home, why flight numbers are only a hint, and what to check at each end.',
     body: `
 <p>"Outbound" and "inbound" describe your journey relative to home. For a UK traveller, an outbound flight leaves the UK and an inbound flight arrives in it. The difference decides what you need to do and where you need to be.</p>
 <h2>How to tell for certain</h2>
@@ -247,7 +247,7 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <p>Flightdeck shows a clear outbound / inbound label on each flight and, when the provider reports it, the terminal, gate and baggage belt. <a href="/">Track a flight</a>.</p>`,
   },
   {
-    slug: 'guides/what-to-do-if-your-flight-is-delayed-or-cancelled', kind: 'guide', title: 'What to do if your flight is delayed or cancelled', description: 'A calm checklist for the first hour of a delay or cancellation, and where to find your rights from official sources.',
+    slug: 'guides/what-to-do-if-your-flight-is-delayed-or-cancelled', kind: 'guide', category: 'trouble', takeaways: ["Confirm the facts on the airport screens and the airline's app first.", "Contact the airline early, keep every receipt and note, and stay near the gate.", "For your rights, use official sources such as the CAA passenger advice."], title: 'What to do if your flight is delayed or cancelled', description: 'A calm checklist for the first hour of a delay or cancellation, and where to find your rights from official sources.',
     body: `
 <p>A delay or cancellation is stressful, and the first hour matters most. This is a practical order of things to do. For your legal rights, always use the official sources linked below, because the rules depend on where you are flying from and to, which airline operates the flight, the length of the delay and the reason for it.</p>
 <h2>In the first few minutes</h2>
@@ -273,7 +273,7 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <p>Let whoever is meeting you know the new time. Flightdeck can show a flight's estimated arrival when the provider has one, and your trip checklist stays available offline while you wait.</p>`,
   },
   {
-    slug: 'guides/pack-your-cabin-bag-for-a-long-flight', kind: 'guide', title: 'Pack your cabin bag for a long flight', description: 'What to keep in the cabin bag on a long flight, what to put in the hold, and what to carry in your pocket.',
+    slug: 'guides/pack-your-cabin-bag-for-a-long-flight', kind: 'guide', category: 'prepare', takeaways: ["Keep documents, phone, money and medicines on you, never in the hold.", "Pack a change of underwear and a wash kit in case your bag arrives late.", "Rules on liquids and batteries change, so check your airline and airport before you go."], title: 'Pack your cabin bag for a long flight', description: 'What to keep in the cabin bag on a long flight, what to put in the hold, and what to carry in your pocket.',
     body: `
 <p>On a long flight your cabin bag is the one thing you can reach. Packing it with intent turns a long journey into a comfortable one. Use this as a starting point and adjust it to your own needs. The <a href="/travel-checklist/">printable travel checklist</a> covers the rest of the trip.</p>
 <h2>Keep with you at all times</h2>
@@ -299,7 +299,7 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <p>Add what you always forget to your own checklist in Flightdeck and it will be there on every trip.</p>`,
   },
   {
-    slug: 'guides/baggage-reclaim-and-missing-bags', kind: 'guide', title: 'Baggage reclaim and what to do about a missing bag', description: 'How baggage reclaim works, why the belt is often not known until you land, and the steps to take if your bag does not arrive.',
+    slug: 'guides/baggage-reclaim-and-missing-bags', kind: 'guide', category: 'trouble', takeaways: ["The belt is often only known near landing, and it can change.", "If a bag does not arrive, report it before leaving the baggage hall and get a reference number.", "Report damage at the airport and photograph it, because deadlines can be short."], title: 'Baggage reclaim and what to do about a missing bag', description: 'How baggage reclaim works, why the belt is often not known until you land, and the steps to take if your bag does not arrive.',
     body: `
 <p>After a long flight, the last obstacle is the baggage hall. Knowing how it works helps, and knowing what to do if your bag does not appear helps even more.</p>
 <h2>Which belt?</h2>
@@ -322,6 +322,80 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <h2>Damaged bags</h2>
 <p>If your bag is damaged, report it at the airport before you leave, and make a photo record. Airlines often have a short deadline for damage reports, so do not wait until you get home.</p>`,
   },
+  {
+    slug: 'guides/flight-numbers-airline-codes-and-codeshares', kind: 'guide', category: 'reading', takeaways: ["A flight number is the airline code plus a number, and the date matters.", "IATA airport codes have three letters and ICAO codes have four.", "In a codeshare, check which airline actually operates the flight."], title: 'Flight numbers, airline codes and codeshares: what the letters and digits mean', description: 'How to read a flight number like BA117, what airport and airline codes stand for, and why one flight can carry several numbers.',
+    body: `
+<p>A flight number looks simple, but it carries a few separate pieces of information, and one aircraft can be sold under more than one number. Knowing how it is built helps you search correctly and avoid turning up for the wrong flight.</p>
+<h2>How a flight number is built</h2>
+<p>A flight number is the airline's code followed by a number, for example <strong>BA117</strong>. The two characters at the start identify the airline (the IATA airline designator). Most are two letters, but some include a digit, such as U2. The number after it is the airline's own reference for that service, and it may have up to four digits.</p>
+<ul>
+<li>The same flight number is normally used on the same route at the same time on many days, so the <strong>date</strong> matters. Searching a number without the right date can show a different day's flight.</li>
+<li>Airlines can reuse a number for a different route later, so an old booking confirmation is not proof of today's flight.</li>
+<li>A flight number is not a guide to direction. Some airlines use odd and even numbers for outbound and return legs, but there is no rule that all airlines follow.</li>
+</ul>
+<h2>Airport and airline codes</h2>
+<ul>
+<li><strong>IATA airport codes</strong> have three letters and are the ones on tickets and bag tags, such as LHR or JFK.</li>
+<li><strong>ICAO airport codes</strong> have four letters and are used in aviation operations and by air traffic control. EGLL and KJFK are the ICAO codes for the same two airports.</li>
+<li><strong>Callsigns</strong> are what pilots and controllers say on the radio. They often use the airline's three-letter ICAO code, so a flight sold as BA117 may be tracked on an air traffic display under a callsign beginning BAW. Callsigns can differ from the number on your ticket, which is one reason live tracking maps do not always match a booking at first glance.</li>
+</ul>
+<h2>What a codeshare is</h2>
+<p>In a codeshare, one flight is sold by more than one airline, each under its own flight number. Only one airline actually operates the aircraft with its own crew. You may see two terms:</p>
+<ul>
+<li>The <strong>marketing carrier</strong> is the airline whose number you booked under.</li>
+<li>The <strong>operating carrier</strong> is the airline that flies the aircraft. It controls check-in times for the aircraft, the gate and many of the day-to-day decisions.</li>
+</ul>
+<p>The practical effect: if your ticket says "operated by" another airline, check that airline's website or the airport's departure board. The partner's number may not appear on the airport screens, and you may need to look for the operating airline's number instead.</p>
+<h2>Searching well</h2>
+<ol>
+<li>Use the flight number exactly as it appears on your booking, including any letters.</li>
+<li>Enter the departure date for the airport where the flight starts, in that airport's local date.</li>
+<li>If nothing is found, try the operating airline's number if your ticket shows one.</li>
+<li>If it is still not found, it may be too far ahead for the airline to have published, so check again closer to the date.</li>
+</ol>
+<h2>How Flightdeck handles this</h2>
+<p>Flightdeck asks for the flight number and the date, and shows only what a source actually reports. It does not guess a flight from a partial match. <a href="/">Track a flight</a> to see it, or read <a href="/guides/flight-status-explained/">how to read the times</a> once you have it.</p>`,
+  },
+  {
+    slug: 'guides/departure-day-airport-timeline', kind: 'guide', category: 'prepare', takeaways: ["Follow your airline's advice on how early to arrive.", "Rules on liquids and electronics differ by airport, so check them shortly before you go.", "Watch the screens: gates are shown late and can change."], title: 'Departure day at the airport: a simple timeline', description: 'A calm step-by-step order for the day you fly, from checking your flight at home to the gate, with the checks worth doing at each stage.',
+    body: `
+<p>Most travel stress comes from not knowing what comes next. This is a general order for a departure day. Airlines and airports differ, so treat it as a frame and use your own airline's instructions for anything specific.</p>
+<h2>Before you leave</h2>
+<ul>
+<li><strong>Check the flight.</strong> Look at the current status, departure time and, if shown, the terminal. Times can change after you booked.</li>
+<li><strong>Check the airline's advice on arriving.</strong> Airlines publish how early they recommend you get to the airport. Follow their guidance and allow extra for travel to the airport.</li>
+<li><strong>Documents.</strong> Passport or ID, boarding pass if you have it on your phone, and any visa or entry paperwork the destination needs. For entry requirements, use the official <a href="https://www.gov.uk/foreign-travel-advice" rel="noopener">GOV.UK foreign travel advice</a>.</li>
+<li><strong>Phone and power.</strong> Charge your phone and carry a charger or power bank in your cabin bag, not in the hold.</li>
+<li><strong>Bags.</strong> Re-check your allowance for cabin and hold bags on your airline's website, as limits vary by airline and fare.</li>
+</ul>
+<h2>At the airport</h2>
+<ol>
+<li><strong>Find your check-in or bag drop.</strong> Departure boards show the desk or zone for your flight. If you checked in online and have no hold bag, you can usually go straight to security.</li>
+<li><strong>Drop your hold bag</strong> if you have one, and keep your boarding pass and ID to hand.</li>
+<li><strong>Security.</strong> Rules for liquids, electronics and what must be taken out of bags differ by airport and can change, so read the airport's current guidance before you pack your cabin bag.</li>
+<li><strong>After security.</strong> Check the departure screens. The gate is often shown only a short time before boarding, so do not go far from the screens until it appears.</li>
+</ol>
+<h2>At the gate</h2>
+<ul>
+<li>Listen for announcements and watch for a gate change. Gates do change.</li>
+<li>Boarding usually starts before the departure time. Be at the gate by the time your airline asks.</li>
+<li>If the flight is delayed, look at the airline's information first, and read <a href="/guides/what-to-do-if-your-flight-is-delayed-or-cancelled/">what to do if your flight is delayed or cancelled</a>.</li>
+</ul>
+<h2>When you land</h2>
+<ul>
+<li>Check the baggage belt on the arrivals screens or the airline's app. Belt numbers are often shown only after landing.</li>
+<li>If a bag does not arrive, report it at the airline's desk before leaving the baggage hall. See <a href="/guides/baggage-reclaim-and-missing-bags/">baggage reclaim and missing bags</a>.</li>
+</ul>
+<h2>A short checklist for the night before</h2>
+<p>Passports, chargers, medication, house keys and a final check of the flight. The full list is on the <a href="/travel-checklist/">printable packing list</a>.</p>`,
+  },
+
+];
+
+export const guideCategories = [
+  { id: 'reading', title: 'Understand your flight', blurb: 'Read times, numbers and directions the way the airline means them.' },
+  { id: 'prepare', title: 'Prepare and pack', blurb: 'Get ready before you leave, and know the order of the day.' },
+  { id: 'trouble', title: 'When things go wrong', blurb: 'Calm checklists for delays, cancellations and bags that do not arrive.' },
 ];
 
 export const guideIndex = {
