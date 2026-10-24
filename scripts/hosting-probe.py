@@ -10,6 +10,8 @@ import os
 import pathlib
 import secrets
 import ssl
+import time
+import urllib.error
 import urllib.request
 from urllib.parse import urlsplit
 
@@ -54,9 +56,20 @@ def main():
             ftp.storbinary('STOR ' + filename, io.BytesIO(body))
             uploaded = True
             request = urllib.request.Request(values['PUBLIC_BASE_URL'].rstrip('/') + '/' + filename, headers={'Cache-Control': 'no-cache', 'User-Agent': 'Flightdeck-deploy-probe/1.0 (+https://github.com/gsakinz/flightdeck)'})
-            with urllib.request.urlopen(request, timeout=25, context=ssl.create_default_context()) as response:
-                if response.status != 200 or response.geturl() != request.full_url or response.read(65537) != body:
-                    raise RuntimeError('Public HTTPS probe did not match the uploaded page')
+            for attempt in range(1, 4):
+                try:
+                    with urllib.request.urlopen(request, timeout=25, context=ssl.create_default_context()) as response:
+                        got = response.read(65537)
+                        info = (response.status, response.geturl() == request.full_url, len(got), len(body), response.headers.get('Content-Type'), response.headers.get('cf-mitigated'), response.headers.get('cf-cache-status'))
+                        if response.status == 200 and info[1] and got == body:
+                            break
+                except urllib.error.HTTPError as http_error:
+                    info = (http_error.code, None, None, len(body), http_error.headers.get('Content-Type'), http_error.headers.get('cf-mitigated'), None)
+                # Non-secret diagnostics: status, same-url, got/sent length, content-type, cf-mitigated, cf-cache-status.
+                print('attempt ' + str(attempt) + ' mismatch: ' + repr(info))
+                time.sleep(3)
+            else:
+                raise RuntimeError('Public HTTPS probe did not match the uploaded page')
             print('PASS: GitHub runner -> certificate-verified FTPS -> public HTTPS exact page')
             print('Probe file: ' + filename + ' marker: ' + marker)
         finally:
