@@ -1,0 +1,31 @@
+schema_version: 1
+name: Flightdeck
+last_reviewed: "2026-10-24"
+status: local-prototype
+current:
+  frontend: react-typescript-vite-pwa
+  backend: node-express-tsx   # reference; php/private + public/api implemented locally, not deployed
+  styling: plain-css
+  database: none
+  authentication: none
+  git_repository: false
+  github_remote: null
+  deployed: true   # staging/first release live at https://flightdeck.gakinz.com (24 Oct 2026), manual upload via scripts/deploy-staging.sh
+target_preference:
+  frontend: static-react-pwa-on-cpanel
+  backend: php-on-cpanel
+  migration_approved: true   # user chose the PHP backend on 24 Oct 2026 ("pick the best one")
+  database_only_if_needed: cpanel-mariadb
+  authentication_only_if_needed: clerk
+  dns_https: cloudflare-full-strict
+release:
+  preferred_branch: production
+  selected_domain: flightdeck.gakinz.com
+  document_root: /home/devgeereact/flightdeck.gakinz.com   # private: /home/devgeereact/flightdeck-private
+  workflow_created: false
+  auto_deploy_verified: false
+constraints:
+  no_extra_paid_hosting_without_approval: true
+  conserve_github_actions_minutes: true
+  no_fabricated_live_flights: true
+  no_deploy_in_documentation_task: true

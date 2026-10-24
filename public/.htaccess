@@ -1,0 +1,23 @@
+# Flightdeck on cPanel/Apache. /api goes to the PHP entrypoint BEFORE the SPA fallback.
+Options -Indexes
+RewriteEngine On
+
+RewriteCond %{REQUEST_URI} !^/api/index\.php$
+RewriteRule ^api(/.*)?$ api/index.php [L,QSA]
+
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+RewriteRule ^ index.html [L]
+
+<IfModule mod_headers.c>
+  # Revalidate the shell, manifest and service worker so releases update; hashed assets can cache.
+  <FilesMatch "^(index\.html|sw\.js|registerSW\.js|manifest\.webmanifest|workbox-.*\.js)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+  <FilesMatch "\.(js|css)$">
+    Header setifempty Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>

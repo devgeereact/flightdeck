@@ -1,0 +1,5 @@
+---
+description: Project development rules and task context
+alwaysApply: true
+---
+Read AGENTS.md, .agent/PROJECT.yml and .agent/CURRENT-TASK.md, then relevant docs/RULES.md sections. Preserve existing implementation and user data. Linked docs must be explicitly loaded if not available in context.
