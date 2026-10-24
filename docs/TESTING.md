@@ -22,3 +22,6 @@ Record exact evidence and limitations in VERIFICATION. Build/unit success alone 
 
 ## Local gate before any push or release (rule from the owner, 24 Oct 2026)
 Test locally FIRST, then push. Required before pushing main or asking for a release: `pnpm test`, `pnpm test:php`, `pnpm test:ui`, `pnpm build`, and a look at the result. `pnpm test:ui` (test/ui-smoke.mjs) builds the real source, serves it with the PHP dev router using your .env keys and drives it in jsdom: default state with live data available (must open on live, empty search, no demo), a real live search, fallback to the sample flight when no providers are configured, and a remembered "Sample flights" choice. It is local only (uses provider keys, may spend 2 AeroDataBox units) and is not in the release workflow. A green unit-test run alone is not enough: the "still showing the demo" bug of 24 Oct 2026 passed every unit test.
+
+## UI smoke test data (25 Oct 2026)
+`pnpm test:ui` runs the real built app in jsdom against fixed flight and weather data, so it gives the same result at any hour and spends no provider units. To also run one check against the real providers, use `UI_TEST_LIVE=1 pnpm test:ui`.

@@ -196,7 +196,7 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 
   /* ------------------------------------------------------------------ guides */
   {
-    slug: 'guides/flight-status-explained', kind: 'guide', category: 'reading', takeaways: ["Scheduled is the plan, estimated is the current prediction, and actual is what happened.", "Leaving the gate and reaching the gate include taxiing, so they are longer than the time in the air.", "A delay can differ between departure and arrival, and times are in each airport's own time zone."], title: 'Flight status explained: scheduled, estimated and actual times', description: 'What check-in, boarding, leaving the gate, take-off, landing and reaching the gate mean, why times change, and how to read a flight status without being misled.',
+    slug: 'guides/flight-status-explained', kind: 'guide', category: 'reading', takeaways: ["Scheduled is the plan, estimated is the current prediction, and actual is what happened.", "Leaving the gate and reaching the gate include taxiing, so they are longer than the time in the air.", "A delay can differ between departure and arrival, and times are in each airport's own time zone."], title: 'Flight status explained: scheduled, estimated, actual', description: 'What check-in, boarding, leaving the gate, take-off, landing and reaching the gate mean, why times change, and how to read a flight status without being misled.',
     body: `
 <p>A flight status page can look like a jumble of times. They each mean something specific, and knowing which is which tells you what is really happening.</p>
 <h2>The three kinds of time</h2>
@@ -227,7 +227,7 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <p>Flightdeck marks every time as scheduled, estimated or actual. A step with no time shows as not reported rather than a guess, and anything Flightdeck works out itself, such as how far along the flight is, is marked as an estimate. <a href="/">Track a flight</a>.</p>`,
   },
   {
-    slug: 'guides/outbound-and-inbound-flights', kind: 'guide', category: 'reading', takeaways: ["Use the route, not the flight number, to tell outbound from inbound.", "Odd and even numbering is a habit some airlines follow, not a rule.", "Outbound: check documents, terminal and bag drop. Inbound: check the belt, onward travel and customs."], title: 'Outbound and inbound flights: how to tell, and why it matters', description: 'How to tell whether a flight is leaving the UK or coming home, why flight numbers are only a hint, and what to check at each end.',
+    slug: 'guides/outbound-and-inbound-flights', kind: 'guide', category: 'reading', takeaways: ["Use the route, not the flight number, to tell outbound from inbound.", "Odd and even numbering is a habit some airlines follow, not a rule.", "Outbound: check documents, terminal and bag drop. Inbound: check the belt, onward travel and customs."], title: 'Outbound and inbound flights: how to tell the difference', description: 'How to tell whether a flight is leaving the UK or coming home, why flight numbers are only a hint, and what to check at each end.',
     body: `
 <p>"Outbound" and "inbound" describe your journey relative to home. For a UK traveller, an outbound flight leaves the UK and an inbound flight arrives in it. The difference decides what you need to do and where you need to be.</p>
 <h2>How to tell for certain</h2>
@@ -325,7 +325,7 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <p>If your bag is damaged, report it at the airport before you leave, and make a photo record. Airlines often have a short deadline for damage reports, so do not wait until you get home.</p>`,
   },
   {
-    slug: 'guides/flight-numbers-airline-codes-and-codeshares', kind: 'guide', category: 'reading', takeaways: ["A flight number is the airline code plus a number, and the date matters.", "IATA airport codes have three letters and ICAO codes have four.", "In a codeshare, check which airline actually operates the flight."], title: 'Flight numbers, airline codes and codeshares: what the letters and digits mean', description: 'How to read a flight number like BA117, what airport and airline codes stand for, and why one flight can carry several numbers.',
+    slug: 'guides/flight-numbers-airline-codes-and-codeshares', kind: 'guide', category: 'reading', takeaways: ["A flight number is the airline code plus a number, and the date matters.", "IATA airport codes have three letters and ICAO codes have four.", "In a codeshare, check which airline actually operates the flight."], title: 'Flight numbers, airline codes and codeshares explained', description: 'How to read a flight number like BA117, what airport and airline codes stand for, and why one flight can carry several numbers.',
     body: `
 <p>A flight number looks simple, but it carries a few separate pieces of information, and one aircraft can be sold under more than one number. Knowing how it is built helps you search correctly and avoid turning up for the wrong flight.</p>
 <h2>How a flight number is built</h2>

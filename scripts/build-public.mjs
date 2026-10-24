@@ -123,7 +123,7 @@ const shell = ({ slug, title, description, body, kind, updated, category, relate
 <meta name="description" content="${esc(description)}"><link rel="canonical" href="${esc(url)}"><meta name="theme-color" content="#133c35">
 <meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(description)}"><meta property="og:type" content="${kind === 'guide' ? 'article' : 'website'}"><meta property="og:url" content="${esc(url)}"><meta property="og:site_name" content="${esc(config.siteName)}"><meta property="og:image" content="${esc(config.url)}/og-image.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="${esc(config.url)}/og-image.png">
 <meta name="fd-ga-id" content="${esc(gaId)}">
-<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
 ${ld}
 <style>${css}</style>${slotHtml ? `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${esc(ads.pubId)}" crossorigin="anonymous"></script>` : ''}</head>
 <body><a class="skip" href="#main">Skip to content</a>

@@ -8,8 +8,25 @@ import path from 'node:path';
 const root = path.resolve(import.meta.dirname, '..');
 const PORT = 3997, BASE = `http://127.0.0.1:${PORT}/`;
 const FLIGHT = process.env.UI_TEST_FLIGHT || 'LH400';
+const LIVE = process.env.UI_TEST_LIVE === '1'; // set to also run the checks against the real flight providers (spends provider units)
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 let failed = 0;
+// A fixed, provider-free flight so these checks give the same answer at any hour. BA59 does fly LHR to CPT, but nothing here depends on today's real data.
+const iso = (h, m = 0, d = 0) => new Date(Date.UTC(2026, 9, 25 + d, h, m)).toISOString();
+const airport = (code, name, city, country, countryCode, timezone, lat, lon) => ({code, name, city, country, countryCode, timezone, lat, lon});
+const LHR = airport('LHR', 'London Heathrow', 'London', 'United Kingdom', 'GB', 'Europe/London', 51.47, -0.45);
+const CPT = airport('CPT', 'Cape Town International', 'Cape Town', 'South Africa', 'ZA', 'Africa/Johannesburg', -33.97, 18.6);
+const baseFlight = {id: 'ba59-fixture', number: 'BA59', airline: 'British Airways', status: 'Scheduled', cancelled: false, diverted: false, origin: LHR, destination: CPT,
+  scheduledOut: iso(21, 20), estimatedOut: iso(21, 20), actualOut: null, scheduledIn: iso(10, 10, 1), estimatedIn: iso(10, 10, 1), actualIn: null, takeoff: null, landing: null, boarding: null,
+  gateOut: null, gateIn: null, terminalOut: '5', terminalIn: null, baggage: '2', aircraft: 'Boeing 777', registration: null, progress: null, delayMinutes: 0, position: null,
+  providerStatus: 'Expected', liveUpdates: true, dataSource: 'AeroDataBox', direction: {type: 'outbound', basis: 'route', home: 'GB', place: 'London'}};
+const fixtureFlights = (date) => {
+  const far = (new Date(date + 'T00:00:00Z') - Date.now()) / 86400000 > 4;
+  const f = far ? {...baseFlight, usualRouteOnly: true, scheduledOut: null, estimatedOut: null, scheduledIn: null, estimatedIn: null, baggage: null, terminalOut: null, liveUpdates: false, delayMinutes: null}
+    : baseFlight;
+  return {mode: 'live', flights: [f], fetchedAt: new Date().toISOString(), cached: false, source: 'AeroDataBox · OpenSky Network', sources: ['AeroDataBox', 'OpenSky Network'], refreshSeconds: 60,
+    notes: far ? ['No schedule is published for this date yet, so this is the flight\'s usual route only.'] : []};
+};
 const check = (name, ok, extra = '') => { console.log((ok ? 'PASS ' : 'FAIL ') + name + (ok ? '' : '  -> ' + extra)); if (!ok) failed++; };
 
 execFileSync('pnpm', ['exec', 'vite', 'build', '--config', 'vite.ui-test.config.ts', '--logLevel', 'error'], {cwd: root, stdio: 'inherit'});
@@ -29,13 +46,16 @@ process.on('exit', stop);
 for (let i = 0; i < 20; i++) { try { if ((await fetch(BASE + 'api/config')).ok) break; } catch {} await sleep(250); }
 const cfg = await (await fetch(BASE + 'api/config')).json();
 
-async function boot({config, storedMode, hash = '', storage = {}} = {}) {
+async function boot({config, storedMode, hash = '', storage = {}, fixtures = false} = {}) {
   const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {url: BASE + hash, runScripts: 'outside-only', pretendToBeVisual: true});
   const w = dom.window;
   if (storedMode) w.localStorage.setItem('flightdeck-mode', storedMode);
   for (const [k, v] of Object.entries(storage)) w.localStorage.setItem(k, v);
   w.fetch = async (input, init) => {
     const u = new URL(String(input), BASE);
+    if (fixtures && u.pathname === '/api/config') return new Response(JSON.stringify({liveAvailable: true, provider: 'fixture'}), {headers: {'content-type': 'application/json'}});
+    if (fixtures && u.pathname === '/api/flights') return new Response(JSON.stringify(fixtureFlights(u.searchParams.get('date'))), {headers: {'content-type': 'application/json'}});
+    if (fixtures && u.pathname === '/api/weather') return new Response(JSON.stringify({temperature_2m: 15.2, weather_code: 2, wind_speed_10m: 14.9, time: '2026-10-25T01:30'}), {headers: {'content-type': 'application/json'}});
     if (config && u.pathname === '/api/config') return new Response(JSON.stringify(config), {headers: {'content-type': 'application/json'}});
     return fetch(u, {...init, signal: undefined}); // jsdom's AbortSignal is not Node's
   };
@@ -55,16 +75,16 @@ async function search(app, number) {
 }
 
 try {
-  if (cfg.liveAvailable) {
-    const a = await boot(); await sleep(2500);
+  { // flight search, with fixed provider data (see the fixtures above)
+    const a = await boot({fixtures: true}); await sleep(1500);
     const t0 = a.text();
     check('A1 no data-source choice is shown and nothing says sample/demo', !a.w.document.querySelector('select') && !/Sample|DATA SOURCE|demo/i.test(t0));
     check('A2 flight number box starts empty', val(a, 'input[aria-label="Flight number"]') === '');
     check('A3 shows the "Track a flight" prompt, no flight preloaded', t0.includes('Track a flight') && !a.w.document.querySelector('.flight-card'));
-    await search(a, FLIGHT); await sleep(7500);
+    await search(a, 'BA59'); await sleep(1500);
     const t = a.text(), d = a.w.document;
-    const found = !!d.querySelector('.flight-card') && t.includes(FLIGHT), none = t.includes('No flights found');
-    check(`B1 search for ${FLIGHT} gives a flight card or an honest "not found"`, found || none, t.slice(300, 500));
+    const found = !!d.querySelector('.flight-card') && t.includes('BA59'), none = t.includes('No flights found');
+    check('B1 searching a flight gives a flight card', found, t.slice(300, 500));
     if (found) {
       check('B2 direction is stated (outbound/inbound/domestic/international)', !!d.querySelector('.direction') && /Leaving|Arriving|Domestic|International|Probably/.test(d.querySelector('.direction').textContent), d.querySelector('.direction')?.textContent);
       const rows = [...d.querySelectorAll('.timeline-row')].map(r => ({label: r.querySelector('strong').textContent, kind: r.querySelector('small').textContent, time: r.lastElementChild.textContent}));
@@ -74,19 +94,32 @@ try {
       [...d.querySelectorAll('.fv-tablist button')].find(b => b.textContent === 'Updates').dispatchEvent(new a.w.MouseEvent('click', {bubbles: true})); await sleep(300);
       check('B6 provider attribution is shown (Updates tab)', /Schedule data from AeroDataBox|Live aircraft positions from The OpenSky Network/.test(a.text()));
     }
+    const tabClick = async (name) => { [...d.querySelectorAll('.fv-tablist button')].find(b => b.textContent === name).dispatchEvent(new a.w.MouseEvent('click', {bubbles: true})); await sleep(300); };
+    check('B9 once a flight shows there is still exactly one h1 (hidden), and the search stays visible', d.querySelectorAll('h1').length === 1 && !!d.querySelector('input[aria-label="Flight number"]'));
+    await tabClick('Airport and bags');
+    check('B10 Airport and bags tab shows the terminal and the baggage belt', /Departure terminal5/.test(a.text()) && /BAGGAGE BELT2/.test(a.text()), a.text().slice(0, 300));
+    await tabClick('Weather');
+    check('B11 Weather tab shows the destination weather in plain words', /Cape Town/.test(a.text()) && /15°C/.test(a.text()) && /Partly cloudy/.test(a.text()));
+    check('B12 the in-app footer has two equal menus, the right links, and no cookie settings', (() => { const cols = [...d.querySelectorAll('footer.sf .sf-col')]; const n = cols.map(c => c.querySelectorAll('a').length); return cols.length === 2 && n[0] === n[1] && !d.querySelector('[data-fd-cookie-settings]') && [...d.querySelectorAll('footer.sf a')].some(x => x.getAttribute('href') === '#/checklist'); })());
     check('B7 no runtime errors', a.errors.length === 0, a.errors.join(' | '));
     a.w.close();
     // Usual-route fallback: a date far beyond the schedule window still says what the flight normally flies
     const far = new Date(Date.now() + 25 * 86400000).toISOString().slice(0, 10);
-    const f = await boot(); await sleep(2000);
+    const f = await boot({fixtures: true}); await sleep(1500);
     f.w.document.querySelector('input[aria-label="Departure date"]');
     Object.getOwnPropertyDescriptor(f.w.HTMLInputElement.prototype, 'value').set.call(f.w.document.querySelector('input[aria-label="Departure date"]'), far);
     f.w.document.querySelector('input[aria-label="Departure date"]').dispatchEvent(new f.w.Event('input', {bubbles: true}));
-    await search(f, 'BA59'); await sleep(6000);
+    await search(f, 'BA59'); await sleep(1500);
     const tf = f.text();
     check('B8 far-future date: usual route + outbound shown, no invented times', tf.includes('LHR') && tf.includes('CPT') && /Leaving London/.test(tf) && tf.includes('not published yet'), tf.slice(300, 700));
     f.w.close();
-  } else console.log('SKIPPED A/B: no live provider keys configured locally');
+  }
+  if (LIVE && cfg.liveAvailable) { // optional: the same journey against the real providers. Run with UI_TEST_LIVE=1; it spends a few provider units.
+    const l = await boot(); await sleep(2500);
+    await search(l, FLIGHT); await sleep(7500);
+    check(`L1 live: ${FLIGHT} gives a flight card or an honest "not found"`, !!l.w.document.querySelector('.flight-card') || l.text().includes('No flights found'), l.text().slice(300, 500));
+    l.w.close();
+  }
 
   // ---- Travel checklist (no Clerk, so it runs as a guest with the list on this device) ----
   {

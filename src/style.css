@@ -230,3 +230,18 @@ main>.mobile-nav{max-width:none}
 .ad-kpis:has(>:nth-child(4):last-child){grid-template-columns:repeat(4,minmax(0,1fr))}
 @media(max-width:1000px){.ad-kpis,.ad-kpis:has(>:nth-child(4):last-child){grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.ad-kpis,.ad-kpis:has(>:nth-child(4):last-child){grid-template-columns:1fr}}
+
+/* Tighter vertical rhythm: a searched flight fits in one window, and the footer takes less room inside the app. */
+.topbar{height:64px}
+.search-card{padding:12px 16px;margin-bottom:16px}
+.fv{gap:16px}.fv-top{gap:16px}
+.flight-card{padding:18px 22px}
+.flight-card .in-short{margin:12px 0 0;padding:10px 14px}
+.flight-card .direction{margin-top:10px}
+.flight-card .route{margin:14px 0 10px}.flight-card .route h2{font-size:38px}.flight-card .route h3{margin:2px 0}
+.flight-card .route-progress{margin-top:14px}.flight-card .progress-meta{margin-top:6px}
+.map-card{padding:16px}.map-card .route-map{height:170px}.map-card .position-note{margin:4px 0 10px}
+.fv-body{padding:18px 22px 22px;min-height:0}
+.fv-tablist{padding-top:6px}
+.app .sf{margin-top:28px;padding:26px 0 72px}.app .sf-base{margin-top:20px;padding-top:14px}
+@media(max-width:700px){.topbar{height:56px}}

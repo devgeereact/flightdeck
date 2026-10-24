@@ -4,6 +4,20 @@ Scope: the live site (https://flightdeck.gakinz.com at commit 12e0b15), the owne
 
 Status key: **Fixed** = fixed in code during this test (needs a release), **To do** = I can do it, **Owner** = needs you.
 
+## Progress since the test (same day)
+
+| # | Item | Status |
+|---|---|---|
+| 1 | `mail_from` now `info@flightdeck.gakinz.com` on the server (DKIM and DMARC still need you) | Partly done, Owner for DNS |
+| 4 | Landing content for crawlers: static text in a `noscript` block plus WebApplication structured data | Fixed, needs a release |
+| 5 | PNG icons (192, 512, maskable), Apple touch icon, favicon links, manifest description | Fixed, needs a release. The install `alert()` fallback is still to do |
+| 6 | Tracker spacing tightened so a searched flight is about one window tall; footer takes less room in the app | Fixed, needs a release |
+| 7 | `body-parser` forced to 2.4.0 in `pnpm-workspace.yaml`; `pnpm audit` is clean | Fixed, needs a release |
+| 8 | The UI smoke test now uses fixed flight data (same answer at any hour) and new checks for tabs, weather, h1 and the footer. The live-provider check is optional (`UI_TEST_LIVE=1`). A UI test for the console reply form is still to do | Mostly fixed |
+| 9, 10 | GSAP warnings, h1, contrast, heading levels | Fixed, needs a release |
+| 14 | Guide titles shortened to 69 characters or fewer including the site name | Fixed, needs a release |
+| 11 | `/404.html` returning 200 | Accepted: it carries `noindex`, and changing it risks breaking the error page |
+
 ## What passed
 
 | Area | Result |
