@@ -29,7 +29,10 @@ function SavedSync({saved,setSaved,setSignedIn}:{saved:SavedItem[];setSaved:(v:S
  return null}
 const Landing=lazy(()=>import('./Landing'));
 // Signed-out visitors get the landing page; signed-in users get the dashboard. Without a Clerk key the app is open (no accounts).
-function Gate(){const {isLoaded,isSignedIn}=useAuth();if(!isLoaded)return <div className="boot" role="status" aria-label="Loading"/>;return isSignedIn?<Dashboard/>:<Suspense fallback={<div className="boot" role="status" aria-label="Loading"/>}><Landing/></Suspense>}
+function Gate(){const {isLoaded,isSignedIn}=useAuth();const [slow,setSlow]=useState(false);
+ useEffect(()=>{if(isLoaded)return;const t=setTimeout(()=>setSlow(true),10000);return()=>clearTimeout(t)},[isLoaded]);
+ if(!isLoaded)return <div className="boot" role="status" aria-label="Loading">{slow&&<div className="boot-msg"><Plane size={26}/><h2>Sign-in could not load</h2><p>Flightdeck could not reach its sign-in service. Check your connection, then reload the page.</p><button className="cta" onClick={()=>location.reload()}>Reload</button></div>}</div>;
+ return isSignedIn?<Dashboard/>:<Suspense fallback={<div className="boot" role="status" aria-label="Loading"/>}><Landing/></Suspense>}
 const pick=(actual:string|null,estimate:string|null|undefined,scheduled:string|null):{t:string|null;kind:string}=>actual?{t:actual,kind:'Actual'}:estimate?{t:estimate,kind:'Estimated'}:scheduled?{t:scheduled,kind:'Scheduled'}:{t:null,kind:'Not yet reported'};
 const regionName=(code?:string|null)=>{try{return code?new Intl.DisplayNames(['en'],{type:'region'}).of(code)||code:''}catch{return code||''}};
 const directionText=(d:NonNullable<Flight['direction']>)=>{const home=regionName(d.home)||d.home;if(d.basis==='number')return d.type==='outbound'?`Probably outbound from ${home} · judged from the flight number, route not confirmed`:`Probably inbound to ${home} · judged from the flight number, route not confirmed`;return d.type==='outbound'?`Outbound from ${d.place}`:d.type==='inbound'?`Inbound to ${d.place}`:d.type==='domestic'?`Domestic · within ${home}`:`International · not to or from ${home}`};

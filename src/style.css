@@ -36,3 +36,4 @@
 .hero-title div,.hero-title span{overflow-clip-margin:.2em}
 .hero-title [style*="overflow"]{padding-bottom:.16em;margin-bottom:-.16em}
 .chip-status-wrap{top:auto;bottom:11%;right:6%}
+.boot{display:grid;place-items:center;padding:24px}.boot-msg{text-align:center;max-width:380px;color:#5f7367}.boot-msg svg{color:#759966;margin-bottom:12px}.boot-msg h2{font-size:22px;color:#173e34;margin-bottom:8px}.boot-msg p{font-size:13px;line-height:1.7;margin-bottom:20px}
