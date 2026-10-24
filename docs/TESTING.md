@@ -19,3 +19,6 @@ pnpm test: tsx --test server/*.test.ts. Four tests cover search validation, null
 Use isolated test data. No seed business records required. Live-provider, account/login, paid quota, real mail and production mutations need appropriate access/authorisation. No user accounts currently exist to test.
 
 Record exact evidence and limitations in VERIFICATION. Build/unit success alone is not a full app pass. A PHP migration needs HTTP contract/parity tests for config/search/weather and missing-key failures before switching the host.
+
+## Local gate before any push or release (rule from the owner, 24 Oct 2026)
+Test locally FIRST, then push. Required before pushing main or asking for a release: `pnpm test`, `pnpm test:php`, `pnpm test:ui`, `pnpm build`, and a look at the result. `pnpm test:ui` (test/ui-smoke.mjs) builds the real source, serves it with the PHP dev router using your .env keys and drives it in jsdom: default state with live data available (must open on live, empty search, no demo), a real live search, fallback to the sample flight when no providers are configured, and a remembered "Sample flights" choice. It is local only (uses provider keys, may spend 2 AeroDataBox units) and is not in the release workflow. A green unit-test run alone is not enough: the "still showing the demo" bug of 24 Oct 2026 passed every unit test.

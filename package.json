@@ -9,7 +9,8 @@
     "start": "tsx server/index.ts",
     "test": "tsx --test server/*.test.ts",
     "test:php": "php php/tests/run.php",
-    "parity": "node php/tests/parity.mjs"
+    "parity": "node php/tests/parity.mjs",
+    "test:ui": "node test/ui-smoke.mjs"
   },
   "dependencies": {
     "dotenv": "^17.0.0",
@@ -25,6 +26,7 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^5.0.0",
     "concurrently": "^9.0.0",
+    "jsdom": "^30.1.3",
     "tsx": "^4.0.0",
     "typescript": "^5.9.0",
     "vite": "^7.0.0",

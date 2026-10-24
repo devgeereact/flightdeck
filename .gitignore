@@ -5,3 +5,4 @@ dist/
 .DS_Store
 php/private/config.php
 php/private/var/
+.ui-test-build/
