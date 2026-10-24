@@ -67,6 +67,10 @@ def main():
                     info = (http_error.code, None, None, len(body), http_error.headers.get('Content-Type'), http_error.headers.get('cf-mitigated'), None)
                 # Non-secret diagnostics: status, same-url, got/sent length, content-type, cf-mitigated, cf-cache-status.
                 print('attempt ' + str(attempt) + ' mismatch: ' + repr(info))
+                if attempt == 1 and info[2]:
+                    # Public page content only; show the first differing region to find proxy/rewrite interference.
+                    at = next((i for i, (a, b) in enumerate(zip(body, got)) if a != b), min(len(body), len(got)))
+                    print('first difference at byte ' + str(at) + '; received: ' + repr(got[max(0, at - 40):at + 260]))
                 time.sleep(3)
             else:
                 raise RuntimeError('Public HTTPS probe did not match the uploaded page')
