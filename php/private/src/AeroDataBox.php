@@ -74,7 +74,9 @@ final class AeroDataBox
             );
             if ($status === 401 || $status === 403) {
                 $this->store->put('adb-cooldown', 1, 300000);
-                throw new AeroDataBoxError('The AeroDataBox key was rejected.');
+                throw new AeroDataBoxError(stripos($body, 'not subscribed') !== false
+                    ? 'The RapidAPI key is not subscribed to the AeroDataBox API yet.'
+                    : 'The AeroDataBox key was rejected.');
             }
             if ($status === 429) {
                 $this->store->put('adb-cooldown', 1, 600000);

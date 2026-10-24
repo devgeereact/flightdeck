@@ -32,7 +32,7 @@ $env = static function (string ...$names): ?string {
 };
 $config['opensky_client_id'] = $config['opensky_client_id'] ?? $env('OPENSKY_CLIENT_ID', 'clientId');
 $config['opensky_client_secret'] = $config['opensky_client_secret'] ?? $env('OPENSKY_CLIENT_SECRET', 'clientSecret');
-$config['aerodatabox_key'] = $config['aerodatabox_key'] ?? $env('AERODATABOX_KEY');
+$config['aerodatabox_key'] = $config['aerodatabox_key'] ?? $env('AERODATABOX_KEY', 'RAPID_API_KEY', 'RAPIDAPI_KEY');
 if (($config['opensky_client_id'] ?? '') === '' || ($config['opensky_client_secret'] ?? '') === '') {
     $config['opensky_client_id'] = $config['opensky_client_secret'] = null;
 }

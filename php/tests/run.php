@@ -138,6 +138,15 @@ try {
     $again = $e->getMessage();
 }
 check('adb svc: rejected key -> safe message, then cooldown without more calls', strpos($msg, 'rejected') !== false && strpos($again, 'paused') !== false && count($calls) === 2 && strpos($msg . $again, 'k-test') === false);
+$calls = [];
+$unsub = new AeroDataBox(['aerodatabox_key' => 'k'], new Store($tmp . '-g'), $fakeAdb(403, '{"message":"You are not subscribed to this API."}'));
+$why = '';
+try {
+    $unsub->fetch('BA117', '2026-10-24');
+} catch (AeroDataBoxError $e) {
+    $why = $e->getMessage();
+}
+check('adb svc: 403 not-subscribed gives an actionable message', strpos($why, 'not subscribed') !== false);
 check('adb svc: unconfigured without key', !(new AeroDataBox([], $store3))->configured());
 
 $routeBody = json_encode(['response' => ['flightroute' => [
@@ -194,7 +203,7 @@ Flight::combine([], $many, 'BA117', $now, static function () use (&$lookups) {
 });
 check('combine: at most 5 route lookups per search', $lookups === 5);
 check('combine: unknown route -> no geometry invented', Flight::combine([], [$live], 'BA117', $now, $noRoute)[0]['progress'] === null);
-foreach ([$tmp, $tmp . '-b', $tmp . '-c', $tmp . '-d', $tmp . '-e', $tmp . '-f'] as $dir) {
+foreach ([$tmp, $tmp . '-b', $tmp . '-c', $tmp . '-d', $tmp . '-e', $tmp . '-f', $tmp . '-g'] as $dir) {
     exec('rm -rf ' . escapeshellarg($dir));
 }
 
