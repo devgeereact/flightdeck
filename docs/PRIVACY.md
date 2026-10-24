@@ -1,15 +1,19 @@
-# Flightdeck privacy inventory — review draft
+# Flightdeck privacy inventory
 
-Not a published privacy policy. Entity/contact/jurisdiction/retention details are unknown. No legal compliance claim is made.
+The published notice is generated from content/pages.mjs (privacy, cookies) and must be kept in step with this table. This is an engineering inventory, not legal advice. Controller: Gideon Akinlotan, info@flightdeck.gakinz.com.
 
-| Data/flow | Current handling | Unknowns/actions |
+| Data / flow | Handling | Retention / control |
 |---|---|---|
-| Flight number/date/mode | Browser → local API; upstream OpenSky only with credentials (the flight number is matched locally against a shared snapshot; it is not sent upstream) | Provider retention/licence; avoid needless logs |
-| Saved searches | browser localStorage, up to six | Inform users clearing browser data removes them |
-| Airport coordinates | server → Open-Meteo | Provider policy/retention and commercial licence |
-| Browser IP | Express limiter memory; hosting may log requests in production | Host log retention/region not verified |
-| Font request | Google Fonts CSS import in src/style.css | Third-party network disclosure or approved self-hosting |
-| PWA cache | static shell/resources | Verify no private API caching on device |
-| External attraction/airline links | User navigates to third parties | Make external destinations clear |
+| Flight number, date | Sent to our PHP API for the signed-in user; matched against provider data (OpenSky, AeroDataBox, adsbdb) | Cached server-side briefly; not tied to the user in counters |
+| Saved flights | Clerk user metadata (signed-in) and localStorage | User can remove; deleted with the Clerk account |
+| Travel checklist | localStorage; signed-in users also in `var/checklists/<sha256(sub)>.json` | "Delete my checklist" erases server copy and local copy |
+| Account (email, name, avatar) | Clerk (sign-in provider); we verify its session token and never see passwords | Clerk account deletion |
+| Usage counters | Daily aggregates in `var/metrics/` (searches, provider calls, errors, checklist saves, event whitelist). Daily active users use a hashed user id set, never paired with flight numbers | 90 days for the hashed set |
+| Enquiries and feedback | Stored in `var/enquiries/` and emailed to the owner; IP kept only as a daily-salted hash for abuse control | Deleted on request |
+| Google Analytics 4 | Loads only after the visitor accepts (Consent Mode, defaults denied, no user id, no flight numbers) | Google retention setting on the property |
+| Weather | Airport coordinates sent to Open-Meteo | No user data |
+| Fonts | Self-hosted (OFL); no Google Fonts requests | n/a |
+| Browser IP | Hosting and Cloudflare logs; rate limiter | Host log retention not verified |
+| Advertising | Not shown. If ever enabled: certified consent tool first; see docs/MONETISATION.md | n/a |
 
-No account, payment, precise device-location permission, analytics SDK, AI prompt processing or DB is implemented. Do not infer no personal data: IPs, local travel searches and network requests can be relevant. Data retention/export/deletion claims must reflect actual controls. Determine target audience/age, legal entity/contact and applicable obligations before drafting/publishing a notice with appropriate review.
+Not implemented: payments, precise location, AI processing of user text (phase 8 is flagged off; when enabled it must be disclosed here first). Audience is general public; the notice says the service is not aimed at under-13s.

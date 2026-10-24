@@ -63,6 +63,10 @@ const PLANE = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" strok
 const LABELS = { legal: 'Legal and help', contact: 'Get in touch', checklist: 'Free tool', guide: 'Travel guide', index: 'Travel guides' };
 const shell = ({ slug, title, description, body, kind, updated }) => {
   const label = LABELS[kind] || 'Flightdeck';
+  const ldObj = kind === 'guide'
+    ? { '@context': 'https://schema.org', '@type': 'Article', headline: title, description, dateModified: updated || config.lastReviewed, mainEntityOfPage: `${config.url}/${slug}/`, author: { '@type': 'Person', name: config.ownerName || config.siteName }, publisher: { '@type': 'Organization', name: config.siteName, url: config.url } }
+    : { '@context': 'https://schema.org', '@type': 'WebPage', name: title, description, url: `${config.url}/${slug}/`, isPartOf: { '@type': 'WebSite', name: config.siteName, url: config.url } };
+  const ld = `<script type="application/ld+json">${JSON.stringify(ldObj).replace(/</g, '\\u003c')}</script>`;
   const wrap = kind === 'legal' || kind === 'guide';
   const slotHtml = kind === 'guide' || kind === 'checklist' ? slotFor(kind) : '';
   const url = `${config.url}/${slug}/`;
@@ -73,6 +77,7 @@ const shell = ({ slug, title, description, body, kind, updated }) => {
 <meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(description)}"><meta property="og:type" content="${kind === 'guide' ? 'article' : 'website'}"><meta property="og:url" content="${esc(url)}"><meta property="og:site_name" content="${esc(config.siteName)}">
 <meta name="fd-ga-id" content="${esc(gaId)}">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
+${ld}
 <style>${css}</style>${slotHtml ? `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${esc(ads.pubId)}" crossorigin="anonymous"></script>` : ''}</head>
 <body><a class="skip" href="#main">Skip to content</a>
 <header class="pub-top"><div class="pub-in"><a class="pub-brand" href="/"><span class="pub-mark" aria-hidden="true">${PLANE}</span><span>flightdeck<i>.</i></span></a><nav class="pub-nav" aria-label="Main">${nav.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}<a class="pub-open" href="/">Open the app</a></nav></div></header>
