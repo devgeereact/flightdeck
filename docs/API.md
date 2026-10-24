@@ -17,6 +17,13 @@ Live query uses OpenSky (OAuth2 client credentials). OpenSky has no flight-numbe
 
 Missing boarding and aircraft position remain null. Flight data source and retrieved time accompany results. Weather is CURRENT airport-area model data, not an arrival forecast. Detailed response types are src/types.ts; extend parity tests before PHP replacement.
 
+## Live data pipeline (24 Oct 2026, PHP only)
+`GET /api/flights?mode=live` now combines up to three sources; each degrades independently and the response names what was used (`sources`, `notes`).
+1. **AeroDataBox** (RapidAPI, needs `aerodatabox_key` in the private config): schedule, revised/actual times, terminal, gate, baggage belt, aircraft model/registration, status, delay. Date-specific. Requested only for dates from yesterday to three days ahead. Cached 10 minutes per number+date. Every call costs 2 of the free 400 units a month; the server counts BEFORE calling and stops at `aerodatabox_monthly_units` (default 360) and `aerodatabox_hourly_calls` (default 12), then falls back with a note. A rejected key or 429 pauses calls for 5-10 minutes.
+2. **OpenSky**: live position, altitude, speed, heading of the aircraft in the air. If a scheduled flight is airborne the position is attached to it; a grounded aircraft is never used as a position.
+3. **adsbdb** (free, no key): usual origin/destination for a callsign, used only when there is no scheduled data. Cached 1 hour (10 minutes for unknown), at most 5 lookups per search. Route data belongs to its authors: do not persist it.
+Derived fields (never provider times): `progress` with `progressBasis` position|times, `distanceRemainingKm` (straight line), `etaEstimate` (only when the provider gave no estimated arrival and speed is at least 200 km/h). Extra fields: `providerStatus`, `liveUpdates` (false means the times are only the airline schedule), `dataSource`, `routeSource`. `/api/config` adds `providers`. With no AeroDataBox key the behaviour is OpenSky plus route enrichment. The Node reference server is NOT extended with these; parity covers demo mode and validation only.
+
 ## PHP implementation differences (24 Oct 2026)
 The PHP API (public/api/index.php) returns the same shapes. Intentional differences: mode other than demo/live returns 400; non-GET/HEAD returns JSON 405. Limiter key is REMOTE_ADDR unless trust_cf_connecting_ip is enabled.
 

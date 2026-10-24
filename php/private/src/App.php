@@ -28,12 +28,18 @@ final class App
         }
 
         $opensky = new OpenSky($config['opensky_client_id'] ?? null, $config['opensky_client_secret'] ?? null, $store);
+        $adb = new AeroDataBox($config, $store);
+        $routes = new RouteLookup($store);
         switch ($route) {
             case '/config':
-                Http::json(200, ['liveAvailable' => $opensky->configured(), 'provider' => 'OpenSky Network']);
+                Http::json(200, [
+                    'liveAvailable' => $opensky->configured() || $adb->configured(),
+                    'provider' => $adb->configured() ? 'AeroDataBox + OpenSky Network' : 'OpenSky Network',
+                    'providers' => ['opensky' => $opensky->configured(), 'aerodatabox' => $adb->configured(), 'routes' => true],
+                ]);
                 return;
             case '/flights':
-                self::flights($opensky);
+                self::flights($opensky, $adb, $routes);
                 return;
             case '/weather':
                 self::weather($store);
@@ -48,7 +54,7 @@ final class App
         return isset($_GET[$name]) && is_string($_GET[$name]) ? $_GET[$name] : '';
     }
 
-    private static function flights(OpenSky $opensky): void
+    private static function flights(OpenSky $opensky, AeroDataBox $adb, RouteLookup $routes): void
     {
         $number = Flight::normalizeNumber(self::param('number'));
         $date = self::param('date');
@@ -69,18 +75,71 @@ final class App
             ]);
             return;
         }
-        if (!$opensky->configured()) {
-            Http::json(503, ['error' => 'Live flights need OpenSky API credentials on the server. Sample mode is available now.']);
+        if (!$opensky->configured() && !$adb->configured()) {
+            Http::json(503, ['error' => 'Live flights need provider credentials on the server. Sample mode is available now.']);
             return;
         }
         try {
-            [$states, $cached, $fetchedAt] = $opensky->states();
-            $flights = array_map(static function (array $s) use ($number) {
-                return Flight::stateToFlight($s, $number);
-            }, array_slice(Flight::matchStates($states, $number), 0, 20));
+            $now = Store::nowMs();
+            $notes = [];
+            $sources = [];
+            $times = [];
+            $cached = true;
+            $scheduled = [];
+            if ($adb->configured()) {
+                if (Flight::scheduleDateOk($date, $now)) {
+                    try {
+                        [$raw, $c, $t] = $adb->fetch($number, $date);
+                        foreach ($raw as $x) {
+                            $scheduled[] = Flight::fromAeroDataBox($x, $number, $date);
+                        }
+                        $sources[] = 'AeroDataBox';
+                        $times[] = $t;
+                        $cached = $cached && $c;
+                    } catch (AeroDataBoxError $e) {
+                        $notes[] = $e->getMessage();
+                    }
+                } else {
+                    $notes[] = 'Scheduled details are requested only for dates from yesterday to three days ahead.';
+                }
+            }
+            $matches = [];
+            $openskyError = null;
+            if ($opensky->configured()) {
+                try {
+                    [$states, $c, $t] = $opensky->states();
+                    $matches = array_slice(Flight::matchStates($states, $number), 0, 20);
+                    $sources[] = 'OpenSky Network';
+                    $times[] = $t;
+                    $cached = $cached && $c;
+                } catch (OpenSkyError $e) {
+                    $openskyError = $e->getMessage();
+                    $notes[] = $e->getMessage();
+                }
+            }
+            if ($openskyError !== null && !$scheduled && !$adb->configured()) {
+                Http::json(502, ['error' => $openskyError]);
+                return;
+            }
+            $flights = Flight::combine($scheduled, $matches, $number, $now, static function (string $callsign) use ($routes) {
+                try {
+                    return $routes->lookup($callsign);
+                } catch (\Throwable $e) {
+                    error_log('flightdeck route: ' . get_class($e));
+                    return null;
+                }
+            });
+            if ($flights && !$scheduled) {
+                $sources[] = 'adsbdb routes';
+            }
+            $airborne = false;
+            foreach ($flights as $f) {
+                $airborne = $airborne || $f['position'] !== null;
+            }
             Http::json(200, [
-                'mode' => 'live', 'flights' => $flights, 'fetchedAt' => Flight::iso($fetchedAt), 'cached' => $cached,
-                'source' => 'OpenSky Network — live aircraft position only; the date is not used', 'refreshSeconds' => OpenSky::SNAPSHOT_SECONDS,
+                'mode' => 'live', 'flights' => $flights, 'fetchedAt' => Flight::iso($times ? min($times) : $now), 'cached' => $cached,
+                'source' => $sources ? implode(' · ', $sources) : 'No provider answered', 'sources' => $sources, 'notes' => $notes,
+                'refreshSeconds' => $airborne ? OpenSky::SNAPSHOT_SECONDS : 600,
             ]);
         } catch (OpenSkyError $e) {
             Http::json(502, ['error' => $e->getMessage()]);

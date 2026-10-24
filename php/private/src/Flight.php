@@ -173,4 +173,202 @@ final class Flight
         $f['delayMinutes'] = $delayed ? 35 : 0;
         return $f;
     }
+
+    private const ADB_STATUS = [
+        'Unknown' => 'Status unavailable', 'Expected' => 'Scheduled', 'EnRoute' => 'En route', 'CheckIn' => 'Check-in open',
+        'Boarding' => 'Boarding', 'GateClosed' => 'Gate closed', 'Departed' => 'Departed', 'Delayed' => 'Delayed',
+        'Approaching' => 'Approaching', 'Arrived' => 'Arrived', 'Canceled' => 'Cancelled', 'Diverted' => 'Diverted',
+        'CanceledUncertain' => 'Possibly cancelled',
+    ];
+    /** Provider statuses where the aircraft has left the gate. */
+    private const AIRBORNE = ['Departed' => 1, 'EnRoute' => 1, 'Approaching' => 1];
+    private const GATE_OUT_DONE = ['Departed' => 1, 'EnRoute' => 1, 'Approaching' => 1, 'Arrived' => 1];
+
+    private static function str($v): ?string
+    {
+        return is_string($v) && $v !== '' ? $v : null;
+    }
+
+    /** AeroDataBox times look like "2026-10-24 15:20Z" (UTC) or with an offset (local). Returns ISO UTC or null. */
+    private static function adbTime($t): ?string
+    {
+        $raw = is_array($t) ? ($t['utc'] ?? null) : null;
+        $ts = is_string($raw) ? strtotime($raw) : false;
+        return $ts === false ? null : self::iso($ts * 1000);
+    }
+
+    private static function adbAirport($m): array
+    {
+        $a = is_array($m) && is_array($m['airport'] ?? null) ? $m['airport'] : [];
+        $loc = is_array($a['location'] ?? null) ? $a['location'] : [];
+        $lat = self::num($loc['lat'] ?? null);
+        $lon = self::num($loc['lon'] ?? null);
+        $code = self::str($a['iata'] ?? null) ?? self::str($a['icao'] ?? null) ?? '—';
+        $name = self::str($a['shortName'] ?? null) ?? self::str($a['name'] ?? null) ?? ($code === '—' ? 'Airport unavailable' : $code);
+        return [
+            'code' => $code, 'name' => $name, 'city' => self::str($a['municipalityName'] ?? null) ?? '',
+            'country' => self::str($a['countryCode'] ?? null) ?? '', 'timezone' => self::str($a['timeZone'] ?? null),
+            'lat' => $lat, 'lon' => $lon,
+        ];
+    }
+
+    /** Map one AeroDataBox flight to Flightdeck's shape. Unknown fields stay null; nothing is invented. */
+    public static function fromAeroDataBox(array $x, string $number, string $date): array
+    {
+        $dep = is_array($x['departure'] ?? null) ? $x['departure'] : [];
+        $arr = is_array($x['arrival'] ?? null) ? $x['arrival'] : [];
+        $rawStatus = is_string($x['status'] ?? null) ? $x['status'] : 'Unknown';
+        $origin = self::adbAirport($dep);
+        $destination = self::adbAirport($arr);
+        $f = self::emptyFlight('adb-' . $number . '-' . $date . '-' . $origin['code'] . '-' . $destination['code'], $number);
+        $f['airline'] = self::str(is_array($x['airline'] ?? null) ? ($x['airline']['name'] ?? null) : null) ?? 'Airline not reported';
+        $f['status'] = self::ADB_STATUS[$rawStatus] ?? 'Status unavailable';
+        $f['providerStatus'] = isset(self::ADB_STATUS[$rawStatus]) ? $rawStatus : 'Unknown';
+        $f['cancelled'] = $rawStatus === 'Canceled';
+        $f['diverted'] = $rawStatus === 'Diverted';
+        $f['origin'] = $origin;
+        $f['destination'] = $destination;
+        $f['scheduledOut'] = self::adbTime($dep['scheduledTime'] ?? null);
+        $f['scheduledIn'] = self::adbTime($arr['scheduledTime'] ?? null);
+        $revisedOut = self::adbTime($dep['revisedTime'] ?? null);
+        $revisedIn = self::adbTime($arr['revisedTime'] ?? null);
+        $f['estimatedOut'] = $revisedOut;
+        $f['estimatedIn'] = $revisedIn;
+        if (isset(self::GATE_OUT_DONE[$rawStatus])) {
+            $f['actualOut'] = $revisedOut;
+            $f['takeoff'] = self::adbTime($dep['runwayTime'] ?? null);
+        }
+        if ($rawStatus === 'Arrived') {
+            $f['actualIn'] = $revisedIn;
+            $f['landing'] = self::adbTime($arr['runwayTime'] ?? null);
+        }
+        $f['gateOut'] = self::str($dep['gate'] ?? null);
+        $f['terminalOut'] = self::str($dep['terminal'] ?? null);
+        $f['gateIn'] = self::str($arr['gate'] ?? null);
+        $f['terminalIn'] = self::str($arr['terminal'] ?? null);
+        $f['baggage'] = self::str($arr['baggageBelt'] ?? null);
+        $ac = is_array($x['aircraft'] ?? null) ? $x['aircraft'] : [];
+        $f['aircraft'] = self::str($ac['model'] ?? null);
+        $f['registration'] = self::str($ac['reg'] ?? null);
+        $scheduled = $revisedIn !== null ? $f['scheduledIn'] : $f['scheduledOut'];
+        $revised = $revisedIn !== null ? $revisedIn : $revisedOut;
+        if ($scheduled !== null && $revised !== null) {
+            $f['delayMinutes'] = max(0, self::round((strtotime($revised) - strtotime($scheduled)) / 60));
+        }
+        $quality = array_merge(
+            is_array($dep['quality'] ?? null) ? $dep['quality'] : [],
+            is_array($arr['quality'] ?? null) ? $arr['quality'] : []
+        );
+        $f['liveUpdates'] = in_array('Live', $quality, true);
+        $f['dataSource'] = 'AeroDataBox';
+        return $f;
+    }
+
+    /** Copy live position fields from an OpenSky-derived flight onto a scheduled flight. */
+    public static function applyPosition(array $f, array $live): array
+    {
+        foreach (['position', 'altitudeM', 'speedKmh', 'headingDeg', 'onGround', 'originCountry'] as $k) {
+            if (array_key_exists($k, $live)) {
+                $f[$k] = $live[$k];
+            }
+        }
+        return $f;
+    }
+
+    /** Fill unknown origin/destination from a callsign route lookup. */
+    public static function applyRoute(array $f, ?array $route): array
+    {
+        if ($route !== null) {
+            $f['origin'] = $route['origin'];
+            $f['destination'] = $route['destination'];
+            $f['routeSource'] = 'adsbdb';
+        }
+        return $f;
+    }
+
+    /** Derive journey progress, distance remaining and a labelled ETA estimate. Never overrides provider times. */
+    public static function addGeometry(array $f, int $nowMs): array
+    {
+        $o = $f['origin'];
+        $d = $f['destination'];
+        if (!isset($o['lat'], $o['lon'], $d['lat'], $d['lon'])) {
+            return $f;
+        }
+        $total = Geo::distanceKm((float) $o['lat'], (float) $o['lon'], (float) $d['lat'], (float) $d['lon']);
+        $pos = $f['position'] ?? null;
+        if (is_array($pos) && empty($f['onGround']) && $total > 50) {
+            $remaining = Geo::distanceKm((float) $pos['lat'], (float) $pos['lon'], (float) $d['lat'], (float) $d['lon']);
+            $f['distanceRemainingKm'] = self::round($remaining);
+            if ($f['progress'] === null) {
+                $f['progress'] = (int) max(0, min(100, self::round((1 - $remaining / $total) * 100)));
+                $f['progressBasis'] = 'position';
+            }
+            $speed = $f['speedKmh'] ?? null;
+            if ($f['estimatedIn'] === null && $speed !== null && $speed >= 200) {
+                $f['etaEstimate'] = self::iso($nowMs + (int) round($remaining / $speed * 3600000));
+            }
+            return $f;
+        }
+        $out = $f['actualOut'] ?? $f['estimatedOut'] ?? $f['scheduledOut'];
+        $in = $f['estimatedIn'] ?? $f['scheduledIn'];
+        if ($f['progress'] === null && isset(self::AIRBORNE[$f['providerStatus'] ?? '']) && $out !== null && $in !== null) {
+            $span = strtotime($in) - strtotime($out);
+            if ($span > 0) {
+                $f['progress'] = (int) max(0, min(100, self::round(($nowMs / 1000 - strtotime($out)) / $span * 100)));
+                $f['progressBasis'] = 'times';
+            }
+        }
+        return $f;
+    }
+
+    /** Scheduled details are only requested close to now, so the small free allowance is not wasted. */
+    public static function scheduleDateOk(string $date, int $nowMs): bool
+    {
+        $day = strtotime($date . ' 00:00:00 UTC');
+        $today = strtotime(gmdate('Y-m-d', intdiv($nowMs, 1000)) . ' 00:00:00 UTC');
+        return $day !== false && $day >= $today - 86400 && $day <= $today + 3 * 86400;
+    }
+
+    public static function isAirborneStatus(array $f): bool
+    {
+        return isset(self::AIRBORNE[$f['providerStatus'] ?? '']);
+    }
+
+    /**
+     * Merge scheduled (date-specific) flights with live OpenSky matches. Scheduled data is authoritative; the aircraft's live
+     * position is attached to the first flight that is in the air. Without scheduled data, live matches are returned alone and
+     * their usual route is looked up (at most 5 lookups) via $routeFor(callsign): ?array.
+     */
+    public static function combine(array $scheduled, array $matches, string $number, int $nowMs, callable $routeFor): array
+    {
+        $flights = [];
+        if ($scheduled) {
+            $live = null;
+            foreach ($matches as $s) {
+                if (empty($s[8])) {
+                    $live = self::stateToFlight($s, $number);
+                    break;
+                }
+            }
+            $attached = false;
+            foreach ($scheduled as $f) {
+                if ($live !== null && !$attached && self::isAirborneStatus($f)) {
+                    $f = self::applyPosition($f, $live);
+                    $attached = true;
+                }
+                $flights[] = self::addGeometry($f, $nowMs);
+            }
+            return $flights;
+        }
+        $looked = 0;
+        foreach ($matches as $s) {
+            $f = self::stateToFlight($s, $number);
+            if ($looked < 5 && isset($s[1]) && is_string($s[1])) {
+                $looked++;
+                $f = self::applyRoute($f, $routeFor(self::canonicalCallsign($s[1])));
+            }
+            $flights[] = self::addGeometry($f, $nowMs);
+        }
+        return $flights;
+    }
 }

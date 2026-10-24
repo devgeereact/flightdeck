@@ -11,3 +11,9 @@
 | Clerk/MariaDB | NOT IMPLEMENTED; not required by current V1 | Activate only for approved accounts/shared data |
 
 Provider availability/licences may change. Before activation consult current official provider documentation; record source/date/limits and cost, without secret values. No source page is permission to buy a plan or send private data.
+
+## Live flight data (24 October 2026)
+- OpenSky Network: live positions; OAuth2 client credentials; 4,000 credits a day; snapshot cached 120 s.
+- adsbdb (api.adsbdb.com/v0/callsign/{callsign}): free, no key; route data by David Taylor and Jim Mason, not to be copied into other databases; short cache only.
+- AeroDataBox (RapidAPI, host aerodatabox.p.rapidapi.com, GET /flights/number/{number}/{date}): free Basic plan 400 units a month, 1 request a second, personal use, visible attribution required (shown in the app). Key goes in php/private/config.php as aerodatabox_key (server only, never VITE_). Spend limits in config.example.php.
+- Google: no public flight API (QPX Express closed 2018).

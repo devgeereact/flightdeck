@@ -24,3 +24,6 @@ Historical feature checks are not promoted to fresh passes. No newly configured 
 
 ## Hosting probe, 24 October 2026
 PASS: target discovery (cPanel roots, FTP account list), origin FTPS certificate, scoped FTP login/root, GitHub secrets saved by name, manual workflow run 40077621830, public HTTPS exact marker page, cleanup. PASS (Skyhook, 24 Oct 2026): Cloudflare SSL strict and hostname-scoped respect-origin cache rule verified by API; manifest MIME application/manifest+json live; production release run 40078631011 (tests, build, restricted-key PHP rsync, additive FTPS upload, public checks); restricted key denies shell and --delete. NOT TESTED: PWA install/offline/update on a device; rollback of a prior release.
+
+## Live data pipeline, 24 October 2026
+PASS: php tests 46/46 (mapping from a schema-derived AeroDataBox fixture, spend limits, caching, cooldown, route lookup, merge rules); pnpm test 6/6; pnpm build. PASS live through the local PHP server: OpenSky + adsbdb for EK1 (DXB to LHR, progress, distance, ETA estimate) and LH400. NOT TESTED: AeroDataBox against the real service (no key yet; fixture is derived from the published OpenAPI spec, not a captured response, and the unit cost per call is assumed to be 2); UI in a browser; Node/PHP parity run for the changed config route; production deploy.
