@@ -8,6 +8,7 @@ import html
 import io
 import os
 import pathlib
+import re
 import secrets
 import ssl
 import time
@@ -16,6 +17,7 @@ import urllib.request
 from urllib.parse import urlsplit
 
 APP_NAME = 'Flightdeck'
+BEACON = re.compile(rb'<script[^>]*static\.cloudflareinsights\.com[^>]*></script>')
 TEMPLATE = pathlib.Path(__file__).with_name('deployment-test-page.template.html')
 
 
@@ -59,7 +61,7 @@ def main():
             for attempt in range(1, 4):
                 try:
                     with urllib.request.urlopen(request, timeout=25, context=ssl.create_default_context()) as response:
-                        got = response.read(65537)
+                        got = BEACON.sub(b'', response.read(65537), count=1)  # Cloudflare Web Analytics injects one script at the edge
                         info = (response.status, response.geturl() == request.full_url, len(got), len(body), response.headers.get('Content-Type'), response.headers.get('cf-mitigated'), response.headers.get('cf-cache-status'))
                         if response.status == 200 and info[1] and got == body:
                             break
