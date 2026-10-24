@@ -53,7 +53,7 @@ def main():
         try:
             ftp.storbinary('STOR ' + filename, io.BytesIO(body))
             uploaded = True
-            request = urllib.request.Request(values['PUBLIC_BASE_URL'].rstrip('/') + '/' + filename, headers={'Cache-Control': 'no-cache'})
+            request = urllib.request.Request(values['PUBLIC_BASE_URL'].rstrip('/') + '/' + filename, headers={'Cache-Control': 'no-cache', 'User-Agent': 'Flightdeck-deploy-probe/1.0 (+https://github.com/gsakinz/flightdeck)'})
             with urllib.request.urlopen(request, timeout=25, context=ssl.create_default_context()) as response:
                 if response.status != 200 or response.geturl() != request.full_url or response.read(65537) != body:
                     raise RuntimeError('Public HTTPS probe did not match the uploaded page')
