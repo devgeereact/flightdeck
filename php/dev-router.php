@@ -1,6 +1,5 @@
 <?php
 $csp = file_get_contents(__DIR__ . '/../public/.htaccess');
-if (preg_match('/Content-Security-Policy-Report-Only "([^"]+)"/', $csp, $m)) { header('Content-Security-Policy-Report-Only: ' . $m[1]); }
 if (preg_match('/Content-Security-Policy "([^"]+)"/', $csp, $m)) { header('Content-Security-Policy: ' . $m[1]); }
 
 // Local only: php -S 127.0.0.1:3998 php/dev-router.php
