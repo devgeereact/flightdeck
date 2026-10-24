@@ -1,13 +1,14 @@
 <?php
 declare(strict_types=1);
 // Mirrors server/flight.test.ts. Run: php php/tests/run.php
-foreach (['Http', 'Store', 'CloudflareIps', 'Geo', 'Flight', 'OpenSky', 'RouteLookup', 'AeroDataBox'] as $f) {
+foreach (['Http', 'DevEnv', 'Store', 'CloudflareIps', 'Geo', 'Flight', 'OpenSky', 'RouteLookup', 'AeroDataBox'] as $f) {
     require __DIR__ . '/../private/src/' . $f . '.php';
 }
 
 use Flightdeck\AeroDataBox;
 use Flightdeck\AeroDataBoxError;
 use Flightdeck\CloudflareIps;
+use Flightdeck\DevEnv;
 use Flightdeck\Flight;
 use Flightdeck\Geo;
 use Flightdeck\RouteLookup;
@@ -262,6 +263,10 @@ check('date filter: nothing matches -> provider list returned, flagged inexact',
 $idA = Flight::fromAeroDataBox($two[0], 'BA59', '2026-10-24')['id'];
 $two[1]['departure']['scheduledTime']['utc'] = '2026-10-24 21:30Z';
 check('flight ids are unique per departure time', $idA !== Flight::fromAeroDataBox($two[1], 'BA59', '2026-10-24')['id']);
+$p = DevEnv::parse("# c\nA=1\nB = \"two words\" \nC='x'\nEMPTY=\nbad line\n  D=4\r\n");
+check('devenv: parses plain, quoted, spaced and CRLF lines; skips empty and junk', $p === ['A' => '1', 'B' => 'two words', 'C' => 'x', 'D' => '4'], json_encode($p));
+check('devenv: never reads a .env on the real server layout', DevEnv::forPrivateDir('/home/someone/flightdeck-private') === [] && DevEnv::forPrivateDir('/srv/app/private') === []);
+check('devenv: reads the project .env only for php/private', is_array(DevEnv::forPrivateDir(dirname(__DIR__) . '/private')));
 foreach ([$tmp, $tmp . '-b', $tmp . '-c', $tmp . '-d', $tmp . '-e', $tmp . '-f', $tmp . '-g'] as $dir) {
     exec('rm -rf ' . escapeshellarg($dir));
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 // Loaded by the public entrypoint. Lives OUTSIDE every webroot on the server.
 ini_set('display_errors', '0');
 require __DIR__ . '/Http.php';
+require __DIR__ . '/DevEnv.php';
 require __DIR__ . '/CloudflareIps.php';
 require __DIR__ . '/Store.php';
 require __DIR__ . '/Geo.php';
@@ -22,11 +23,15 @@ set_exception_handler(static function (\Throwable $e): void {
 
 $privateDir = dirname(__DIR__);
 $config = is_file($privateDir . '/config.php') ? (array) require $privateDir . '/config.php' : [];
-$env = static function (string ...$names): ?string {
+$devEnv = \Flightdeck\DevEnv::forPrivateDir($privateDir); // empty on the real server
+$env = static function (string ...$names) use ($devEnv): ?string {
     foreach ($names as $n) {
         $v = getenv($n);
         if (is_string($v) && $v !== '') {
             return $v;
+        }
+        if (isset($devEnv[$n])) {
+            return $devEnv[$n];
         }
     }
     return null;

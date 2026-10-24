@@ -4,18 +4,21 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -k \"tsx watch server/index.ts\" \"vite --host 127.0.0.1\"",
+    "dev": "concurrently -k \"php -S 127.0.0.1:3001 php/dev-router.php\" \"vite --host 127.0.0.1\"",
     "build": "tsc --noEmit && vite build",
     "start": "tsx server/index.ts",
     "test": "tsx --test server/*.test.ts",
     "test:php": "php php/tests/run.php",
     "parity": "node php/tests/parity.mjs",
-    "test:ui": "node test/ui-smoke.mjs"
+    "test:ui": "node test/ui-smoke.mjs",
+    "dev:node": "concurrently -k \"tsx watch server/index.ts\" \"vite --host 127.0.0.1\""
   },
   "dependencies": {
     "@clerk/react": "6.17.8",
+    "@gsap/react": "2.1.2",
     "dotenv": "^17.0.0",
     "express": "^5.0.0",
+    "gsap": "3.15.0",
     "lucide-react": "^0.468.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

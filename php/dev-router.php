@@ -1,5 +1,9 @@
 <?php
-// Local only: php -S 127.0.0.1:3998 php/dev-router.php   (set FLIGHTDECK_PRIVATE=php/private)
+// Local only: php -S 127.0.0.1:3998 php/dev-router.php
+// Provider keys come from the project's .env automatically (see php/private/src/DevEnv.php); nothing has to be exported.
+if (getenv('FLIGHTDECK_PRIVATE') === false) {
+    putenv('FLIGHTDECK_PRIVATE=' . __DIR__ . '/private');
+}
 $path = rawurldecode((string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH));
 if (strncmp($path, '/api', 4) === 0 && ($path === '/api' || $path[4] === '/')) {
     require __DIR__ . '/../public/api/index.php';
