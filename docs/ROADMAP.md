@@ -15,6 +15,6 @@
 ## P3 — quality and release
 - F6: scoped UI extraction/readability/accessibility and storage/error fixes.
 - F7: complete PWA icons/update UX/offline/reconnect/device checks.
-- F8: dedicated FTPS account and low-minutes GitHub release workflow after Git/repo/targets are separately approved. Exit: real successful authorised deploy and public smoke checks.
+- F8 (DONE 24 Oct 2026 by Skyhook, run 40078631011): dedicated FTPS account and low-minutes GitHub release workflow after Git/repo/targets are separately approved. Exit: real successful authorised deploy and public smoke checks.
 
 Current: documentation/governance completed in this task; product code unchanged. Do not mark future milestones complete based on scaffold or docs existence. No calendar estimates are promised.

@@ -23,7 +23,7 @@ Public DNS-over-HTTPS returned Cloudflare A records for flightdeck.gakinz.com (1
 | /api/config | PASS, 200 | provider OpenSky Network; liveAvailable true; no-store; CF BYPASS |
 | /api/flights?number=BA117&date=2026-10-24&mode=demo | PASS, 200 | mode demo; one sample result; no-store |
 | /sw.js | PASS, 200 | JavaScript; no-cache |
-| /manifest.webmanifest | PARTIAL, 200 | no-cache, but Content-Type application/octet-stream; correct manifest MIME still needs review |
+| /manifest.webmanifest | PASS, 200 | no-cache, Content-Type application/manifest+json (fixed 24 Oct 2026 by Skyhook: AddType in public/.htaccess plus single-URL Cloudflare purge) |
 
 Live OpenSky search was NOT called in this pass, to avoid spending its quota. liveAvailable true is configuration evidence, not proof of every live field. OpenSky positional data does not establish boarding/gates/baggage/schedules. No browser rendering/device/install/update matrix was repeated. PHP/Node HTTP parity was not rerun because it needs controlled local servers.
 
@@ -31,7 +31,7 @@ Live OpenSky search was NOT called in this pass, to avoid spending its quota. li
 
 Project notes name public root /home/devgeereact/flightdeck.gakinz.com and private PHP root /home/devgeereact/flightdeck-private. These filesystem mappings were not freshly checked via cPanel in this pass. Do not guess or recreate them. Prior origin: premium17.web-hosting.com / 185.61.152.45, explicit FTPS 21, SSH/SFTP 21098. Check account/root/permissions before using.
 
-The existing public site must be preserved. Origin certificate/Cloudflare Full(strict), zone ID/access, exact current DNS configuration, current dedicated FTP accounts, GitHub identity/repo and saved Actions secrets were NOT verified here. Public Cloudflare HTTPS alone does not prove strict origin TLS.
+The existing public site must be preserved. Origin certificate/Cloudflare Full(strict), zone ID/access, exact current DNS configuration, current dedicated FTP accounts, GitHub identity/repo and saved Actions secrets were NOT verified here (UPDATE 24 Oct 2026, Skyhook: Cloudflare strict mode, DNS record and cache rule verified by API; release workflow and secrets now exist, see docs/DEPLOYMENT.md). Public Cloudflare HTTPS alone does not prove strict origin TLS.
 
 ## Documentation inconsistencies
 

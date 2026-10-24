@@ -22,3 +22,6 @@ Verified source backup: ~/repo-backups/flightdeck-2026-10-24-0022. Original 25 f
 
 ## Update 24 Oct 2026
 User approved the PHP backend (picked as best option). PHP API implemented and locally tested (see MIGRATION-PHP). Next gate: read-only cPanel/DNS discovery for flightdeck.gakinz.com, then staging upload. php installed locally via Homebrew (8.5.12).
+
+## Update 24 Oct 2026 (agent Skyhook)
+Production release pipeline built and proven: `production` branch + .github/workflows/release.yml, restricted rsync-only SSH key for ~/flightdeck-private/src, additive FTPS for the public root. Cloudflare SSL strict verified; hostname-scoped cache rule respects origin headers; manifest MIME fixed. Open: trust_cf_connecting_ip (shared rate bucket) awaits user approval; PWA update test on a device. See docs/DEPLOYMENT.md.

@@ -19,7 +19,7 @@ Status: PREPARE_ONLY. Read-only audit complete; no external resource, repository
 | GitHub | `gh` authenticated as **gsakinz** (scopes gist, read:org, repo, workflow). No orgs. No repository matching "flight". Billing API needs the `user` scope (not granted), so Actions minutes/plan cannot be read. | PARTIAL |
 | Local Git | `/Users/realmrgee/Developer/Projects/flightdeck` is not a Git repo. `.gitignore` covers `node_modules, dist, .env, *.log, .DS_Store, php/private/config.php, php/private/var/`. `.env.example` holds empty secret values. | OK |
 | Backup | `~/repo-backups/flightdeck-2026-10-24-0022` exists but **predates** the PHP work (php/, public/api, scripts/). A fresh snapshot is needed before `git init`. | ACTION |
-| Cloudflare | Zone is on Cloudflare but no Cloudflare API access/token is available in this session, so Full (strict), Browser Cache TTL and the exact record set are NOT verifiable. Origin has a valid public-CA cert for `*.web-hosting.com`, but whether it covers `flightdeck.gakinz.com` (AutoSSL) is unverified. | NOT TESTED |
+| Cloudflare | Zone is on Cloudflare but no Cloudflare API access/token is available in this session, so Full (strict), Browser Cache TTL and the exact record set were NOT verifiable at the time. UPDATE 24 Oct 2026 (Skyhook): verified by API; SSL mode strict; hostname-scoped respect-origin Cache Rule added. Origin has a valid public-CA cert for `*.web-hosting.com`, but whether it covers `flightdeck.gakinz.com` (AutoSSL) is unverified. | NOT TESTED |
 
 Doc inconsistencies to reconcile later (history kept): DEPLOYMENT.md, CURRENT-TASK.md and ARCHITECTURE.md still carry older "no deployment / PHP proposed / Node-only" paragraphs beside the current deployed-manually facts.
 
@@ -58,7 +58,7 @@ Out of scope for this task: deploying the full app, changing the homepage, Cloud
 
 ## 4. Proposed small fixes (separate approval)
 - Manifest MIME: add `AddType application/manifest+json .webmanifest` to the project's own `public/.htaccess` (origin-side, affects only this subdomain). Inspect the current file first; do not overwrite.
-- Cloudflare: confirm SSL mode Full (strict) and Browser Cache TTL "Respect Existing Headers" in the dashboard (zone-wide, your call); note the headers now look right for sw.js and index.html.
+- DONE 24 Oct 2026 (Skyhook): SSL strict confirmed; a hostname-scoped respect-origin Cache Rule replaced the zone-wide change. Original note: confirm SSL mode Full (strict) and Browser Cache TTL "Respect Existing Headers" in the dashboard (zone-wide, your call); note the headers now look right for sw.js and index.html.
 - `trust_cf_connecting_ip` stays false until Cloudflare IP ranges are verified (shared 30/min rate bucket remains).
 
 ## 5. Questions that block Stage B
@@ -71,3 +71,6 @@ Out of scope for this task: deploying the full app, changing the homepage, Cloud
 
 ## 6. Rollback
 Nothing external has changed yet. Later: remove the probe file only by its exact name; revoke the FTP account and secrets only on request; restore from the private backup, never delete a home directory or unrelated DNS.
+
+## Update 24 Oct 2026 (Skyhook)
+The production release workflow and the restricted private PHP release path were built and ran successfully (run 40078631011). Details: docs/DEPLOYMENT.md, Production release. Items above that say Cloudflare is unverifiable or the release workflow is not built are superseded.
