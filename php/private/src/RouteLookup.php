@@ -33,12 +33,16 @@ final class RouteLookup
         }
         $key = 'route-' . $callsign;
         $hit = $this->store->get($key);
+        if ($hit !== null) {
+            Metrics::count('route_cache_hit');
+        }
         if (is_array($hit)) {
             return isset($hit['origin'], $hit['destination']) ? $hit : null;
         }
         if ($hit === 'none') {
             return null;
         }
+        Metrics::count('route_lookup');
         [$status, $body] = ($this->http)('GET', 'https://api.adsbdb.com/v0/callsign/' . rawurlencode($callsign), ['User-Agent: Flightdeck/1.0 (+https://flightdeck.gakinz.com)', 'Accept: application/json'], null, 8);
         if ($status === 404 || $status === 400) {
             $this->store->put($key, 'none', self::MISS_MS);

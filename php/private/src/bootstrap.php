@@ -7,6 +7,10 @@ require __DIR__ . '/Http.php';
 require __DIR__ . '/DevEnv.php';
 require __DIR__ . '/ClerkAuth.php';
 require __DIR__ . '/Checklists.php';
+require __DIR__ . '/Metrics.php';
+require __DIR__ . '/Enquiries.php';
+require __DIR__ . '/ClerkApi.php';
+require __DIR__ . '/Admin.php';
 require __DIR__ . '/CloudflareIps.php';
 require __DIR__ . '/Store.php';
 require __DIR__ . '/Geo.php';
@@ -40,6 +44,9 @@ $env = static function (string ...$names) use ($devEnv): ?string {
 };
 $config['opensky_client_id'] = $config['opensky_client_id'] ?? $env('OPENSKY_CLIENT_ID', 'clientId');
 $config['opensky_client_secret'] = $config['opensky_client_secret'] ?? $env('OPENSKY_CLIENT_SECRET', 'clientSecret');
+$config['admin_user_ids'] = $config['admin_user_ids'] ?? array_values(array_filter(array_map('trim', explode(',', (string) $env('FLIGHTDECK_ADMIN_IDS')))));
+$config['owner_email'] = $config['owner_email'] ?? $env('OWNER_EMAIL');
+$config['clerk_secret_key'] = $config['clerk_secret_key'] ?? $env('CLERK_SECRET_KEY');
 $config['aerodatabox_key'] = $config['aerodatabox_key'] ?? $env('AERODATABOX_KEY', 'RAPID_API_KEY', 'RAPIDAPI_KEY');
 if (($config['opensky_client_id'] ?? '') === '' || ($config['opensky_client_secret'] ?? '') === '') {
     $config['opensky_client_id'] = $config['opensky_client_secret'] = null;

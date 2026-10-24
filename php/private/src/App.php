@@ -7,46 +7,71 @@ final class App
 {
     public static function run(array $config, string $privateDir): void
     {
-        $store = new Store($privateDir . '/var');
+        $varDir = $privateDir . '/var';
+        $store = new Store($varDir);
+        Metrics::init($varDir);
+        $method = (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET');
         $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
         $pos = strpos($path, '/api');
         $route = rtrim($pos === false ? $path : substr($path, $pos + 4), '/');
 
         $ip = CloudflareIps::clientIp((string) ($_SERVER['REMOTE_ADDR'] ?? 'local'), isset($_SERVER['HTTP_CF_CONNECTING_IP']) ? (string) $_SERVER['HTTP_CF_CONNECTING_IP'] : null, !empty($config['trust_cf_connecting_ip']));
         if (!$store->rateAllow($ip, 30, 60000)) {
+            Metrics::count('rate_limited');
             Http::json(429, ['error' => 'Too many requests. Please wait a minute.']);
             return;
         }
         $allowed = ['GET', 'HEAD'];
         if ($route === '/checklist') {
             $allowed[] = 'PUT';
+        } elseif ($route === '/event' || $route === '/contact') {
+            $allowed = ['POST'];
+        } elseif (strpos($route, '/admin/enquiries/') === 0) {
+            $allowed = ['PATCH'];
         }
-        if (!in_array($_SERVER['REQUEST_METHOD'] ?? 'GET', $allowed, true)) {
+        if (!in_array($method, $allowed, true)) {
             header('Allow: ' . implode(', ', $allowed));
             Http::json(405, ['error' => 'Method not allowed']);
             return;
         }
 
         $auth = new ClerkAuth($config['clerk_issuer'] ?? null, $store, null, is_array($config['clerk_authorized_parties'] ?? null) ? $config['clerk_authorized_parties'] : []);
+        $isAdminRoute = strpos($route, '/admin/') === 0;
         $sub = null;
-        if ($route === '/checklist' && !$auth->enabled()) {
-            Http::json(503, ['error' => 'Saving your list to your account needs sign-in, which is not enabled on this server.']);
-            return;
-        }
-        if ($auth->enabled() && ($route === '/flights' || $route === '/weather' || $route === '/checklist')) {
-            $token = ClerkAuth::tokenFrom($_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? null, $_SERVER['HTTP_X_SESSION_TOKEN'] ?? null);
-            $verdict = $auth->check($token);
-            if (!$verdict['ok']) {
-                Http::json($verdict['status'], ['error' => $verdict['error']]);
-                return;
+        if (in_array($route, ['/flights', '/weather', '/checklist', '/me'], true) || $isAdminRoute) {
+            if (!$auth->enabled()) {
+                if ($route === '/me') {
+                    Http::json(200, ['signedIn' => false, 'isAdmin' => false]);
+                    return;
+                }
+                if ($route === '/checklist' || $isAdminRoute) {
+                    Http::json(503, ['error' => 'This needs sign-in, which is not enabled on this server.']);
+                    return;
+                }
+            } else {
+                $token = ClerkAuth::tokenFrom($_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? null, $_SERVER['HTTP_X_SESSION_TOKEN'] ?? null);
+                $verdict = $auth->check($token);
+                if (!$verdict['ok']) {
+                    Metrics::count('auth_denied');
+                    Http::json($verdict['status'], ['error' => $verdict['error']]);
+                    return;
+                }
+                $sub = $verdict['sub'];
+                if ($sub !== null) {
+                    Metrics::user($sub);
+                }
             }
-            $sub = $verdict['sub'];
+        }
+        if ($isAdminRoute && !Admin::isAdmin($sub, $config)) {
+            Metrics::count('admin_denied');
+            Http::json(403, ['error' => 'This area is for the site owner.']);
+            return;
         }
         $opensky = new OpenSky($config['opensky_client_id'] ?? null, $config['opensky_client_secret'] ?? null, $store);
         $adb = new AeroDataBox($config, $store);
         $routes = new RouteLookup($store);
-        switch ($route) {
-            case '/config':
+        switch (true) {
+            case $route === '/config':
                 Http::json(200, [
                     'liveAvailable' => $opensky->configured() || $adb->configured(),
                     'provider' => $adb->configured() ? 'AeroDataBox + OpenSky Network' : 'OpenSky Network',
@@ -54,18 +79,120 @@ final class App
                     'signInRequired' => $auth->enabled(),
                 ]);
                 return;
-            case '/flights':
+            case $route === '/flights':
                 self::flights($opensky, $adb, $routes, $config);
                 return;
-            case '/weather':
+            case $route === '/weather':
                 self::weather($store);
                 return;
-            case '/checklist':
-                self::checklist(new Checklists($privateDir . '/var'), (string) $sub);
+            case $route === '/checklist':
+                self::checklist(new Checklists($varDir), (string) $sub);
+                return;
+            case $route === '/me':
+                $admin = Admin::isAdmin($sub, $config);
+                Http::json(200, ['signedIn' => true, 'isAdmin' => $admin, 'unread' => $admin ? (new Enquiries($varDir))->unread() : null]);
+                return;
+            case $route === '/event':
+                self::event();
+                return;
+            case $route === '/contact':
+                self::contact($store, $varDir, $config, $ip);
+                return;
+            case $isAdminRoute:
+                self::admin($route, $method, $config, $store, $varDir, (string) $sub);
                 return;
             default:
                 Http::json(404, ['error' => 'Unknown endpoint']);
         }
+    }
+
+    /** Small JSON request body, hard-capped. */
+    private static function jsonBody(int $max): ?array
+    {
+        $raw = file_get_contents('php://input', false, null, 0, $max + 1);
+        if ($raw === false || $raw === '' || strlen($raw) > $max) {
+            return null;
+        }
+        $d = json_decode($raw, true);
+        return is_array($d) ? $d : null;
+    }
+
+    /** Anonymous, whitelisted, counter-only events from the app (no cookies, no identifiers). */
+    private static function event(): void
+    {
+        $b = self::jsonBody(512);
+        $name = is_array($b) && is_string($b['name'] ?? null) ? $b['name'] : '';
+        if (!in_array($name, Admin::EVENTS, true)) {
+            Http::json(422, ['error' => 'Unknown event.']);
+            return;
+        }
+        Metrics::count($name);
+        Http::json(200, ['ok' => true]);
+    }
+
+    private static function contact(Store $store, string $varDir, array $config, string $ip): void
+    {
+        if (!$store->rateAllow('contact:' . $ip, 3, 3600000)) {
+            Http::json(429, ['error' => 'You have sent a few messages already. Please try again in an hour.']);
+            return;
+        }
+        $b = self::jsonBody(Enquiries::MAX_MESSAGE * 4 + 2048);
+        if ($b === null) {
+            Http::json(422, ['error' => 'Your message could not be read. Please try again.']);
+            return;
+        }
+        $from = is_string($config['mail_from'] ?? null) && filter_var($config['mail_from'], FILTER_VALIDATE_EMAIL) ? $config['mail_from'] : 'noreply@flightdeck.gakinz.com';
+        $r = (new Enquiries($varDir))->submit($b, is_string($config['owner_email'] ?? null) ? $config['owner_email'] : null, $from);
+        if (!$r['ok']) {
+            Http::json($r['status'], ['error' => $r['error']]);
+            return;
+        }
+        if ($r['id'] !== null) {
+            Metrics::count('enquiry_received');
+        }
+        Http::json(200, ['ok' => true, 'message' => 'Thank you. Your message has been sent.']);
+    }
+
+    /** Owner console data. Only reached by an allow-listed Clerk user (checked in run()). */
+    private static function admin(string $route, string $method, array $config, Store $store, string $varDir, string $sub): void
+    {
+        $metrics = Metrics::instance();
+        $enq = new Enquiries($varDir);
+        if ($route === '/admin/overview') {
+            $days = max(1, min(90, (int) ($_GET['days'] ?? 30)));
+            Metrics::flushNow();
+            $range = $metrics !== null ? $metrics->range($days) : [];
+            Http::json(200, ['overview' => Admin::overview($range), 'allowance' => Admin::allowance($store, $config), 'unread' => $enq->unread()]);
+            return;
+        }
+        if ($route === '/admin/users') {
+            Http::json(200, (new ClerkApi($config['clerk_secret_key'] ?? null, $store))->summary());
+            return;
+        }
+        if ($route === '/admin/enquiries' && $method === 'GET') {
+            Http::json(200, $enq->list(50, max(0, (int) ($_GET['offset'] ?? 0))));
+            return;
+        }
+        if (strpos($route, '/admin/enquiries/') === 0 && $method === 'PATCH') {
+            $b = self::jsonBody(512);
+            $id = substr($route, strlen('/admin/enquiries/'));
+            if (!is_array($b) || !is_string($b['status'] ?? null) || !$enq->setStatus($id, $b['status'])) {
+                Http::json(422, ['error' => 'That change could not be saved.']);
+                return;
+            }
+            Admin::audit($varDir, $sub, 'enquiry ' . $id . ' -> ' . $b['status']);
+            Http::json(200, ['ok' => true, 'unread' => $enq->unread()]);
+            return;
+        }
+        if ($route === '/admin/system') {
+            Http::json(200, Admin::system($config, $store, (new ClerkApi($config['clerk_secret_key'] ?? null, $store))->configured(), false));
+            return;
+        }
+        if ($route === '/admin/analytics') {
+            Http::json(200, ['configured' => false]);
+            return;
+        }
+        Http::json(404, ['error' => 'Unknown endpoint']);
     }
 
     /** GET returns the signed-in user's checklist document; PUT {baseRev, data} stores it if baseRev is still the latest. */
@@ -102,6 +229,27 @@ final class App
             return;
         }
         Http::json(200, ['rev' => $r['rev']]);
+    }
+
+    /** Aggregate-only search statistics: never stored together with who searched. */
+    private static function recordSearch(string $number, array $flights): void
+    {
+        Metrics::count('search_total');
+        if (!$flights) {
+            Metrics::count('search_notfound');
+            Metrics::tally('notfound', $number);
+            return;
+        }
+        Metrics::count(!empty($flights[0]['usualRouteOnly']) ? 'search_usual_route' : 'search_found');
+        Metrics::tally('airlines', substr($number, 0, 2));
+        if (isset($flights[0]['direction']['type'])) {
+            Metrics::tally('direction', (string) $flights[0]['direction']['type']);
+        }
+        $o = $flights[0]['origin']['code'] ?? '—';
+        $d = $flights[0]['destination']['code'] ?? '—';
+        if ($o !== '—' && $d !== '—') {
+            Metrics::tally('routes', $o . '>' . $d);
+        }
     }
 
     private static function param(string $name): string
@@ -211,14 +359,17 @@ final class App
             foreach ($flights as $f) {
                 $airborne = $airborne || $f['position'] !== null;
             }
+            self::recordSearch($number, $flights);
             Http::json(200, [
                 'mode' => 'live', 'flights' => $flights, 'fetchedAt' => Flight::iso($times ? min($times) : $now), 'cached' => $cached,
                 'source' => $sources ? implode(' · ', $sources) : 'No provider answered', 'sources' => $sources, 'notes' => $notes,
                 'refreshSeconds' => $airborne ? OpenSky::SNAPSHOT_SECONDS : 600,
             ]);
         } catch (OpenSkyError $e) {
+            Metrics::count('search_error');
             Http::json(502, ['error' => $e->getMessage()]);
         } catch (\Throwable $e) {
+            Metrics::count('search_error');
             error_log('flightdeck flights: ' . get_class($e));
             Http::json(502, ['error' => 'Unable to retrieve flight data.']);
         }

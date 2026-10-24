@@ -54,17 +54,22 @@ final class AeroDataBox
         $cacheKey = 'adb-' . sha1($number . '|' . $date);
         $hit = $this->store->get($cacheKey);
         if (is_array($hit) && isset($hit['flights'], $hit['fetchedAt'])) {
+            Metrics::count('adb_cache_hit');
             return [$hit['flights'], true, $hit['fetchedAt']];
         }
         return $this->store->withLock('adb', function () use ($number, $date, $cacheKey) {
             $hit = $this->store->get($cacheKey);
             if (is_array($hit) && isset($hit['flights'], $hit['fetchedAt'])) {
+                Metrics::count('adb_cache_hit');
                 return [$hit['flights'], true, $hit['fetchedAt']];
             }
             if ($this->store->get('adb-cooldown') !== null) {
                 throw new AeroDataBoxError('Scheduled flight details are paused for a few minutes.');
             }
             $this->spend();
+            Metrics::count('adb_call');
+            Metrics::count('adb_units', self::COST_UNITS);
+            $t0 = microtime(true);
             [$status, $body] = ($this->http)(
                 'GET',
                 'https://' . $this->host . '/flights/number/' . rawurlencode($number) . '/' . $date . '?dateLocalRole=Departure&withAircraftImage=false&withLocation=false&withFlightPlan=false',
@@ -72,6 +77,10 @@ final class AeroDataBox
                 null,
                 15
             );
+            Metrics::latency('aerodatabox', (int) round((microtime(true) - $t0) * 1000));
+            if ($status !== 200 && $status !== 204) {
+                Metrics::count('adb_error');
+            }
             if ($status === 401 || $status === 403) {
                 $this->store->put('adb-cooldown', 1, 300000);
                 throw new AeroDataBoxError(stripos($body, 'not subscribed') !== false

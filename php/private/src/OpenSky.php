@@ -55,6 +55,7 @@ final class OpenSky
     {
         $snap = $this->store->get('snapshot');
         if (is_array($snap)) {
+            Metrics::count('opensky_cache_hit');
             return [$snap['states'], true, $snap['fetchedAt']];
         }
         return $this->store->withLock('snapshot', function () {
@@ -63,7 +64,13 @@ final class OpenSky
                 return [$snap['states'], true, $snap['fetchedAt']];
             }
             @ini_set('memory_limit', '256M');
+            Metrics::count('opensky_fetch');
+            $t0 = microtime(true);
             [$status, $body] = Http::request('GET', 'https://opensky-network.org/api/states/all', ['Authorization: Bearer ' . $this->token()], null, 20);
+            Metrics::latency('opensky', (int) round((microtime(true) - $t0) * 1000));
+            if ($status !== 200) {
+                Metrics::count('opensky_error');
+            }
             if ($status === 401) {
                 $this->store->forget('token');
                 throw new OpenSkyError('OpenSky rejected the API credentials.');

@@ -1,4 +1,4 @@
-import {useRef} from 'react';
+import {useEffect,useRef} from 'react';
 import {Plane,ArrowRight,Check} from 'lucide-react';
 import {SignInButton,SignUpButton} from '@clerk/react';
 import gsap from 'gsap';
@@ -6,6 +6,7 @@ import {useGSAP} from '@gsap/react';
 import {SplitText} from 'gsap/SplitText';
 import {MotionPathPlugin} from 'gsap/MotionPathPlugin';
 import {DrawSVGPlugin} from 'gsap/DrawSVGPlugin';
+import {track,trackOnce} from './track';
 gsap.registerPlugin(useGSAP,SplitText,MotionPathPlugin,DrawSVGPlugin);
 
 // One calm hero: headline, two actions, and an illustrative flight drawn in the app's own look.
@@ -14,6 +15,7 @@ const STAGES:[number,string][]=[[0,'Boarding'],[0.06,'Departed'],[0.12,'En route
 
 export default function Landing(){
  const root=useRef<HTMLDivElement>(null);
+ useEffect(()=>{trackOnce('landing_view')},[]);
  useGSAP(()=>{
   const q=gsap.utils.selector(root);
   const mm=gsap.matchMedia();
@@ -59,7 +61,7 @@ export default function Landing(){
     <h1 className="hero-title" id="hero-title">Know your flight before the airport does.</h1>
     <p className="hero-sub">Live status, gates, baggage belts and where the aircraft is right now, together in one calm place. Free to use.</p>
     <div className="hero-cta">
-     <SignUpButton mode="modal"><button className="cta">Create free account<ArrowRight size={17}/></button></SignUpButton>
+     <SignUpButton mode="modal"><button className="cta" onClick={()=>track('cta_click')}>Create free account<ArrowRight size={17}/></button></SignUpButton>
      <SignInButton mode="modal"><button className="cta ghost">Sign in</button></SignInButton>
     </div>
     <ul className="hero-points"><li><Check size={15}/>Outbound or inbound, clearly labelled</li><li><Check size={15}/>Real gate, terminal and baggage belt when reported</li><li><Check size={15}/>Position straight from the aircraft</li></ul>

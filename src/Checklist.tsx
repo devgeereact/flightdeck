@@ -5,6 +5,7 @@ import {TEMPLATE} from './checklistTemplate';
 import {loadLocal,saveLocal,getOwner,setOwner,clearLocal} from './checklistStore';
 import {syncOnce,httpApi} from './checklistSync';
 import {apiFetch} from './api';
+import {track} from './track';
 
 type Saved={number:string;date:string};
 type Props={saved:Saved[];signedIn:boolean;userId:string|null;request:Saved|null;onRequestDone:()=>void;onTrack:(n:string,d:string)=>void};
@@ -33,7 +34,9 @@ export default function Checklist({saved,signedIn,userId,request,onRequestDone,o
 
  // One place every change goes through: apply, check it still fits, keep it on this device straight away (works offline).
  const commit=(fn:(d:M.ChecklistData)=>M.ChecklistData)=>{
-  const next=fn(dataRef.current);if(next===dataRef.current)return;
+  const prev=dataRef.current;const next=fn(prev);if(next===prev)return;
+  if(next.trips.some(t=>!prev.trips.some(p=>p.id===t.id)))track('checklist_created');
+  const p=next.trips.find(t=>t.id===next.active);if(p){const pr=M.progress(M.view(next,p.id));if(pr.total>0&&pr.done===pr.total){try{const k='fd-done-'+p.id;if(!localStorage.getItem(k)){localStorage.setItem(k,'1');track('checklist_completed')}}catch{}}}
   if(!M.fits(next)){setMsg('Your checklist is full. Remove a trip or some of your own items first.');return}
   dataRef.current=next;setData(next);setMsg('');
   if(!saveLocal(next))setMsg('Your browser could not save this. Changes will be lost when you close the page.');

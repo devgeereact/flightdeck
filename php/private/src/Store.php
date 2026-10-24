@@ -74,7 +74,7 @@ final class Store
     public function rateAllow(string $key, int $limit, int $windowMs): bool
     {
         if (mt_rand(1, 100) === 1) {
-            $cutoff = time() - 600;
+            $cutoff = time() - 7200; // longer than the longest window used (one hour)
             foreach (glob($this->dir . '/rate/*.json') ?: [] as $f) {
                 if (@filemtime($f) < $cutoff) {
                     @unlink($f);

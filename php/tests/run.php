@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 // Mirrors server/flight.test.ts. Run: php php/tests/run.php
-foreach (['Http', 'DevEnv', 'ClerkAuth', 'Checklists', 'Store', 'CloudflareIps', 'Geo', 'Flight', 'OpenSky', 'RouteLookup', 'AeroDataBox'] as $f) {
+foreach (['Http', 'DevEnv', 'ClerkAuth', 'Checklists', 'Metrics', 'Enquiries', 'ClerkApi', 'Admin', 'Store', 'CloudflareIps', 'Geo', 'Flight', 'OpenSky', 'RouteLookup', 'AeroDataBox'] as $f) {
     require __DIR__ . '/../private/src/' . $f . '.php';
 }
 
@@ -10,6 +10,10 @@ use Flightdeck\AeroDataBoxError;
 use Flightdeck\CloudflareIps;
 use Flightdeck\ClerkAuth;
 use Flightdeck\Checklists;
+use Flightdeck\Metrics;
+use Flightdeck\Enquiries;
+use Flightdeck\ClerkApi;
+use Flightdeck\Admin;
 use Flightdeck\DevEnv;
 use Flightdeck\Flight;
 use Flightdeck\Geo;
@@ -361,7 +365,117 @@ check('checklist: files are named by a hash (never the user id), mode 600, no te
     return substr($f, -4) === '.tmp';
 })) === 0 && fileperms($tmp . '-l/checklists/' . hash('sha256', 'user_a') . '.json') % 01000 === 0600);
 
-foreach ([$tmp, $tmp . '-b', $tmp . '-c', $tmp . '-d', $tmp . '-e', $tmp . '-f', $tmp . '-g', $tmp . '-h', $tmp . '-i', $tmp . '-j', $tmp . '-k', $tmp . '-l'] as $dir) {
+// ---- Owner console: counters, enquiries, Clerk users, admin rules ----
+$mdir = $tmp . '-m';
+@mkdir($mdir, 0700, true);
+Metrics::init($mdir);
+Metrics::count('search_total', 3);
+Metrics::count('search_found', 2);
+Metrics::count('search_notfound');
+Metrics::tally('airlines', 'BA', 2);
+Metrics::tally('airlines', 'LH');
+Metrics::tally('routes', 'LHR>JFK', 2);
+Metrics::tally('routes', 'bad key!! <script>');
+Metrics::latency('aerodatabox', 300);
+Metrics::latency('aerodatabox', 500);
+Metrics::user('user_a');
+Metrics::user('user_a');
+Metrics::user('user_b');
+$nowSec = (int) strtotime('2026-10-24 12:00:00 UTC');
+Metrics::instance()->flush($nowSec);
+Metrics::count('search_total');
+Metrics::user('user_a');
+Metrics::instance()->flush($nowSec); // a second request the same day
+$day = Metrics::instance()->range(1, $nowSec)[0];
+check('metrics: counters add up across requests in one day', $day['c']['search_total'] === 4 && $day['c']['search_found'] === 2 && $day['m']['airlines'] == ['BA' => 2, 'LH' => 1] && $day['m']['routes']['LHR>JFK'] === 2);
+check('metrics: unsafe keys are cleaned, never stored raw', !array_key_exists('bad key!! <script>', $day['m']['routes']) && isset($day['m']['routes']['badkeyscript>']));
+check('metrics: distinct users counted once per day (2 people, 3 visits)', $day['users'] === 2);
+check('metrics: provider latency kept as sum and count', $day['lat']['aerodatabox'] == [800, 2]);
+$raw = (string) file_get_contents($mdir . '/metrics/2026-10-24.json');
+check('metrics: the file holds no raw user ids, only salted hashes, and is mode 600', strpos($raw, 'user_a') === false && fileperms($mdir . '/metrics/2026-10-24.json') % 01000 === 0600 && preg_match('/"u":\["[0-9a-f]{16}"/', $raw) === 1);
+$r7 = Metrics::instance()->range(7, $nowSec);
+check('metrics: a range returns every day, oldest first, with empty days as zeros', count($r7) === 7 && $r7[0]['date'] === '2026-10-18' && $r7[6]['date'] === '2026-10-24' && $r7[0]['users'] === 0 && $r7[0]['c'] === []);
+for ($i = 0; $i < 230; $i++) {
+    Metrics::tally('routes', 'R' . $i . '>X');
+}
+Metrics::instance()->flush($nowSec);
+check('metrics: a map cannot grow without limit (extra keys fold into _other)', count(Metrics::instance()->range(1, $nowSec)[0]['m']['routes']) <= 202 && isset(Metrics::instance()->range(1, $nowSec)[0]['m']['routes']['_other']));
+
+$mails = [];
+$enq = new Enquiries($tmp . '-n', static function ($to, $subject, $body, $headers) use (&$mails) {
+    $mails[] = compact('to', 'subject', 'body', 'headers');
+    return true;
+});
+$ok = ['kind' => 'contact', 'name' => 'Sam', 'email' => 'sam@example.com', 'message' => 'Hello, can you add Terminal 3 info please?', 'elapsed' => 9000, 'website' => ''];
+$nowMs = 1800000000000;
+$r = $enq->submit($ok, 'owner@example.com', 'noreply@flightdeck.gakinz.com', $nowMs);
+check('enquiry: a good message is stored, emailed to the owner with a safe reply-to', $r['ok'] && $r['id'] !== null && count($mails) === 1 && $mails[0]['to'] === 'owner@example.com' && in_array('Reply-To: sam@example.com', $mails[0]['headers'], true) && strpos($mails[0]['body'], 'Terminal 3') !== false);
+$stored = $enq->list();
+check('enquiry: it appears in the inbox as new, with the unread count', $stored['total'] === 1 && $stored['unread'] === 1 && $stored['items'][0]['status'] === 'new' && $stored['items'][0]['emailed'] === true);
+$inj = $ok;
+$inj['email'] = "evil@example.com\r\nBcc: victim@example.com";
+check('enquiry: header injection through the email field is refused', $enq->submit($inj, 'owner@example.com', 'noreply@x.com', $nowMs)['status'] === 422 && count($mails) === 1);
+$inj2 = $ok;
+$inj2['name'] = "Sam\r\nBcc: victim@example.com";
+$inj2['message'] = "Subject line\r\nBcc: victim@example.com\r\n\r\nhello there";
+$enq->submit($inj2, 'owner@example.com', 'noreply@x.com', $nowMs + 1000);
+$last = end($mails);
+check('enquiry: line breaks in name or message never reach an email header', count($mails) === 2 && !preg_match('/[\r\n]Bcc:/i', implode("\r\n", $last['headers']) . $last['subject']) && strpos($last['subject'], 'Bcc') === false);
+$bot = $ok;
+$bot['website'] = 'http://spam.example';
+$rb = $enq->submit($bot, 'owner@example.com', 'noreply@x.com', $nowMs);
+check('enquiry: the honeypot silently drops bots without storing or emailing', $rb['ok'] && $rb['id'] === null && count($mails) === 2 && $enq->list()['total'] === 2);
+$fast = $ok;
+$fast['elapsed'] = 400;
+check('enquiry: a form filled in under a second is refused', $enq->submit($fast, 'o@example.com', 'n@x.com', $nowMs)['status'] === 429);
+$links = $ok;
+$links['message'] = 'Buy http://a.example http://b.example http://c.example now';
+check('enquiry: too many links are refused as spam', $enq->submit($links, 'o@example.com', 'n@x.com', $nowMs)['status'] === 422);
+check('enquiry: invalid kind, short, huge, bad email and missing email for contact are refused', $enq->submit(['kind' => 'x'] + $ok, null, 'n@x.com', $nowMs)['status'] === 422 && $enq->submit(['message' => 'hi'] + $ok, null, 'n@x.com', $nowMs)['status'] === 422 && $enq->submit(['message' => str_repeat('a', 5000)] + $ok, null, 'n@x.com', $nowMs)['status'] === 413 && $enq->submit(['email' => 'nope'] + $ok, null, 'n@x.com', $nowMs)['status'] === 422 && $enq->submit(['email' => ''] + $ok, null, 'n@x.com', $nowMs)['status'] === 422);
+$fb = $enq->submit(['kind' => 'feedback', 'message' => 'Love the checklist!', 'elapsed' => 5000, 'email' => ''], null, 'n@x.com', $nowMs + 5000);
+check('enquiry: feedback needs no email; stored without email when no owner address is set', $fb['ok'] && $enq->list()['items'][0]['emailed'] === false);
+$bigId = $enq->list()['items'][0]['id'];
+check('enquiry: the owner can mark it read; bad ids and statuses are refused; unread drops', $enq->setStatus($bigId, 'read') && !$enq->setStatus('../../etc/passwd', 'read') && !$enq->setStatus($bigId, 'deleted') && $enq->unread() === 2);
+$noMail = new Enquiries($tmp . '-n', static function () {
+    throw new \RuntimeException('smtp down');
+});
+check('enquiry: a broken mail system never loses the message', $noMail->submit($ok, 'owner@example.com', 'n@x.com', $nowMs + 9000)['ok'] && $noMail->list()['total'] >= 4);
+
+$clerkCalls = [];
+$clerkFake = static function ($method, $url, $headers) use (&$clerkCalls) {
+    $clerkCalls[] = $url;
+    if (strpos($url, '/users/count') !== false) {
+        return [200, json_encode(['object' => 'total_count', 'total_count' => strpos($url, 'last_active') !== false ? 3 : 12])];
+    }
+    return [200, json_encode([['id' => 'user_1', 'created_at' => 1800000000000, 'last_active_at' => 1800000100000, 'last_sign_in_at' => 1800000090000, 'primary_email_address_id' => 'idn_1', 'email_addresses' => [['id' => 'idn_0', 'email_address' => 'other@example.com'], ['id' => 'idn_1', 'email_address' => 'primary@example.com']]]])];
+};
+check('clerk users: refuses a malformed secret key, nothing is called', !(new ClerkApi('not-a-key', new Store($tmp . '-o'), $clerkFake))->configured() && (new ClerkApi('', new Store($tmp . '-o'), $clerkFake))->summary() === ['configured' => false] && $clerkCalls === []);
+$ca = new ClerkApi('sk_live_abcdef123456', new Store($tmp . '-o'), $clerkFake);
+$sum = $ca->summary(1800000200000);
+check('clerk users: totals, 7/30-day activity, signups and the newest user with their PRIMARY email', $sum['configured'] && $sum['total'] === 12 && $sum['active7'] === 3 && $sum['active30'] === 3 && $sum['newest'][0]['email'] === 'primary@example.com' && $sum['newest'][0]['lastActiveAt'] === 1800000100000);
+$n = count($clerkCalls);
+$ca->summary(1800000200001);
+check('clerk users: cached for five minutes (no second round of calls)', count($clerkCalls) === $n);
+$rejected = (new ClerkApi('sk_live_abcdef123456', new Store($tmp . '-p'), static function () {
+    return [401, '{}'];
+}))->summary();
+check('clerk users: a rejected key reports an error, no exception, no key in the message', $rejected['configured'] === true && strpos($rejected['error'], 'rejected') !== false && strpos(json_encode($rejected), 'sk_live') === false);
+
+$cfg = ['admin_user_ids' => ['user_owner']];
+check('admin: only the exact configured user ids are admins', Admin::isAdmin('user_owner', $cfg) && !Admin::isAdmin('user_other', $cfg) && !Admin::isAdmin(null, $cfg) && !Admin::isAdmin('', $cfg) && !Admin::isAdmin('user_owner', []) && !Admin::isAdmin('user_owner', ['admin_user_ids' => 'user_owner']) && !Admin::isAdmin('USER_OWNER', $cfg));
+$ov = Admin::overview(Metrics::instance()->range(7, $nowSec));
+check('admin: overview totals and success rate', $ov['totals']['searches'] === 4 && $ov['totals']['found'] === 2 && $ov['totals']['notFound'] === 1 && $ov['totals']['successRate'] === 50.0 && $ov['days'] === 7 && count($ov['series']['searches']) === 7 && $ov['series']['searches'][6] === 4);
+check('admin: top airlines/routes and average provider latency', $ov['top']['airlines'][0] === ['key' => 'BA', 'count' => 2] && array_column($ov['top']['routes'], 'count', 'key')['LHR>JFK'] === 2 && $ov['latencyMs']['aerodatabox'] === 400);
+$store2 = new Store($tmp . '-q');
+$store2->put('adb-units-2026-10', 100, 86400000);
+$al = Admin::allowance($store2, ['aerodatabox_monthly_units' => 360], $nowSec);
+check('admin: allowance forecast (100 units in 24 days -> about 4/day, enough until month end)', $al['used'] === 100 && $al['left'] === 260 && $al['perDay'] === 4.2 && $al['runsOutBeforeMonthEnd'] === false);
+$store2->put('adb-units-2026-10', 340, 86400000);
+check('admin: allowance forecast warns when the month will run out early', Admin::allowance($store2, ['aerodatabox_monthly_units' => 360], $nowSec)['runsOutBeforeMonthEnd'] === true);
+check('admin: the console never reports secrets in the system view', strpos(json_encode(Admin::system(['aerodatabox_key' => 'SECRETKEY', 'clerk_secret_key' => 'sk_live_x', 'owner_email' => 'o@x.com'], $store2, true, false)), 'SECRET') === false && Admin::system(['owner_email' => 'o@x.com'], $store2, false, false)['emailNotifications'] === true);
+check('admin: the event whitelist contains only counter names', in_array('landing_view', Admin::EVENTS, true) && !in_array('search_total', Admin::EVENTS, true) && !in_array('admin_denied', Admin::EVENTS, true));
+
+foreach ([$tmp, $tmp . '-b', $tmp . '-c', $tmp . '-d', $tmp . '-e', $tmp . '-f', $tmp . '-g', $tmp . '-h', $tmp . '-i', $tmp . '-j', $tmp . '-k', $tmp . '-l', $tmp . '-m', $tmp . '-n', $tmp . '-o', $tmp . '-p', $tmp . '-q'] as $dir) {
     exec('rm -rf ' . escapeshellarg($dir));
 }
 
