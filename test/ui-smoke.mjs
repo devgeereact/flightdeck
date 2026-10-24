@@ -29,10 +29,11 @@ process.on('exit', stop);
 for (let i = 0; i < 20; i++) { try { if ((await fetch(BASE + 'api/config')).ok) break; } catch {} await sleep(250); }
 const cfg = await (await fetch(BASE + 'api/config')).json();
 
-async function boot({config, storedMode} = {}) {
-  const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {url: BASE, runScripts: 'outside-only', pretendToBeVisual: true});
+async function boot({config, storedMode, hash = '', storage = {}} = {}) {
+  const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {url: BASE + hash, runScripts: 'outside-only', pretendToBeVisual: true});
   const w = dom.window;
   if (storedMode) w.localStorage.setItem('flightdeck-mode', storedMode);
+  for (const [k, v] of Object.entries(storage)) w.localStorage.setItem(k, v);
   w.fetch = async (input, init) => {
     const u = new URL(String(input), BASE);
     if (config && u.pathname === '/api/config') return new Response(JSON.stringify(config), {headers: {'content-type': 'application/json'}});
@@ -85,6 +86,47 @@ try {
     check('B8 far-future date: usual route + outbound shown, no invented times', tf.includes('LHR') && tf.includes('CPT') && /Outbound from London/.test(tf) && tf.includes('not published yet'), tf.slice(300, 700));
     f.w.close();
   } else console.log('SKIPPED A/B: no live provider keys configured locally');
+
+  // ---- Travel checklist (no Clerk, so it runs as a guest with the list on this device) ----
+  {
+    const click = (w, el) => el.dispatchEvent(new w.MouseEvent('click', {bubbles: true, cancelable: true}));
+    const setVal = (w, el, v) => { Object.getOwnPropertyDescriptor(w.HTMLInputElement.prototype, 'value').set.call(el, v); el.dispatchEvent(new w.Event('input', {bubbles: true})); };
+    const byText = (d, sel, t) => [...d.querySelectorAll(sel)].find(e => e.textContent.trim() === t || e.textContent.trim().startsWith(t));
+    const k = await boot({hash: '#/checklist'}); await sleep(1500);
+    let d = k.w.document;
+    check('K1 checklist route shows the first-time screen, not the flight search', k.text().includes('Pack once. Reuse it every trip.') && !d.querySelector('.search-card'));
+    setVal(k.w, d.querySelector('.cl-start input'), 'Cape Town in October');
+    d.querySelector('.cl-start').dispatchEvent(new k.w.Event('submit', {bubbles: true, cancelable: true})); await sleep(600);
+    check('K2 starting makes a trip with all 8 sections and 101 items unticked', d.querySelectorAll('details.cl-sec').length === 8 && d.querySelectorAll('.cl-check').length === 101 && k.text().includes('0 of 101 packed'), k.text().slice(300, 600));
+    check('K3 sections run in trip order, ending with the night before and last minute', [...d.querySelectorAll('.cl-sec-title')].map(e => e.textContent).join('|') === 'Days in advance|Clothes and accessories|Bathroom bag|Accessories|Papers and documents|Mostly work related|The night before|Last minute');
+    const passport = byText(d, '.cl-check', 'Passport');
+    click(k.w, passport.querySelector('input')); await sleep(400);
+    check('K4 ticking Passport updates the count and keeps it on the device', k.text().includes('1 of 101 packed') && JSON.parse(k.w.localStorage.getItem('flightdeck-checklist')).trips[0].done.length === 1);
+    const saved = k.w.localStorage.getItem('flightdeck-checklist');
+    const k2 = await boot({hash: '#/checklist', storage: {'flightdeck-checklist': saved}}); await sleep(1500);
+    const d2 = k2.w.document;
+    check('K5 after a reload the trip, its name and the tick are still there', k2.text().includes('1 of 101 packed') && d2.querySelector('.cl-name').value === 'Cape Town in October' && byText(d2, '.cl-check', 'Passport').querySelector('input').checked);
+    byText(d2, '.cl-sec', 'Last minute').querySelector('.cl-sec-foot .text-button').dispatchEvent(new k2.w.MouseEvent('click', {bubbles: true})); await sleep(300);
+    setVal(k2.w, d2.querySelector('.cl-add input'), 'Travel pillow');
+    d2.querySelector('.cl-add').dispatchEvent(new k2.w.Event('submit', {bubbles: true, cancelable: true})); await sleep(400);
+    check('K6 adding your own item puts it in that section and the total grows', !!byText(d2, '.cl-check', 'Travel pillow') && k2.text().includes('1 of 102 packed'));
+    click(k2.w, byText(d2, 'button', 'Edit list')); await sleep(300);
+    const x = d2.querySelector('button[aria-label="Hide Watch"]'); click(k2.w, x); await sleep(300);
+    check('K7 hiding an item removes it from the total, and Restore all brings it back', k2.text().includes('of 101 packed') && k2.text().includes('1 item hidden'));
+    click(k2.w, byText(d2, 'button', 'Restore all')); await sleep(300);
+    check('K8 restore works', k2.text().includes('of 102 packed') && !k2.text().includes('item hidden'));
+    click(k2.w, byText(d2, 'button', 'Done editing')); await sleep(200);
+    click(k2.w, byText(d2, 'button', 'Reset ticks')); await sleep(200);
+    check('K9 reset asks first, then unticks everything for the next trip', k2.text().includes('Yes, untick everything'));
+    click(k2.w, byText(d2, 'button', 'Yes, untick everything')); await sleep(300);
+    check('K10 after reset nothing is ticked but the list and the added item remain', k2.text().includes('0 of 102 packed') && !!byText(d2, '.cl-check', 'Travel pillow'));
+    click(k2.w, byText(d2, 'button', 'Still to pack')); await sleep(300);
+    check('K11 "Still to pack" filter keeps the list visible and no runtime errors occurred', d2.querySelectorAll('.cl-check').length === 102 && k.errors.length === 0 && k2.errors.length === 0, k.errors.concat(k2.errors).join(' | '));
+    k.w.close(); k2.w.close();
+    const tampered = await boot({hash: '#/checklist', storage: {'flightdeck-checklist': '{"trips":"nope","tpl":7,"rev":"x"}'}}); await sleep(1200);
+    check('K12 a corrupted saved list never crashes the page', tampered.text().includes('Pack once. Reuse it every trip.') && tampered.errors.length === 0);
+    tampered.w.close();
+  }
   const c = await boot({config: {liveAvailable: false, provider: 'x'}}); await sleep(2000);
   check('C1 no live providers: says so plainly', c.text().includes('not configured on this server'));
   c.w.close();

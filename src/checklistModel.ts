@@ -1,0 +1,151 @@
+// Pure checklist logic: no React, no browser APIs, so it is unit-tested in node and reused by the sync layer.
+// Stored data is small on purpose: the template ships in the app, a user stores only their edits and per-trip ticks.
+import { TEMPLATE, type TemplateSection } from './checklistTemplate';
+
+export type Flight = { number: string; date: string };
+export type Trip = { id: string; name: string; flight?: Flight; updatedAt: number; done: string[] };
+export type Added = { id: string; sec: string; text: string };
+export type ChecklistData = {
+  v: 1;
+  rev: number; // server revision for conflict detection (0 = never synced)
+  tpl: { updatedAt: number; hidden: string[]; renamed: Record<string, string>; added: Added[] };
+  trips: Trip[];
+  gone: Record<string, number>; // deleted trip id -> time, so a delete survives a merge
+  active: string | null;
+};
+export type ViewItem = { id: string; text: string; custom: boolean; done: boolean };
+export type ViewSection = { id: string; title: string; hint?: string; items: ViewItem[]; hiddenCount: number; doneCount: number };
+
+export const LIMITS = { bytes: 64 * 1024, trips: 12, items: 250, label: 80, name: 60 };
+
+export const emptyData = (): ChecklistData => ({ v: 1, rev: 0, tpl: { updatedAt: 0, hidden: [], renamed: {}, added: [] }, trips: [], gone: {}, active: null });
+
+const clean = (t: string, max: number) => t.replace(/\s+/g, ' ').trim().slice(0, max);
+export const uid = (prefix: string, now = Date.now(), rnd = Math.random()) => `${prefix}.${now.toString(36)}${Math.floor(rnd * 1e6).toString(36)}`;
+
+/** Defensive parse of anything read from storage or the network. Never throws; drops what it does not understand. */
+export function sanitize(raw: unknown): ChecklistData {
+  const out = emptyData();
+  if (!raw || typeof raw !== 'object') return out;
+  const r = raw as any;
+  out.rev = Number.isInteger(r.rev) && r.rev >= 0 ? r.rev : 0;
+  const t = r.tpl && typeof r.tpl === 'object' ? r.tpl : {};
+  out.tpl.updatedAt = Number.isFinite(t.updatedAt) ? t.updatedAt : 0;
+  out.tpl.hidden = Array.isArray(t.hidden) ? t.hidden.filter((x: unknown) => typeof x === 'string').slice(0, 400) : [];
+  if (t.renamed && typeof t.renamed === 'object') {
+    for (const [k, v] of Object.entries(t.renamed)) if (typeof v === 'string' && v.trim()) out.tpl.renamed[k] = clean(v, LIMITS.label);
+  }
+  if (Array.isArray(t.added)) {
+    out.tpl.added = t.added
+      .filter((a: any) => a && typeof a.id === 'string' && typeof a.sec === 'string' && typeof a.text === 'string' && a.text.trim())
+      .slice(0, LIMITS.items).map((a: any) => ({ id: a.id, sec: a.sec, text: clean(a.text, LIMITS.label) }));
+  }
+  if (Array.isArray(r.trips)) {
+    out.trips = r.trips
+      .filter((x: any) => x && typeof x.id === 'string' && typeof x.name === 'string')
+      .slice(0, LIMITS.trips).map((x: any): Trip => ({
+        id: x.id, name: clean(x.name, LIMITS.name) || 'My trip', updatedAt: Number.isFinite(x.updatedAt) ? x.updatedAt : 0,
+        done: Array.isArray(x.done) ? [...new Set<string>(x.done.filter((d: unknown) => typeof d === 'string'))].slice(0, 500) : [],
+        ...(x.flight && typeof x.flight.number === 'string' && typeof x.flight.date === 'string' ? { flight: { number: x.flight.number.slice(0, 12), date: x.flight.date.slice(0, 10) } } : {}),
+      }));
+  }
+  if (r.gone && typeof r.gone === 'object') for (const [k, v] of Object.entries(r.gone)) if (Number.isFinite(v)) out.gone[k] = v as number;
+  out.active = typeof r.active === 'string' && out.trips.some((x) => x.id === r.active) ? r.active : out.trips[0]?.id ?? null;
+  return out;
+}
+
+export const bytes = (d: ChecklistData) => new TextEncoder().encode(JSON.stringify(d)).length;
+
+/** The sections the user actually sees, with their edits applied. */
+export function view(d: ChecklistData, tripId: string | null, sections: TemplateSection[] = TEMPLATE): ViewSection[] {
+  const trip = d.trips.find((t) => t.id === tripId);
+  const done = new Set(trip?.done ?? []);
+  const hidden = new Set(d.tpl.hidden);
+  return sections.map((sec) => {
+    const all = [
+      ...sec.items.map((i) => ({ id: i.id, text: d.tpl.renamed[i.id] ?? i.text, custom: false })),
+      ...d.tpl.added.filter((a) => a.sec === sec.id).map((a) => ({ id: a.id, text: a.text, custom: true })),
+    ];
+    const shown = all.filter((i) => !hidden.has(i.id)).map((i) => ({ ...i, done: done.has(i.id) }));
+    return { id: sec.id, title: sec.title, hint: sec.hint, items: shown, hiddenCount: all.length - shown.length, doneCount: shown.filter((i) => i.done).length };
+  });
+}
+
+export function progress(sections: ViewSection[]) {
+  const total = sections.reduce((n, s) => n + s.items.length, 0);
+  const done = sections.reduce((n, s) => n + s.doneCount, 0);
+  return { total, done, percent: total ? Math.round((done / total) * 100) : 0 };
+}
+
+const touchTrip = (d: ChecklistData, id: string, fn: (t: Trip) => Trip, now: number): ChecklistData =>
+  ({ ...d, trips: d.trips.map((t) => (t.id === id ? { ...fn(t), updatedAt: now } : t)) });
+const touchTpl = (d: ChecklistData, tpl: Partial<ChecklistData['tpl']>, now: number): ChecklistData => ({ ...d, tpl: { ...d.tpl, ...tpl, updatedAt: now } });
+
+export function addTrip(d: ChecklistData, name: string, flight?: Flight, now = Date.now()): ChecklistData {
+  if (d.trips.length >= LIMITS.trips) return d;
+  const t: Trip = { id: uid('trip', now), name: clean(name, LIMITS.name) || 'My next trip', updatedAt: now, done: [], ...(flight ? { flight } : {}) };
+  return { ...d, trips: [...d.trips, t], active: t.id };
+}
+export function removeTrip(d: ChecklistData, id: string, now = Date.now()): ChecklistData {
+  const trips = d.trips.filter((t) => t.id !== id);
+  return { ...d, trips, gone: { ...d.gone, [id]: now }, active: d.active === id ? trips[0]?.id ?? null : d.active };
+}
+export const renameTrip = (d: ChecklistData, id: string, name: string, now = Date.now()) =>
+  touchTrip(d, id, (t) => ({ ...t, name: clean(name, LIMITS.name) || t.name }), now);
+export const linkFlight = (d: ChecklistData, id: string, flight: Flight | undefined, now = Date.now()) =>
+  touchTrip(d, id, ({ flight: _old, ...t }) => ({ ...t, ...(flight ? { flight } : {}) }), now);
+export const tick = (d: ChecklistData, id: string, itemId: string, on: boolean, now = Date.now()) =>
+  touchTrip(d, id, (t) => ({ ...t, done: on ? [...new Set([...t.done, itemId])] : t.done.filter((x) => x !== itemId) }), now);
+export const resetTicks = (d: ChecklistData, id: string, now = Date.now()) => touchTrip(d, id, (t) => ({ ...t, done: [] }), now);
+
+export function addItem(d: ChecklistData, sec: string, text: string, now = Date.now()): ChecklistData {
+  const t = clean(text, LIMITS.label);
+  if (!t || d.tpl.added.length >= LIMITS.items || !TEMPLATE.some((s) => s.id === sec)) return d;
+  if (d.tpl.added.some((a) => a.sec === sec && a.text.toLowerCase() === t.toLowerCase())) return d;
+  return touchTpl(d, { added: [...d.tpl.added, { id: uid('cx', now), sec, text: t }] }, now);
+}
+export function renameItem(d: ChecklistData, id: string, text: string, now = Date.now()): ChecklistData {
+  const t = clean(text, LIMITS.label);
+  if (!t) return d;
+  if (d.tpl.added.some((a) => a.id === id)) return touchTpl(d, { added: d.tpl.added.map((a) => (a.id === id ? { ...a, text: t } : a)) }, now);
+  return touchTpl(d, { renamed: { ...d.tpl.renamed, [id]: t } }, now);
+}
+/** Template items are hidden (and can be restored); items the user added are deleted outright. */
+export function removeItem(d: ChecklistData, id: string, now = Date.now()): ChecklistData {
+  if (d.tpl.added.some((a) => a.id === id)) {
+    return { ...touchTpl(d, { added: d.tpl.added.filter((a) => a.id !== id) }, now), trips: d.trips.map((t) => ({ ...t, done: t.done.filter((x) => x !== id) })) };
+  }
+  return touchTpl(d, { hidden: [...new Set([...d.tpl.hidden, id])] }, now);
+}
+export const restoreAll = (d: ChecklistData, now = Date.now()) => touchTpl(d, { hidden: [] }, now);
+export const hideSection = (d: ChecklistData, sectionId: string, now = Date.now()) => {
+  const ids = (TEMPLATE.find((s) => s.id === sectionId)?.items ?? []).map((i) => i.id);
+  return touchTpl(d, { hidden: [...new Set([...d.tpl.hidden, ...ids])] }, now);
+};
+export const showSection = (d: ChecklistData, sectionId: string, now = Date.now()) => {
+  const ids = new Set((TEMPLATE.find((s) => s.id === sectionId)?.items ?? []).map((i) => i.id));
+  return touchTpl(d, { hidden: d.tpl.hidden.filter((h) => !ids.has(h)) }, now);
+};
+
+/**
+ * Merge two copies (this device and the server). Template edits: the newer copy wins as a whole. Trips: matched by id, the newer
+ * updatedAt wins; a delete beats an older copy of the trip. Deterministic and symmetric, so repeated merges converge.
+ */
+export function merge(a: ChecklistData, b: ChecklistData): ChecklistData {
+  const gone: Record<string, number> = { ...a.gone };
+  for (const [k, v] of Object.entries(b.gone)) gone[k] = Math.max(gone[k] ?? 0, v);
+  const byId = new Map<string, Trip>();
+  for (const t of [...a.trips, ...b.trips]) {
+    const cur = byId.get(t.id);
+    if (!cur || t.updatedAt > cur.updatedAt || (t.updatedAt === cur.updatedAt && JSON.stringify(t) > JSON.stringify(cur))) byId.set(t.id, t);
+  }
+  const trips = [...byId.values()].filter((t) => !(gone[t.id] >= t.updatedAt)).sort((x, y) => x.id.localeCompare(y.id)).slice(0, LIMITS.trips);
+  const tpl = a.tpl.updatedAt > b.tpl.updatedAt || (a.tpl.updatedAt === b.tpl.updatedAt && JSON.stringify(a.tpl) >= JSON.stringify(b.tpl)) ? a.tpl : b.tpl;
+  const active = trips.some((t) => t.id === a.active) ? a.active : trips[0]?.id ?? null;
+  return { v: 1, rev: Math.max(a.rev, b.rev), tpl, trips, gone, active };
+}
+
+export const fits = (d: ChecklistData) => bytes(d) <= LIMITS.bytes && d.trips.length <= LIMITS.trips && d.tpl.added.length <= LIMITS.items;
+
+/** Is there anything worth saving? (An untouched, never-used list is not.) */
+export const isBlank = (d: ChecklistData) => !d.trips.length && !d.tpl.hidden.length && !d.tpl.added.length && !Object.keys(d.tpl.renamed).length;
