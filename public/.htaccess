@@ -1,5 +1,7 @@
 # Flightdeck on cPanel/Apache. /api goes to the PHP entrypoint BEFORE the SPA fallback.
 Options -Indexes
+
+AddType application/manifest+json .webmanifest
 RewriteEngine On
 
 RewriteCond %{REQUEST_URI} !^/api/index\.php$

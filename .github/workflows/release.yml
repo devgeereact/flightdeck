@@ -1,0 +1,48 @@
+name: Production release
+# Releases on a push to the deliberate `production` branch, or manually from it. Tests and build first, additive upload only.
+on:
+  push:
+    branches: [production]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: production-release
+  cancel-in-progress: false  # never cancel mid-upload
+jobs:
+  release:
+    if: github.ref == 'refs/heads/production'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24.22.1
+      - name: Install pnpm
+        run: npm install --global pnpm@12.15.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: pnpm test:php
+      - run: pnpm build
+      - name: Release private PHP source (restricted key, additive rsync)
+        env:
+          RELEASE_SSH_KEY: ${{ secrets.RELEASE_SSH_KEY }}
+          RELEASE_SSH_HOST: ${{ secrets.RELEASE_SSH_HOST }}
+          RELEASE_SSH_KNOWN_HOSTS: ${{ secrets.RELEASE_SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$RELEASE_SSH_KEY" > ~/.ssh/release_key && chmod 600 ~/.ssh/release_key
+          printf '%s\n' "$RELEASE_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          rsync -rlt -e "ssh -i ~/.ssh/release_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -p 21098" \
+            php/private/src/ "$RELEASE_SSH_HOST":flightdeck-private/src/
+          rm -f ~/.ssh/release_key
+      - name: Release static app and verify over public HTTPS
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          PUBLIC_BASE_URL: ${{ vars.PUBLIC_BASE_URL }}
+        run: python3 scripts/release-static.py
