@@ -344,7 +344,8 @@ final class App
             if ($opensky->configured()) {
                 try {
                     [$states, $c, $t] = $opensky->states();
-                    $matches = array_slice(Flight::matchStates($states, $number), 0, 20);
+                    // An aircraft in the air right now is today's flight. It must not be shown as the answer for a date far outside the window.
+                    $matches = Flight::scheduleDateOk($date, $now) ? array_slice(Flight::matchStates($states, $number), 0, 20) : [];
                     $sources[] = 'OpenSky Network';
                     $times[] = $t;
                     $cached = $cached && $c;
