@@ -6,7 +6,7 @@ import type {Airport,Flight,FlightResponse} from './types';
 import {destinations} from './destinations';
 import {apiFetch} from './api';
 import {summarise} from './summary';
-import {withMotion} from './motion';
+import {withMotion,fromAny} from './motion';
 import {time,day,airlines,regionName,withHint,weatherLabel,directionText,journeySteps} from './flightFormat';
 gsap.registerPlugin(useGSAP);
 
@@ -62,13 +62,13 @@ export default function FlightView({flight,data,now,busy,auto,setAuto,changes,on
   useGSAP(()=>{
     const q=gsap.utils.selector(root);
     withMotion(()=>{
-      gsap.from(q('.fv-top > *, .fv-tabs'),{autoAlpha:0,y:20,duration:.55,ease:'power3.out',stagger:.09});
-      gsap.from(q('.route-progress > div'),{scaleX:0,transformOrigin:'0 50%',duration:1,ease:'power2.out',delay:.3});
+      fromAny(gsap,q('.fv-top > *, .fv-tabs'),{autoAlpha:0,y:20,duration:.55,ease:'power3.out',stagger:.09});
+      fromAny(gsap,q('.route-progress > div'),{scaleX:0,transformOrigin:'0 50%',duration:1,ease:'power2.out',delay:.3});
     });
   },{scope:root,dependencies:[flight.id]});
   useGSAP(()=>{
     const q=gsap.utils.selector(root);
-    withMotion(()=>{gsap.from(q('.fv-body > *'),{autoAlpha:0,y:12,duration:.4,ease:'power2.out',stagger:.05})});
+    withMotion(()=>{fromAny(gsap,q('.fv-body > *'),{autoAlpha:0,y:12,duration:.4,ease:'power2.out',stagger:.05})});
   },{scope:root,dependencies:[panel,flight.id]});
   return <div className="fv" ref={root}>
     <div className="fv-bar"><h2>Your flight</h2><div><span className="updated">Updated {time(data.fetchedAt,here())}</span><button className="icon-button" aria-label="Refresh flight" onClick={onRefresh} disabled={busy}><RefreshCw size={16} className={busy?'spin':''}/></button><button className="text-button" onClick={onSave}><Bookmark size={15}/>Save flight</button></div></div>

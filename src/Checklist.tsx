@@ -9,7 +9,7 @@ import {syncOnce,httpApi} from './checklistSync';
 import {suggest} from './checklistRules';
 import {contextFromFlight,weatherStale} from './tripContext';
 import {summarise} from './summary';
-import {withMotion} from './motion';
+import {withMotion,fromAny} from './motion';
 import {apiFetch} from './api';
 import {track,ga} from './track';
 
@@ -119,7 +119,7 @@ export default function Checklist({saved,signedIn,userId,request,onRequestDone,o
  const activeIdx=activeSec?visible.indexOf(activeSec):-1;
  const boardRef=useRef<HTMLDivElement>(null);
  // The open section's items settle in when you switch sections; skipped for people who prefer reduced motion.
- useGSAP(()=>{withMotion(()=>{const q=gsap.utils.selector(boardRef);gsap.from(q('.ck-sec:not([hidden]) .ck-sec-head, .ck-sec:not([hidden]) .ck-list li'),{autoAlpha:0,y:8,duration:.35,ease:'power2.out',stagger:{amount:.3}})})},{scope:boardRef,dependencies:[activeSec?.id,trip?.id],revertOnUpdate:true});
+ useGSAP(()=>{withMotion(()=>{const q=gsap.utils.selector(boardRef);fromAny(gsap,q('.ck-sec:not([hidden]) .ck-sec-head, .ck-sec:not([hidden]) .ck-list li'),{autoAlpha:0,y:8,duration:.35,ease:'power2.out',stagger:{amount:.3}})})},{scope:boardRef,dependencies:[activeSec?.id,trip?.id],revertOnUpdate:true});
 
  if(!trip)return <section className="panel ck-empty">
   <ListChecks size={34}/>

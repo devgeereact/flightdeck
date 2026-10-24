@@ -4,7 +4,7 @@ import {useGSAP} from '@gsap/react';
 import {DrawSVGPlugin} from 'gsap/DrawSVGPlugin';
 import {Activity,Users,Inbox,Gauge,Server,BarChart3,RefreshCw,Mail,Reply,Send,Table2,AlertTriangle,CheckCircle2,CircleSlash,ExternalLink,LineChart} from 'lucide-react';
 import {apiFetch} from './api';
-import {withMotion} from './motion';
+import {withMotion,fromAny} from './motion';
 gsap.registerPlugin(useGSAP,DrawSVGPlugin);
 
 type Tab='overview'|'usage'|'costs'|'users'|'enquiries'|'analytics'|'system';
@@ -41,10 +41,10 @@ function Chart({title,values,dates,kind='bars',unit='',wide=false}:{title:string
 
 function Rank({title,items,empty}:{title:string;items:{key:string;count:number}[];empty:string}){
  const max=Math.max(1,...items.map(i=>i.count));
- return <section className="panel ad-rank"><h3>{title}</h3>{items.length===0?<p className="ad-empty">{empty}</p>:<ul>{items.map(i=><li key={i.key}><span className="ad-rank-k">{i.key}</span><span className="ad-rank-bar"><i style={{width:`${i.count/max*100}%`}}/></span><span className="ad-rank-n">{nf.format(i.count)}</span></li>)}</ul>}</section>
+ return <section className="panel ad-rank"><h3 role="heading" aria-level={2}>{title}</h3>{items.length===0?<p className="ad-empty">{empty}</p>:<ul>{items.map(i=><li key={i.key}><span className="ad-rank-k">{i.key}</span><span className="ad-rank-bar"><i style={{width:`${i.count/max*100}%`}}/></span><span className="ad-rank-n">{nf.format(i.count)}</span></li>)}</ul>}</section>
 }
 
-function Setup({title,children}:{title:string;children:React.ReactNode}){return <section className="panel ad-setup"><AlertTriangle size={20}/><div><h3>{title}</h3>{children}</div></section>}
+function Setup({title,children}:{title:string;children:React.ReactNode}){return <section className="panel ad-setup"><AlertTriangle size={20}/><div><h3 role="heading" aria-level={2}>{title}</h3>{children}</div></section>}
 
 export default function Admin({onUnread}:{onUnread:(n:number)=>void}){
  const [tab,setTab]=useState<Tab>('overview'),[days,setDays]=useState(30),[err,setErr]=useState(''),[busy,setBusy]=useState(false);
@@ -79,10 +79,10 @@ export default function Admin({onUnread}:{onUnread:(n:number)=>void}){
   const q=gsap.utils.selector(root);
   withMotion(()=>{
    const tl=gsap.timeline({defaults:{ease:'power3.out'}});
-   tl.from(q('.ad-head > *'),{autoAlpha:0,y:14,duration:.5,stagger:.08})
-    .from(q('.ad-tabs button'),{autoAlpha:0,y:10,duration:.4,stagger:.04},'<.15')
-    .from(q('.ad-kpi'),{autoAlpha:0,y:18,duration:.55,stagger:.07},'<.1')
-    .from(q('.ad-body .panel, .ad-enq > li'),{autoAlpha:0,y:22,duration:.6,stagger:.08},'<.1');
+   fromAny(tl,q('.ad-head > *'),{autoAlpha:0,y:14,duration:.5,stagger:.08});
+   fromAny(tl,q('.ad-tabs button'),{autoAlpha:0,y:10,duration:.4,stagger:.04},'<.15');
+   fromAny(tl,q('.ad-kpi'),{autoAlpha:0,y:18,duration:.55,stagger:.07},'<.1');
+   fromAny(tl,q('.ad-body .panel, .ad-enq > li'),{autoAlpha:0,y:22,duration:.6,stagger:.08},'<.1');
    q('.ad-kpi strong').forEach((el:Element)=>{
     const txt=(el.textContent||'').trim();
     if(!/^[\d,]+$/.test(txt))return;
@@ -132,7 +132,7 @@ export default function Admin({onUnread}:{onUnread:(n:number)=>void}){
 
   {tab==='costs'&&(!ov?<p className="ad-loading">Loading…</p>:<>
    <section className={al.runsOutBeforeMonthEnd?'panel ad-allow warn':'panel ad-allow'}>
-    <div className="ad-allow-top"><div><h3>Flight schedule allowance ({al.month})</h3><p>{al.used} of {al.cap} units used · {al.left} left</p></div>{al.runsOutBeforeMonthEnd?<span className="pill warn"><AlertTriangle size={11}/>RUNS OUT EARLY</span>:<span className="pill ok"><CheckCircle2 size={11}/>ON TRACK</span>}</div>
+    <div className="ad-allow-top"><div><h3 role="heading" aria-level={2}>Flight schedule allowance ({al.month})</h3><p>{al.used} of {al.cap} units used · {al.left} left</p></div>{al.runsOutBeforeMonthEnd?<span className="pill warn"><AlertTriangle size={11}/>RUNS OUT EARLY</span>:<span className="pill ok"><CheckCircle2 size={11}/>ON TRACK</span>}</div>
     <div className="ad-meter" role="progressbar" aria-valuenow={al.used} aria-valuemin={0} aria-valuemax={al.cap} aria-label="Units used this month"><i style={{width:`${Math.min(100,al.cap?al.used/al.cap*100:0)}%`}}/></div>
     <p className="ad-allow-note">{al.perDay>0?`About ${al.perDay} units a day so far. ${al.daysUntilEmpty===null?'':al.runsOutBeforeMonthEnd?`At this pace the allowance runs out in about ${al.daysUntilEmpty} days, before the month ends. Searches fall back to live position and routes only.`:'At this pace it lasts to the end of the month.'}`:'No units used yet this month.'}</p>
    </section>
@@ -144,7 +144,7 @@ export default function Admin({onUnread}:{onUnread:(n:number)=>void}){
     <Kpi label="BLOCKED BY LIMITS" value={t.rateLimited} sub="too many requests from one visitor"/>
     <Kpi label="REFUSED (NOT SIGNED IN)" value={t.authDenied} sub="requests without a valid sign-in"/>
    </div>
-   <section className="panel"><h3>Average answer time</h3><ul className="ad-lat">{Object.keys(ov.overview.latencyMs).length===0?<li className="ad-empty">No provider calls yet.</li>:Object.entries(ov.overview.latencyMs).map(([k,v])=><li key={k}><span>{k}</span><strong>{v==null?'—':`${nf.format(v as number)} ms`}</strong></li>)}</ul></section>
+   <section className="panel"><h3 role="heading" aria-level={2}>Average answer time</h3><ul className="ad-lat">{Object.keys(ov.overview.latencyMs).length===0?<li className="ad-empty">No provider calls yet.</li>:Object.entries(ov.overview.latencyMs).map(([k,v])=><li key={k}><span>{k}</span><strong>{v==null?'—':`${nf.format(v as number)} ms`}</strong></li>)}</ul></section>
    <Chart title="Paid units used" values={s.adbUnits} dates={dates} unit=" units" wide/>
    <p className="ad-note">AI usage is not switched on yet, so there is no AI cost to show.</p>
   </>)}
@@ -152,9 +152,9 @@ export default function Admin({onUnread}:{onUnread:(n:number)=>void}){
   {tab==='users'&&(!users?<p className="ad-loading">Loading…</p>:!users.configured?<Setup title="Show your user numbers here"><p>This needs your Clerk <b>secret</b> key stored on the server (never in the browser). Add it to the private server config as <code>clerk_secret_key</code>, or ask to have it set up for you. Until then, see your users in the <a href="https://dashboard.clerk.com" target="_blank" rel="noreferrer">Clerk dashboard <ExternalLink size={11}/></a>.</p></Setup>
    :users.error?<Setup title="Clerk did not answer"><p>{users.error}</p></Setup>:<>
    <div className="ad-kpis"><Kpi label="ACCOUNTS" value={users.total} sub="all time"/><Kpi label="NEW IN 7 DAYS" value={users.signups7} sub={`${users.signups30} in 30 days`}/><Kpi label="ACTIVE IN 7 DAYS" value={users.active7} sub={users.total?`${Math.round(users.active7/users.total*100)}% of accounts`:''}/><Kpi label="ACTIVE IN 30 DAYS" value={users.active30} sub={users.total?`${Math.round(users.active30/users.total*100)}% of accounts`:''}/></div>
-   <section className="panel"><h3>Newest accounts</h3><div className="ad-table-wrap"><table className="ad-table"><thead><tr><th>Email</th><th>Joined</th><th>Last active</th></tr></thead><tbody>{users.newest.map((u:any)=><tr key={u.id}><td>{u.email||'—'}</td><td>{when(u.createdAt)}</td><td>{when(u.lastActiveAt)}</td></tr>)}</tbody></table></div><p className="ad-note">Refreshed every five minutes. Checked at {when(users.fetchedAt)}.</p></section></>)}
+   <section className="panel"><h3 role="heading" aria-level={2}>Newest accounts</h3><div className="ad-table-wrap"><table className="ad-table"><thead><tr><th>Email</th><th>Joined</th><th>Last active</th></tr></thead><tbody>{users.newest.map((u:any)=><tr key={u.id}><td>{u.email||'—'}</td><td>{when(u.createdAt)}</td><td>{when(u.lastActiveAt)}</td></tr>)}</tbody></table></div><p className="ad-note">Refreshed every five minutes. Checked at {when(users.fetchedAt)}.</p></section></>)}
 
-  {tab==='enquiries'&&(!enq?<p className="ad-loading">Loading…</p>:enq.items.length===0?<section className="panel ad-emptybox"><Inbox size={28}/><h3>No messages yet</h3><p>When someone uses the Feedback button or the contact form, it appears here and is emailed to you if an address is set up.</p></section>:
+  {tab==='enquiries'&&(!enq?<p className="ad-loading">Loading…</p>:enq.items.length===0?<section className="panel ad-emptybox"><Inbox size={28}/><h3 role="heading" aria-level={2}>No messages yet</h3><p>When someone uses the Feedback button or the contact form, it appears here and is emailed to you if an address is set up.</p></section>:
    <>{sentNote&&<div role="status" className="notice"><CheckCircle2 size={16}/>{sentNote}</div>}<ul className="ad-enq">{enq.items.map((m:any)=><li key={m.id} className={'panel '+(m.status==='new'?'new':'')}>
     <div className="ad-enq-top"><span className="pill">{m.kind.toUpperCase()}</span><strong>{m.name||'Anonymous'}</strong>{m.email&&<a href={`mailto:${m.email}?subject=${encodeURIComponent('Re: your message to Flightdeck')}`}><Mail size={12}/>{m.email}</a>}<time>{when(m.createdAt)}</time><span className={'pill st-'+m.status}>{m.status.toUpperCase()}</span></div>
     <p className="ad-enq-msg">{m.message}</p>
@@ -173,7 +173,7 @@ export default function Admin({onUnread}:{onUnread:(n:number)=>void}){
    <Rank title="Where visits come from" items={ga.channels} empty="No data yet."/>
    <p className="ad-note">Only visitors who accepted analytics appear here, so these numbers are lower than real traffic. Checked at {when(ga.fetchedAt)}; refreshed every 15 minutes.</p></>:<Setup title="Connect Google Analytics"><p>Once you add your Google Analytics 4 Measurement ID to the app and a read-only Google service account to the server, its visitor numbers (countries, devices, traffic sources) will appear here. Until then, open Google Analytics directly.</p><p><a className="cta ghost" href="https://analytics.google.com" target="_blank" rel="noreferrer">Open Google Analytics <ExternalLink size={13}/></a></p></Setup>)}
 
-  {tab==='system'&&(!sys?<p className="ad-loading">Loading…</p>:<section className="panel"><h3>What is switched on</h3><ul className="ad-flags">{([['Sign-in required for lookups',sys.signInEnforced],['Flight schedule data (AeroDataBox)',sys.aerodatabox],['Live aircraft position (OpenSky)',sys.opensky],['User numbers (Clerk secret key)',sys.clerkApi],['Google Analytics numbers',sys.googleAnalyticsApi],['Email notifications for enquiries',sys.emailNotifications],['AI features',sys.ai],['Ads',sys.ads],['Per-visitor rate limits behind Cloudflare',sys.trustCloudflareIp]] as [string,boolean][]).map(([k,v])=><li key={k}>{v?<CheckCircle2 size={16} className="ok"/>:<CircleSlash size={16} className="off"/>}<span>{k}</span><strong>{v?'On':'Off'}</strong></li>)}</ul><p className="ad-note">PHP {sys.phpVersion} · server time {sys.serverTime}</p></section>)}
+  {tab==='system'&&(!sys?<p className="ad-loading">Loading…</p>:<section className="panel"><h3 role="heading" aria-level={2}>What is switched on</h3><ul className="ad-flags">{([['Sign-in required for lookups',sys.signInEnforced],['Flight schedule data (AeroDataBox)',sys.aerodatabox],['Live aircraft position (OpenSky)',sys.opensky],['User numbers (Clerk secret key)',sys.clerkApi],['Google Analytics numbers',sys.googleAnalyticsApi],['Email notifications for enquiries',sys.emailNotifications],['AI features',sys.ai],['Ads',sys.ads],['Per-visitor rate limits behind Cloudflare',sys.trustCloudflareIp]] as [string,boolean][]).map(([k,v])=><li key={k}>{v?<CheckCircle2 size={16} className="ok"/>:<CircleSlash size={16} className="off"/>}<span>{k}</span><strong>{v?'On':'Off'}</strong></li>)}</ul><p className="ad-note">PHP {sys.phpVersion} · server time {sys.serverTime}</p></section>)}
   </div>
  </section>
 }
