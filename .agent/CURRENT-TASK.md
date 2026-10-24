@@ -11,6 +11,6 @@ Local state: Homebrew php 8.5.12 installed. Local .env still has legacy names cl
 
 Deployed 24 Oct 2026 (user created subdomain + Cloudflare record; assistant uploaded). White screen reported earlier was the empty docroot before upload; fixed by upload. Open items: Cloudflare Browser Cache TTL, trust_cf_connecting_ip, Full (strict) check, PWA tests, git/repo + release workflow. Local dev server may still be running on 3998.
 
-Hosting setup audit, 24 Oct 2026 (read-only, no external changes): see docs/FLIGHTDECK-HOSTING-SETUP-PLAN.md. Blocked on user confirmation of GitHub owner/repo, FTP password route, Cloudflare check method, GitHub plan and commit identity. Files changed: that doc and this note only.
+Hosting setup done 24 Oct 2026: private repo gsakinz/flightdeck, scoped FTP account, repo secrets (names only), manual probe PASS (run 40077621830). Details in docs/DEPLOYMENT.md and docs/FLIGHTDECK-HOSTING-SETUP-PLAN.md. Next: reviewed production release workflow (production branch + manual), manifest MIME fix, Cloudflare Full (strict)/cache check by the user. Nothing from the full app was deployed by this task.
 
 Next bounded task (superseded by the above deployment): read-only cPanel/DNS discovery for flightdeck.gakinz.com (subdomain exists? document root, PHP version/extensions/memory_limit, Cloudflare zone), then follow docs/DEPLOYMENT.md staging recipe. Do not deploy without explicit approval.

@@ -21,3 +21,6 @@ Reviewed 24 October 2026. This task adds documentation/rules only; it does not c
 | Public deployment | PARTIAL | 24 Oct 2026 manual deploy to flightdeck.gakinz.com: HTTPS pages and API smoke tests pass, browser render OK (details in DEPLOYMENT.md). CI/auto-deploy NOT TESTED (no repo/workflow). PWA update behaviour affected by Cloudflare cache TTL |
 
 Historical feature checks are not promoted to fresh passes. No newly configured integration, current server runtime or live-source availability is implied. Update this table only with actual reproducible evidence.
+
+## Hosting probe, 24 October 2026
+PASS: target discovery (cPanel roots, FTP account list), origin FTPS certificate, scoped FTP login/root, GitHub secrets saved by name, manual workflow run 40077621830, public HTTPS exact marker page, cleanup. PARTIAL: Cloudflare (no API access in this session; Full strict, Browser Cache TTL unverified), manifest MIME. NOT TESTED: production release workflow, private PHP release, PWA install/update.

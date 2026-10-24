@@ -8,8 +8,8 @@ current:
   styling: plain-css
   database: none
   authentication: none
-  git_repository: false
-  github_remote: null
+  git_repository: true   # initialised 24 Oct 2026, branch main
+  github_remote: https://github.com/gsakinz/flightdeck   # private
   deployed: true   # staging/first release live at https://flightdeck.gakinz.com (24 Oct 2026), manual upload via scripts/deploy-staging.sh
 target_preference:
   frontend: static-react-pwa-on-cpanel
@@ -22,8 +22,8 @@ release:
   preferred_branch: production
   selected_domain: flightdeck.gakinz.com
   document_root: /home/devgeereact/flightdeck.gakinz.com   # private: /home/devgeereact/flightdeck-private
-  workflow_created: false
-  auto_deploy_verified: false
+  workflow_created: probe-only   # .github/workflows/hosting-probe.yml (manual); no app release workflow yet
+  auto_deploy_verified: false   # only the static probe is proven (run 40077621830); the full app release is not
 constraints:
   no_extra_paid_hosting_without_approval: true
   conserve_github_actions_minutes: true
