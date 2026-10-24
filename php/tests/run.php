@@ -73,7 +73,7 @@ check('adb: status and flags', $m['status'] === 'En route' && $m['providerStatus
 check('adb: times in UTC ISO', $m['scheduledOut'] === '2026-10-24T07:25:00.000Z' && $m['estimatedIn'] === '2026-10-24T15:35:00.000Z' && $m['takeoff'] === '2026-10-24T07:58:00.000Z');
 check('adb: actual gate-out only once departed', $m['actualOut'] === '2026-10-24T07:40:00.000Z' && $m['actualIn'] === null && $m['landing'] === null);
 check('adb: gates, terminals, baggage, aircraft', $m['gateOut'] === 'B34' && $m['terminalOut'] === '5' && $m['terminalIn'] === '7' && $m['gateIn'] === null && $m['baggage'] === '9' && $m['aircraft'] === 'Boeing 777-300ER' && $m['registration'] === 'G-STBH');
-check('adb: delay from arrival revision, live flag', $m['delayMinutes'] === 15 && $m['liveUpdates'] === true && $m['boarding'] === null && $m['position'] === null);
+check('adb: departure delay in minutes, live flag', $m['delayMinutes'] === 15 && $m['liveUpdates'] === true && $m['boarding'] === null && $m['position'] === null);
 $planned = $adb;
 $planned['status'] = 'Expected';
 unset($planned['departure']['revisedTime'], $planned['arrival']['revisedTime'], $planned['departure']['runwayTime'], $planned['departure']['gate'], $planned['departure']['quality'], $planned['arrival']['quality']);
@@ -81,6 +81,16 @@ $p = Flight::fromAeroDataBox($planned, 'BA117', '2026-10-24');
 check('adb: scheduled-only flight keeps unknowns null', $p['actualOut'] === null && $p['takeoff'] === null && $p['estimatedOut'] === null && $p['delayMinutes'] === null && $p['gateOut'] === null && $p['liveUpdates'] === false && $p['status'] === 'Scheduled');
 $junk = Flight::fromAeroDataBox(['departure' => 'x', 'arrival' => null, 'status' => 'Nonsense', 'airline' => ['name' => 5]], 'ZZ1', '2026-10-24');
 check('adb: malformed provider data does not crash or invent', $junk['status'] === 'Status unavailable' && $junk['origin']['code'] === '—' && $junk['scheduledOut'] === null && $junk['airline'] === 'Airline not reported');
+$early = $adb;
+$early['departure']['revisedTime'] = ['utc' => '2026-10-24 07:20Z', 'local' => '2026-10-24 08:20+01:00'];
+check('adb: early departure is negative, not hidden', Flight::fromAeroDataBox($early, 'BA117', '2026-10-24')['delayMinutes'] === -5);
+$done = $adb;
+$done['status'] = 'Arrived';
+$d2 = Flight::fromAeroDataBox($done, 'BA117', '2026-10-24');
+check('adb: arrived flight is 100% (status basis) with actual gate-in', $d2['progress'] === 100 && $d2['progressBasis'] === 'status' && $d2['actualIn'] === '2026-10-24T15:35:00.000Z');
+check('combine: arrived flight keeps 100 and gets no live position', Flight::combine([$d2], [state('BAW117')], 'BA117', strtotime('2026-10-24 16:00:00 UTC') * 1000, static function () {
+    return null;
+})[0]['progress'] === 100);
 $cx = $adb;
 $cx['status'] = 'Canceled';
 check('adb: cancelled flag', Flight::fromAeroDataBox($cx, 'BA117', '2026-10-24')['cancelled'] === true);

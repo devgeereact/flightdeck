@@ -250,10 +250,13 @@ final class Flight
         $ac = is_array($x['aircraft'] ?? null) ? $x['aircraft'] : [];
         $f['aircraft'] = self::str($ac['model'] ?? null);
         $f['registration'] = self::str($ac['reg'] ?? null);
-        $scheduled = $revisedIn !== null ? $f['scheduledIn'] : $f['scheduledOut'];
-        $revised = $revisedIn !== null ? $revisedIn : $revisedOut;
-        if ($scheduled !== null && $revised !== null) {
-            $f['delayMinutes'] = max(0, self::round((strtotime($revised) - strtotime($scheduled)) / 60));
+        // The UI labels this a departure delay, so measure departure (negative means early).
+        if ($f['scheduledOut'] !== null && $revisedOut !== null) {
+            $f['delayMinutes'] = self::round((strtotime($revisedOut) - strtotime($f['scheduledOut'])) / 60);
+        }
+        if ($rawStatus === 'Arrived') {
+            $f['progress'] = 100;
+            $f['progressBasis'] = 'status';
         }
         $quality = array_merge(
             is_array($dep['quality'] ?? null) ? $dep['quality'] : [],
