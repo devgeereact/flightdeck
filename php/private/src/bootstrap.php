@@ -4,6 +4,7 @@ declare(strict_types=1);
 // Loaded by the public entrypoint. Lives OUTSIDE every webroot on the server.
 ini_set('display_errors', '0');
 require __DIR__ . '/Http.php';
+require __DIR__ . '/CloudflareIps.php';
 require __DIR__ . '/Store.php';
 require __DIR__ . '/Geo.php';
 require __DIR__ . '/Flight.php';

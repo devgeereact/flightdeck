@@ -12,11 +12,7 @@ final class App
         $pos = strpos($path, '/api');
         $route = rtrim($pos === false ? $path : substr($path, $pos + 4), '/');
 
-        $ip = $_SERVER['REMOTE_ADDR'] ?? 'local';
-        if (!empty($config['trust_cf_connecting_ip']) && !empty($_SERVER['HTTP_CF_CONNECTING_IP'])
-            && filter_var($_SERVER['HTTP_CF_CONNECTING_IP'], FILTER_VALIDATE_IP)) {
-            $ip = $_SERVER['HTTP_CF_CONNECTING_IP'];
-        }
+        $ip = CloudflareIps::clientIp((string) ($_SERVER['REMOTE_ADDR'] ?? 'local'), isset($_SERVER['HTTP_CF_CONNECTING_IP']) ? (string) $_SERVER['HTTP_CF_CONNECTING_IP'] : null, !empty($config['trust_cf_connecting_ip']));
         if (!$store->rateAllow($ip, 30, 60000)) {
             Http::json(429, ['error' => 'Too many requests. Please wait a minute.']);
             return;

@@ -1,12 +1,13 @@
 <?php
 declare(strict_types=1);
 // Mirrors server/flight.test.ts. Run: php php/tests/run.php
-foreach (['Http', 'Store', 'Geo', 'Flight', 'OpenSky', 'RouteLookup', 'AeroDataBox'] as $f) {
+foreach (['Http', 'Store', 'CloudflareIps', 'Geo', 'Flight', 'OpenSky', 'RouteLookup', 'AeroDataBox'] as $f) {
     require __DIR__ . '/../private/src/' . $f . '.php';
 }
 
 use Flightdeck\AeroDataBox;
 use Flightdeck\AeroDataBoxError;
+use Flightdeck\CloudflareIps;
 use Flightdeck\Flight;
 use Flightdeck\Geo;
 use Flightdeck\RouteLookup;
@@ -216,6 +217,14 @@ check('combine: unknown route -> no geometry invented', Flight::combine([], [$li
 foreach ([$tmp, $tmp . '-b', $tmp . '-c', $tmp . '-d', $tmp . '-e', $tmp . '-f', $tmp . '-g'] as $dir) {
     exec('rm -rf ' . escapeshellarg($dir));
 }
+
+// ---- Cloudflare client address ----
+check('cf: published IPv4 and IPv6 ranges recognised', CloudflareIps::contains('104.21.4.95') && CloudflareIps::contains('172.67.153.246') && CloudflareIps::contains('162.159.0.1') && CloudflareIps::contains('2606:4700:3031::ac43:99f6'));
+check('cf: range edges are exact', CloudflareIps::contains('173.245.63.255') && !CloudflareIps::contains('173.245.64.0') && CloudflareIps::contains('104.23.255.255') && !CloudflareIps::contains('104.32.0.0'));
+check('cf: ordinary and malformed addresses are not Cloudflare', !CloudflareIps::contains('8.8.8.8') && !CloudflareIps::contains('203.0.113.9') && !CloudflareIps::contains('not-an-ip') && !CloudflareIps::contains('2001:db8::1'));
+check('cf: header honoured only from a Cloudflare peer', CloudflareIps::clientIp('104.21.4.95', '198.51.100.7', true) === '198.51.100.7');
+check('cf: spoofed header from a direct connection is ignored', CloudflareIps::clientIp('203.0.113.9', '198.51.100.7', true) === '203.0.113.9');
+check('cf: trust off, garbage or missing header fall back to the peer', CloudflareIps::clientIp('104.21.4.95', '198.51.100.7', false) === '104.21.4.95' && CloudflareIps::clientIp('104.21.4.95', 'junk', true) === '104.21.4.95' && CloudflareIps::clientIp('104.21.4.95', null, true) === '104.21.4.95');
 
 echo $failed ? "\n$failed FAILED\n" : "\nAll passed\n";
 exit($failed ? 1 : 0);
