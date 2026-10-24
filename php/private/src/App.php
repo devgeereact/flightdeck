@@ -24,6 +24,7 @@ final class App
         $allowed = ['GET', 'HEAD'];
         if ($route === '/checklist') {
             $allowed[] = 'PUT';
+            $allowed[] = 'DELETE';
         } elseif ($route === '/event' || $route === '/contact') {
             $allowed = ['POST'];
         } elseif (strpos($route, '/admin/enquiries/') === 0) {
@@ -99,7 +100,7 @@ final class App
                 self::contact($store, $varDir, $config, $ip);
                 return;
             case $isAdminRoute:
-                self::admin($route, $method, $config, $store, $varDir, (string) $sub);
+                self::admin($route, $method, $config, $store, $varDir, (string) $sub, $privateDir);
                 return;
             default:
                 Http::json(404, ['error' => 'Unknown endpoint']);
@@ -154,7 +155,12 @@ final class App
     }
 
     /** Owner console data. Only reached by an allow-listed Clerk user (checked in run()). */
-    private static function admin(string $route, string $method, array $config, Store $store, string $varDir, string $sub): void
+    private static function analytics(array $config, Store $store, string $privateDir): GoogleAnalytics
+    {
+        return new GoogleAnalytics(is_string($config['ga_property_id'] ?? null) ? $config['ga_property_id'] : null, GoogleAnalytics::loadKeyFile(is_string($config['ga_service_account_file'] ?? null) ? $config['ga_service_account_file'] : null, $privateDir), $store);
+    }
+
+    private static function admin(string $route, string $method, array $config, Store $store, string $varDir, string $sub, string $privateDir): void
     {
         $metrics = Metrics::instance();
         $enq = new Enquiries($varDir);
@@ -185,11 +191,11 @@ final class App
             return;
         }
         if ($route === '/admin/system') {
-            Http::json(200, Admin::system($config, $store, (new ClerkApi($config['clerk_secret_key'] ?? null, $store))->configured(), false));
+            Http::json(200, Admin::system($config, $store, (new ClerkApi($config['clerk_secret_key'] ?? null, $store))->configured(), self::analytics($config, $store, $privateDir)->configured()));
             return;
         }
         if ($route === '/admin/analytics') {
-            Http::json(200, ['configured' => false]);
+            Http::json(200, self::analytics($config, $store, $privateDir)->summary());
             return;
         }
         Http::json(404, ['error' => 'Unknown endpoint']);
@@ -200,6 +206,11 @@ final class App
     {
         if ($sub === '') {
             Http::json(401, ['error' => 'Sign in to keep your checklist.']);
+            return;
+        }
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'DELETE') {
+            $lists->delete($sub);
+            Http::json(200, ['ok' => true, 'deleted' => true]);
             return;
         }
         if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'PUT') {

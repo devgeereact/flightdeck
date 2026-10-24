@@ -6,7 +6,7 @@ import {useGSAP} from '@gsap/react';
 import {SplitText} from 'gsap/SplitText';
 import {MotionPathPlugin} from 'gsap/MotionPathPlugin';
 import {DrawSVGPlugin} from 'gsap/DrawSVGPlugin';
-import {track,trackOnce} from './track';
+import {track,trackOnce,ga,cookieSettingsAvailable} from './track';
 gsap.registerPlugin(useGSAP,SplitText,MotionPathPlugin,DrawSVGPlugin);
 
 // One calm hero: headline, two actions, and an illustrative flight drawn in the app's own look.
@@ -61,7 +61,7 @@ export default function Landing(){
     <h1 className="hero-title" id="hero-title">Know your flight before the airport does.</h1>
     <p className="hero-sub">Live status, gates, baggage belts and where the aircraft is right now, together in one calm place. Free to use.</p>
     <div className="hero-cta">
-     <SignUpButton mode="modal"><button className="cta" onClick={()=>track('cta_click')}>Create free account<ArrowRight size={17}/></button></SignUpButton>
+     <SignUpButton mode="modal"><button className="cta" onClick={()=>{track('cta_click');ga('cta_click',{source:'hero'})}}>Create free account<ArrowRight size={17}/></button></SignUpButton>
      <SignInButton mode="modal"><button className="cta ghost">Sign in</button></SignInButton>
     </div>
     <ul className="hero-points"><li><Check size={15}/>Outbound or inbound, clearly labelled</li><li><Check size={15}/>Real gate, terminal and baggage belt when reported</li><li><Check size={15}/>Position straight from the aircraft</li></ul>
@@ -86,5 +86,6 @@ export default function Landing(){
     </div>
    </div>
   </section>
+  <nav className="land-foot" aria-label="Legal and help"><a href="/travel-checklist/">Free packing list</a><a href="/privacy/">Privacy</a><a href="/cookies/">Cookies</a><a href="/terms/">Terms</a><a href="/about/">About</a><a href="/contact/">Contact</a>{cookieSettingsAvailable()&&<a href="#" data-fd-cookie-settings>Cookie settings</a>}</nav>
  </div>
 }

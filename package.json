@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently -k \"php -S 127.0.0.1:3001 php/dev-router.php\" \"vite --host 127.0.0.1\"",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && node scripts/build-public.mjs",
     "start": "tsx server/index.ts",
-    "test": "tsx --test server/*.test.ts test/*.test.ts",
+    "test": "tsx --test server/*.test.ts test/*.test.ts test/*.test.mjs",
     "test:php": "php php/tests/run.php",
     "parity": "node php/tests/parity.mjs",
     "test:ui": "node test/ui-smoke.mjs",

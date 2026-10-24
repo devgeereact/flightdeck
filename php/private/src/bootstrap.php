@@ -11,6 +11,7 @@ require __DIR__ . '/Metrics.php';
 require __DIR__ . '/Enquiries.php';
 require __DIR__ . '/ClerkApi.php';
 require __DIR__ . '/Admin.php';
+require __DIR__ . '/GoogleAnalytics.php';
 require __DIR__ . '/CloudflareIps.php';
 require __DIR__ . '/Store.php';
 require __DIR__ . '/Geo.php';
@@ -47,6 +48,8 @@ $config['opensky_client_secret'] = $config['opensky_client_secret'] ?? $env('OPE
 $config['admin_user_ids'] = $config['admin_user_ids'] ?? array_values(array_filter(array_map('trim', explode(',', (string) $env('FLIGHTDECK_ADMIN_IDS')))));
 $config['owner_email'] = $config['owner_email'] ?? $env('OWNER_EMAIL');
 $config['clerk_secret_key'] = $config['clerk_secret_key'] ?? $env('CLERK_SECRET_KEY');
+$config['ga_property_id'] = $config['ga_property_id'] ?? $env('GA_PROPERTY_ID');
+$config['ga_service_account_file'] = $config['ga_service_account_file'] ?? $env('GA_SERVICE_ACCOUNT_FILE');
 $config['aerodatabox_key'] = $config['aerodatabox_key'] ?? $env('AERODATABOX_KEY', 'RAPID_API_KEY', 'RAPIDAPI_KEY');
 if (($config['opensky_client_id'] ?? '') === '' || ($config['opensky_client_secret'] ?? '') === '') {
     $config['opensky_client_id'] = $config['opensky_client_secret'] = null;

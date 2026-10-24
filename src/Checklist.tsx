@@ -1,11 +1,14 @@
 import {useEffect,useRef,useState} from 'react';
-import {Plus,Printer,RotateCcw,Pencil,X,Trash2,Plane,Eye,EyeOff,Check,ListChecks,Link2} from 'lucide-react';
+import {Plus,Printer,RotateCcw,Pencil,X,Trash2,Plane,Eye,EyeOff,Check,ListChecks,Link2,Lightbulb} from 'lucide-react';
 import * as M from './checklistModel';
 import {TEMPLATE} from './checklistTemplate';
 import {loadLocal,saveLocal,getOwner,setOwner,clearLocal} from './checklistStore';
 import {syncOnce,httpApi} from './checklistSync';
+import {suggest} from './checklistRules';
+import {contextFromFlight,weatherStale} from './tripContext';
+import {summarise} from './summary';
 import {apiFetch} from './api';
-import {track} from './track';
+import {track,ga} from './track';
 
 type Saved={number:string;date:string};
 type Props={saved:Saved[];signedIn:boolean;userId:string|null;request:Saved|null;onRequestDone:()=>void;onTrack:(n:string,d:string)=>void};
@@ -30,13 +33,13 @@ export default function Checklist({saved,signedIn,userId,request,onRequestDone,o
  const [newName,setNewName]=useState('');
  const [adding,setAdding]=useState<string|null>(null);
  const [addText,setAddText]=useState('');
- const [confirmReset,setConfirmReset]=useState(false);
+ const [confirmReset,setConfirmReset]=useState(false),[confirmErase,setConfirmErase]=useState(false),[ctxBusy,setCtxBusy]=useState(false),[ctxNote,setCtxNote]=useState('');
 
  // One place every change goes through: apply, check it still fits, keep it on this device straight away (works offline).
  const commit=(fn:(d:M.ChecklistData)=>M.ChecklistData)=>{
   const prev=dataRef.current;const next=fn(prev);if(next===prev)return;
-  if(next.trips.some(t=>!prev.trips.some(p=>p.id===t.id)))track('checklist_created');
-  const p=next.trips.find(t=>t.id===next.active);if(p){const pr=M.progress(M.view(next,p.id));if(pr.total>0&&pr.done===pr.total){try{const k='fd-done-'+p.id;if(!localStorage.getItem(k)){localStorage.setItem(k,'1');track('checklist_completed')}}catch{}}}
+  if(next.trips.some(t=>!prev.trips.some(p=>p.id===t.id))){track('checklist_created');ga('checklist_created')}
+  const p=next.trips.find(t=>t.id===next.active);if(p){const pr=M.progress(M.view(next,p.id));if(pr.total>0&&pr.done===pr.total){try{const k='fd-done-'+p.id;if(!localStorage.getItem(k)){localStorage.setItem(k,'1');track('checklist_completed');ga('checklist_completed',{bucket:'100'})}}catch{}}}
   if(!M.fits(next)){setMsg('Your checklist is full. Remove a trip or some of your own items first.');return}
   dataRef.current=next;setData(next);setMsg('');
   if(!saveLocal(next))setMsg('Your browser could not save this. Changes will be lost when you close the page.');
@@ -68,12 +71,42 @@ export default function Checklist({saved,signedIn,userId,request,onRequestDone,o
  useEffect(()=>{
   if(!request)return;
   const existing=dataRef.current.trips.find(t=>t.flight&&t.flight.number===request.number&&t.flight.date===request.date);
-  commit(d=>existing?{...d,active:existing.id}:M.addTrip(d,tripNameFor(request),request));
+  if(existing){commit(d=>({...d,active:existing.id}));if(!existing.ctx)void loadContext(existing.id,request)}
+  else{const next=M.addTrip(dataRef.current,tripNameFor(request),request);commit(()=>next);const created=next.trips.find(t=>t.id===next.active);if(created)void loadContext(created.id,request)}
   onRequestDone();
  },[request]);
 
+ // Read the linked flight once (the server caches it) and keep only the few facts the suggestions need. Weather is refreshed for free later.
+ async function loadContext(tripId:string,flight:Saved){
+  setCtxBusy(true);setCtxNote('');
+  try{
+   const r=await apiFetch(`/api/flights?number=${encodeURIComponent(flight.number)}&date=${flight.date}&mode=live`);
+   const j=await r.json();if(!r.ok)throw Error(j.error||'');
+   const f=j.flights?.[0];if(!f)throw Error('not found');
+   let w=null;if(typeof f.destination?.lat==='number'){try{const wr=await apiFetch(`/api/weather?lat=${f.destination.lat}&lon=${f.destination.lon}`);if(wr.ok)w=await wr.json()}catch{/* weather is optional */}}
+   const ctx=contextFromFlight(f,w);if(!ctx)throw Error('no route');
+   commit(d=>M.setContext(d,tripId,ctx));
+   setSummary(summarise(f));
+  }catch{setCtxNote('Could not read this flight just now, so there are no suggestions yet. Try again in a moment.')}
+  finally{setCtxBusy(false)}
+ }
+ async function refreshWeather(tripId:string,c:NonNullable<M.Trip['ctx']>){
+  if(c.lat==null||c.lon==null)return;
+  try{const r=await apiFetch(`/api/weather?lat=${c.lat}&lon=${c.lon}`);if(!r.ok)return;const w=await r.json();const fresh={...c,tempC:typeof w.temperature_2m==='number'?Math.round(w.temperature_2m):c.tempC,rain:w.weather_code!=null?((w.weather_code>=51&&w.weather_code<=67)||(w.weather_code>=80&&w.weather_code<=82)||w.weather_code>=95):c.rain,at:Date.now()};commit(d=>M.setContext(d,tripId,fresh))}catch{/* keep what we have */}
+ }
+ async function erase(){
+  try{
+   const r=await apiFetch('/api/checklist',{method:'DELETE'});
+   if(!r.ok)throw Error();
+   const empty=M.emptyData();dataRef.current=empty;setData(empty);clearLocal();setSync('synced');setConfirmErase(false);setMsg('');
+  }catch{setMsg('Could not delete your saved checklist right now. Please try again.')}
+ }
+ const [summary,setSummary]=useState<string[]>([]);
+ useEffect(()=>{setSummary([])},[data.active]);
  const trip=data.trips.find(t=>t.id===data.active)||null;
+ useEffect(()=>{if(trip?.ctx&&weatherStale(trip.ctx))void refreshWeather(trip.id,trip.ctx)},[trip?.id]);
  const sections=M.view(data,trip?.id??null);
+ const tips=trip?suggest(trip.ctx,trip.nights,sections.flatMap(s=>s.items.map(i=>i.text)),M.dismissedIds(trip)):[];
  const prog=M.progress(sections);
  const hiddenTotal=sections.reduce((n,s)=>n+s.hiddenCount,0);
 
@@ -103,9 +136,15 @@ export default function Checklist({saved,signedIn,userId,request,onRequestDone,o
      <p aria-live="polite">{prog.done} of {prog.total} packed{prog.total>0&&prog.done===prog.total?' · all done, safe travels!':''}</p>
      <div className="cl-flight">
       {trip.flight?<><span className="pill"><Plane size={10}/> {flightLabel}</span><button className="text-button" onClick={()=>onTrack(trip.flight!.number,trip.flight!.date)}>Check this flight</button><button className="text-button" onClick={()=>commit(d=>M.linkFlight(d,trip.id,undefined))} aria-label="Unlink flight"><X size={12}/></button></>
-       :saved.length>0?<label className="cl-link"><Link2 size={13}/><select aria-label="Link a saved flight" value="" onChange={e=>{const s=saved.find(x=>x.number+'|'+x.date===e.target.value);if(s)commit(d=>M.linkFlight(d,trip.id,s))}}><option value="">Link a saved flight…</option>{saved.map(s=><option key={s.number+s.date} value={s.number+'|'+s.date}>{tripNameFor(s)}</option>)}</select></label>
+       :saved.length>0?<label className="cl-link"><Link2 size={13}/><select aria-label="Link a saved flight" value="" onChange={e=>{const s=saved.find(x=>x.number+'|'+x.date===e.target.value);if(s){commit(d=>M.linkFlight(d,trip.id,s));void loadContext(trip.id,s)}}}><option value="">Link a saved flight…</option>{saved.map(s=><option key={s.number+s.date} value={s.number+'|'+s.date}>{tripNameFor(s)}</option>)}</select></label>
        :<span className="cl-hint">Save a flight to link it to this trip.</span>}
      </div>
+     {trip.flight&&<div className="cl-ctx">
+      <label className="cl-nights"><span>Nights away</span><input type="number" min={1} max={365} inputMode="numeric" value={trip.nights??''} placeholder="optional" onChange={e=>commit(d=>M.setNights(d,trip.id,e.target.value?Number(e.target.value):null))}/></label>
+      {!trip.ctx&&<button className="text-button" disabled={ctxBusy} onClick={()=>void loadContext(trip.id,trip.flight!)}><Lightbulb size={13}/>{ctxBusy?'Reading your flight…':'Get suggestions for this flight'}</button>}
+      {trip.ctx&&<small className="cl-ctxline">{trip.ctx.dir?`${trip.ctx.dir==='overseas'?'International':trip.ctx.dir[0].toUpperCase()+trip.ctx.dir.slice(1)} flight to ${trip.ctx.destName}`:`Flight to ${trip.ctx.destName}`}{trip.ctx.tempC!=null?` · ${trip.ctx.tempC}°C there now${trip.ctx.rain?', rain':''}`:''}{trip.ctx.km?` · about ${trip.ctx.km.toLocaleString('en-GB')} km`:''}</small>}
+     </div>}
+     {ctxNote&&<p role="alert" className="cl-msg">{ctxNote}</p>}
     </div>
     <div className="cl-actions">
      <button className={onlyLeft?'text-button primary':'text-button'} onClick={()=>setOnlyLeft(v=>!v)} aria-pressed={onlyLeft}>{onlyLeft?<Eye size={13}/>:<EyeOff size={13}/>}Still to pack</button>
@@ -119,6 +158,8 @@ export default function Checklist({saved,signedIn,userId,request,onRequestDone,o
    {msg&&<p role="alert" className="cl-msg">{msg}</p>}
   </div>
 
+  {summary.length>0&&<section className="panel cl-short" aria-label="Your flight in short"><h3>Your flight in short</h3><p>{summary.join(' ')}</p></section>}
+  {tips.length>0&&<section className="panel cl-tips" aria-label="Suggestions for this trip"><h3><Lightbulb size={15}/>Suggested for this trip</h3><ul>{tips.map(t=><li key={t.id}><div><strong>{t.text}</strong><small>{t.why}</small></div><button className="text-button primary" onClick={()=>commit(d=>M.dismiss(M.addItem(d,t.section,t.text),trip!.id,t.id))}><Plus size={13}/>Add</button><button className="cl-x" aria-label={`Dismiss ${t.text}`} onClick={()=>commit(d=>M.dismiss(d,trip!.id,t.id))}><X size={14}/></button></li>)}</ul><p className="cl-sec-hint">Based on your flight and the weather. These are ideas, never rules. For entry requirements use the official <a href="https://www.gov.uk/foreign-travel-advice" target="_blank" rel="noreferrer">GOV.UK travel advice</a>.</p></section>}
   {sections.map(sec=>{
    const items=onlyLeft?sec.items.filter(i=>!i.done):sec.items;
    if(!edit&&sec.items.length===0)return null;
@@ -142,6 +183,7 @@ export default function Checklist({saved,signedIn,userId,request,onRequestDone,o
    </details>})}
 
   {(hiddenTotal>0)&&<p className="cl-restore">{hiddenTotal} item{hiddenTotal>1?'s':''} hidden from your list. <button className="text-button" onClick={()=>commit(d=>M.restoreAll(d))}>Restore all</button></p>}
+  {signedIn&&<p className="cl-erase">{confirmErase?<>This removes your checklist from our server and from this device. It cannot be undone. <button className="text-button danger" onClick={()=>void erase()}>Yes, delete everything</button> <button className="text-button" onClick={()=>setConfirmErase(false)}>Keep it</button></>:<button className="text-button" onClick={()=>setConfirmErase(true)}><Trash2 size={13}/>Delete my saved checklist</button>}</p>}
   <p className="cl-note" aria-live="polite">{!signedIn?'Your list is kept on this device only. Sign in to keep it across devices. It works without a connection.':sync==='syncing'?'Saving to your account…':sync==='synced'?'Saved to your account and on this device. It works without a connection.':sync==='offline'?'You are offline. Your changes are saved on this device and will sync when you are back online.':sync==='error'?'Could not reach your account just now. Your changes are safe on this device and will sync later.':'Saved on this device.'}</p>
  </section>
 }

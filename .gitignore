@@ -6,3 +6,4 @@ dist/
 php/private/config.php
 php/private/var/
 .ui-test-build/
+.env.local

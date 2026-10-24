@@ -18,8 +18,11 @@ RewriteRule ^ index.html [L]
 
 <IfModule mod_headers.c>
   # Revalidate the shell, manifest and service worker so releases update; hashed assets can cache.
-  <FilesMatch "^(index\.html|sw\.js|registerSW\.js|manifest\.webmanifest|workbox-.*\.js)$">
+  <FilesMatch "^(index\.html|sw\.js|registerSW\.js|consent\.js|manifest\.webmanifest|workbox-.*\.js)$">
     Header set Cache-Control "no-cache"
+  </FilesMatch>
+  <FilesMatch "\.woff2$">
+    Header setifempty Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
   <FilesMatch "\.(js|css)$">
     Header setifempty Cache-Control "public, max-age=31536000, immutable"

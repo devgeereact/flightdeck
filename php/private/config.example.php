@@ -15,6 +15,8 @@ return [
     'admin_user_ids' => [],      // exact Clerk user ids allowed into the owner console, e.g. ['user_abc123']
     'owner_email' => '',         // new enquiries are also emailed here
     'mail_from' => 'noreply@flightdeck.gakinz.com',
+    'ga_property_id' => '',      // numeric GA4 property id (Admin > Property details), for the console's Analytics tab
+    'ga_service_account_file' => '', // path inside this private folder to the service-account JSON key (mode 600)
     'clerk_secret_key' => '',    // Clerk SECRET key (sk_live_...) for the Users view only; never commit it
     'home_country_code' => 'GB', // flights are labelled Outbound/Inbound relative to this country
     // Per-visitor rate limits behind Cloudflare. The CF-Connecting-IP header is only trusted when the connection really comes from a Cloudflare range.

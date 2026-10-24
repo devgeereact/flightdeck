@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 // Mirrors server/flight.test.ts. Run: php php/tests/run.php
-foreach (['Http', 'DevEnv', 'ClerkAuth', 'Checklists', 'Metrics', 'Enquiries', 'ClerkApi', 'Admin', 'Store', 'CloudflareIps', 'Geo', 'Flight', 'OpenSky', 'RouteLookup', 'AeroDataBox'] as $f) {
+foreach (['Http', 'DevEnv', 'ClerkAuth', 'Checklists', 'Metrics', 'Enquiries', 'ClerkApi', 'Admin', 'GoogleAnalytics', 'Store', 'CloudflareIps', 'Geo', 'Flight', 'OpenSky', 'RouteLookup', 'AeroDataBox'] as $f) {
     require __DIR__ . '/../private/src/' . $f . '.php';
 }
 
@@ -14,6 +14,7 @@ use Flightdeck\Metrics;
 use Flightdeck\Enquiries;
 use Flightdeck\ClerkApi;
 use Flightdeck\Admin;
+use Flightdeck\GoogleAnalytics;
 use Flightdeck\DevEnv;
 use Flightdeck\Flight;
 use Flightdeck\Geo;
@@ -350,6 +351,20 @@ $longLabel = $doc;
 $longLabel['tpl']['added'][0]['text'] = str_repeat('é', 500);
 check('checklist: long labels are cut to 80 characters (multibyte safe)', mb_strlen(Checklists::validate($longLabel)['tpl']['added'][0]['text']) === 80);
 
+$withCtx = $doc;
+$withCtx['trips'][0]['nights'] = 7;
+$withCtx['trips'][0]['ctx'] = ['dir' => 'overseas', 'intl' => true, 'dest' => 'CPT', 'destName' => 'Cape Town', 'lat' => -33.97, 'lon' => 18.6, 'tempC' => 24, 'rain' => false, 'km' => 9600, 'at' => 1800000000000];
+$vc = Checklists::validate($withCtx);
+check('checklist: nights and trip context are kept when valid', $vc !== null && $vc['trips'][0]['nights'] === 7 && $vc['trips'][0]['ctx']['dest'] === 'CPT' && $vc['trips'][0]['ctx']['tempC'] == 24 && $vc['trips'][0]['ctx']['rain'] === false);
+$badCtx = $doc;
+$badCtx['trips'][0]['nights'] = 9999;
+$badCtx['trips'][0]['ctx'] = ['dir' => 'sideways', 'dest' => 'CPT', 'lat' => 999, 'tempC' => 'hot', 'km' => -5, 'destName' => '<b>' . str_repeat('x', 100)];
+$vbc = Checklists::validate($badCtx);
+check('checklist: out-of-range nights are dropped and bad context fields become null', $vbc !== null && !isset($vbc['trips'][0]['nights']) && $vbc['trips'][0]['ctx']['dir'] === null && $vbc['trips'][0]['ctx']['lat'] === null && $vbc['trips'][0]['ctx']['tempC'] === null && $vbc['trips'][0]['ctx']['km'] === null && mb_strlen($vbc['trips'][0]['ctx']['destName']) <= 40);
+$noDest = $doc;
+$noDest['trips'][0]['ctx'] = ['dest' => '../x'];
+check('checklist: context with an invalid destination code is dropped', !isset(Checklists::validate($noDest)['trips'][0]['ctx']));
+
 $lists = new Checklists($tmp . '-l');
 check('checklist: a new user has nothing stored (rev 0)', $lists->get('user_a') === ['rev' => 0, 'data' => null]);
 $r1 = $lists->put('user_a', $v, 0);
@@ -475,7 +490,71 @@ check('admin: allowance forecast warns when the month will run out early', Admin
 check('admin: the console never reports secrets in the system view', strpos(json_encode(Admin::system(['aerodatabox_key' => 'SECRETKEY', 'clerk_secret_key' => 'sk_live_x', 'owner_email' => 'o@x.com'], $store2, true, false)), 'SECRET') === false && Admin::system(['owner_email' => 'o@x.com'], $store2, false, false)['emailNotifications'] === true);
 check('admin: the event whitelist contains only counter names', in_array('landing_view', Admin::EVENTS, true) && !in_array('search_total', Admin::EVENTS, true) && !in_array('admin_denied', Admin::EVENTS, true));
 
-foreach ([$tmp, $tmp . '-b', $tmp . '-c', $tmp . '-d', $tmp . '-e', $tmp . '-f', $tmp . '-g', $tmp . '-h', $tmp . '-i', $tmp . '-j', $tmp . '-k', $tmp . '-l', $tmp . '-m', $tmp . '-n', $tmp . '-o', $tmp . '-p', $tmp . '-q'] as $dir) {
+// ---- Checklist erasure and Google Analytics numbers ----
+$er = new Checklists($tmp . '-r');
+$er->put('user_x', $v, 0);
+$er->put('user_y', $v, 0);
+check('erasure: deleting removes the user\'s checklist completely, leaves others alone, and is repeatable', $er->delete('user_x') === true && $er->get('user_x') === ['rev' => 0, 'data' => null] && $er->get('user_y')['rev'] === 1 && $er->delete('user_x') === false && !glob($tmp . '-r/checklists/' . hash('sha256', 'user_x') . '*'));
+$er->put('user_x', $v, 0);
+check('erasure: a fresh list can be started afterwards at revision 1', $er->get('user_x')['rev'] === 1);
+
+$gaKey = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+openssl_pkey_export($gaKey, $gaPem);
+$gaPub = openssl_pkey_get_details($gaKey)['key'];
+$gaAccount = ['client_email' => 'reader@flightdeck-123.iam.gserviceaccount.com', 'private_key' => $gaPem];
+$gaCalls = [];
+$gaReport = static function (array $rows, array $dims = []) {
+    return ['rows' => $rows];
+};
+$gaFake = static function ($method, $url, $headers, $body) use (&$gaCalls, $gaPub) {
+    $gaCalls[] = compact('method', 'url', 'headers', 'body');
+    if (strpos($url, 'oauth2.googleapis.com') !== false) {
+        parse_str($body, $f);
+        [$h, $c, $sg] = explode('.', $f['assertion']);
+        $ok = openssl_verify("$h.$c", base64_decode(strtr($sg, '-_', '+/')), $gaPub, OPENSSL_ALGO_SHA256) === 1;
+        return $ok && $f['grant_type'] === 'urn:ietf:params:oauth:grant-type:jwt-bearer' ? [200, json_encode(['access_token' => 'ya29.test', 'expires_in' => 3599])] : [400, '{}'];
+    }
+    $row = static function (array $d, array $m) {
+        return ['dimensionValues' => array_map(static function ($v) {
+            return ['value' => $v];
+        }, $d), 'metricValues' => array_map(static function ($v) {
+            return ['value' => (string) $v];
+        }, $m)];
+    };
+    return [200, json_encode(['reports' => [
+        ['rows' => [$row(['20261023'], [4, 6, 15]), $row(['20261024'], [7, 9, 30])]],
+        ['rows' => [$row(['date_range_0'], [11, 15, 45]), $row(['date_range_1'], [40, 61, 190])]],
+        ['rows' => [$row(['United Kingdom'], [30]), $row(['United States'], [7]), $row([''], [1])]],
+        ['rows' => [$row(['mobile'], [28]), $row(['desktop'], [12])]],
+        ['rows' => [$row(['Organic Search'], [33]), $row(['Direct'], [20])]],
+    ]])];
+};
+check('ga: not configured without a property id and a valid key, and says so', !(new GoogleAnalytics(null, $gaAccount, new Store($tmp . '-s'), $gaFake))->configured() && !(new GoogleAnalytics('12345678', null, new Store($tmp . '-s'), $gaFake))->configured() && !(new GoogleAnalytics('abc', $gaAccount, new Store($tmp . '-s'), $gaFake))->configured() && !(new GoogleAnalytics('12345678', ['client_email' => 'x', 'private_key' => 'nope'], new Store($tmp . '-s'), $gaFake))->configured() && (new GoogleAnalytics(null, null, new Store($tmp . '-s'), $gaFake))->summary() === ['configured' => false] && $gaCalls === []);
+$ga = new GoogleAnalytics('123456789', $gaAccount, new Store($tmp . '-s'), $gaFake);
+$gs = $ga->summary(1800000000);
+check('ga: the service-account JWT is signed correctly (Google could verify it) and the report call uses the bearer token', $gs['configured'] && strpos($gaCalls[0]['url'], 'oauth2.googleapis.com/token') !== false && in_array('Authorization: Bearer ya29.test', $gaCalls[1]['headers'], true) && strpos($gaCalls[1]['url'], 'properties/123456789:batchRunReports') !== false);
+check('ga: totals for 7 and 28 days, daily series with real dates, ranked countries, devices and channels', $gs['totals']['7'] === ['users' => 11, 'sessions' => 15, 'pageViews' => 45] && $gs['totals']['28']['users'] === 40 && $gs['series'][1] === ['date' => '2026-10-24', 'users' => 7, 'sessions' => 9, 'pageViews' => 30] && $gs['countries'][0] === ['key' => 'United Kingdom', 'count' => 30] && $gs['countries'][2]['key'] === '(not set)' && $gs['devices'][0]['key'] === 'mobile' && $gs['channels'][1] === ['key' => 'Direct', 'count' => 20]);
+$gn = count($gaCalls);
+$ga->summary(1800000100);
+check('ga: results cached for 15 minutes (no new Google calls)', count($gaCalls) === $gn);
+check('ga: the response never contains the private key or token', strpos(json_encode($gs), 'PRIVATE KEY') === false && strpos(json_encode($gs), 'ya29') === false);
+$gaDenied = new GoogleAnalytics('123456789', $gaAccount, new Store($tmp . '-t'), static function ($m, $u) {
+    return strpos($u, 'oauth2') !== false ? [200, '{"access_token":"t","expires_in":3600}'] : [403, '{"error":{"message":"PERMISSION_DENIED"}}'];
+});
+$den = $gaDenied->summary(1800000000);
+check('ga: a refusal from Google becomes a clear set-up message, not an exception or a leak', $den['configured'] === true && strpos($den['error'], 'Viewer') !== false && strpos(json_encode($den), 'PERMISSION_DENIED') === false);
+$gaBad = (new GoogleAnalytics('123456789', $gaAccount, new Store($tmp . '-u'), static function () {
+    return [500, ''];
+}))->summary();
+check('ga: when Google is down the console shows an error and nothing breaks', $gaBad['configured'] === true && isset($gaBad['error']));
+$keydir = $tmp . '-kd';
+@mkdir($keydir . '/secrets', 0700, true);
+file_put_contents($keydir . '/secrets/ga.json', json_encode($gaAccount));
+@mkdir($tmp . '-outside', 0700, true);
+file_put_contents($tmp . '-outside/ga.json', json_encode($gaAccount));
+check('ga: the key file must be inside the private folder (no path escapes)', GoogleAnalytics::loadKeyFile('secrets/ga.json', $keydir) !== null && GoogleAnalytics::loadKeyFile($keydir . '/secrets/ga.json', $keydir) !== null && GoogleAnalytics::loadKeyFile('../' . basename($tmp) . '-outside/ga.json', $keydir) === null && GoogleAnalytics::loadKeyFile($tmp . '-outside/ga.json', $keydir) === null && GoogleAnalytics::loadKeyFile('/etc/passwd', $keydir) === null && GoogleAnalytics::loadKeyFile('', $keydir) === null && GoogleAnalytics::loadKeyFile(null, $keydir) === null);
+
+foreach ([$tmp, $tmp . '-b', $tmp . '-c', $tmp . '-d', $tmp . '-e', $tmp . '-f', $tmp . '-g', $tmp . '-h', $tmp . '-i', $tmp . '-j', $tmp . '-k', $tmp . '-l', $tmp . '-m', $tmp . '-n', $tmp . '-o', $tmp . '-p', $tmp . '-q', $tmp . '-r', $tmp . '-s', $tmp . '-t', $tmp . '-u', $tmp . '-kd', $tmp . '-outside'] as $dir) {
     exec('rm -rf ' . escapeshellarg($dir));
 }
 

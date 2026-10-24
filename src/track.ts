@@ -9,3 +9,11 @@ export function trackOnce(name: EventName) {
   try { const k = 'fd-once-' + name; if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, '1'); } catch { /* still count */ }
   track(name);
 }
+
+type GaName = 'flight_search' | 'flight_saved' | 'checklist_created' | 'checklist_completed' | 'pwa_install' | 'cta_click' | 'feedback_sent';
+/** Google Analytics event. Does nothing unless the visitor accepted analytics (public/consent.js enforces that and a strict whitelist). */
+export function ga(name: GaName, params?: { result?: string; bucket?: string; source?: string }) {
+  try { (window as any).fdConsent?.event(name, params); } catch { /* analytics must never break the app */ }
+}
+export const gaPageview = () => { try { (window as any).fdConsent?.pageview(); } catch { /* ignore */ } };
+export const cookieSettingsAvailable = () => { try { return !!(window as any).fdConsent?.enabled; } catch { return false; } };

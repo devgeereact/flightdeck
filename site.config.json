@@ -1,0 +1,15 @@
+{
+  "siteName": "Flightdeck",
+  "url": "https://flightdeck.gakinz.com",
+  "ownerName": "",
+  "contactEmail": "",
+  "contactNote": "",
+  "lastReviewed": "2026-10-24",
+  "ads": {
+    "enabled": false,
+    "licenceCleared": false,
+    "cmpReady": false,
+    "pubId": "",
+    "slots": { "guide": "", "checklist": "" }
+  }
+}

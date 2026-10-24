@@ -1,6 +1,6 @@
 import {useEffect,useRef,useState} from 'react';
 import {MessageSquare,X,Send,Check} from 'lucide-react';
-import {track} from './track';
+import {track,ga} from './track';
 
 type Kind='feedback'|'bug'|'contact';
 const LABEL:Record<Kind,string>={feedback:'Share feedback',bug:'Report a problem',contact:'Ask a question'};
@@ -17,7 +17,7 @@ export default function Feedback({defaultEmail=''}:{defaultEmail?:string}){
    const r=await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind,message,email,name,website:trap,elapsed:Date.now()-openedAt.current})});
    const j=await r.json().catch(()=>({}));
    if(!r.ok)throw Error(j.error||'Your message could not be sent. Please try again.');
-   setState('sent');setMessage('');
+   setState('sent');setMessage('');ga('feedback_sent',{source:kind});
   }catch(err){setState('idle');setError((err as Error).message)}
  }
  return <>

@@ -5,8 +5,11 @@ import { TEMPLATE, type TemplateSection } from './checklistTemplate';
 export type Flight = { number: string; date: string };
 // marks: item id -> timestamp of its last tick (positive) or untick (negative). Merging keeps the newest mark per ITEM, so ticks made on
 // two devices both survive. (A plain "newest trip copy wins" silently dropped one device's ticks.)
-export type Trip = { id: string; name: string; flight?: Flight; metaAt: number; updatedAt: number; marks: Record<string, number> };
-export const doneIds = (t: Trip) => Object.entries(t.marks).filter(([, v]) => v > 0).map(([k]) => k);
+import type { TripContext } from './tripContext';
+export type Trip = { id: string; name: string; flight?: Flight; nights?: number; ctx?: TripContext; metaAt: number; updatedAt: number; marks: Record<string, number> };
+// ids starting "dis." record dismissed suggestions (same newest-mark-wins merge as ticks); they are not packed items
+export const doneIds = (t: Trip) => Object.entries(t.marks).filter(([k, v]) => v > 0 && !k.startsWith('dis.')).map(([k]) => k);
+export const dismissedIds = (t: Trip | undefined | null) => (t ? Object.entries(t.marks).filter(([k, v]) => v > 0 && k.startsWith('dis.')).map(([k]) => k.slice(4)) : []);
 const KEEP_UNTICKS_MS = 60 * 24 * 3600 * 1000;
 export type Added = { id: string; sec: string; text: string };
 export type ChecklistData = {
@@ -58,6 +61,8 @@ export function sanitize(raw: unknown): ChecklistData {
         return {
           id: x.id, name: clean(x.name, LIMITS.name) || 'My trip', metaAt: Number.isFinite(x.metaAt) ? x.metaAt : updatedAt, updatedAt, marks,
           ...(x.flight && typeof x.flight.number === 'string' && typeof x.flight.date === 'string' ? { flight: { number: x.flight.number.slice(0, 12), date: x.flight.date.slice(0, 10) } } : {}),
+          ...(Number.isInteger(x.nights) && x.nights > 0 && x.nights <= 365 ? { nights: x.nights } : {}),
+          ...(cleanCtx(x.ctx) ? { ctx: cleanCtx(x.ctx)! } : {}),
         };
       });
   }
@@ -66,6 +71,15 @@ export function sanitize(raw: unknown): ChecklistData {
   return out;
 }
 
+const DIRS = ['outbound', 'inbound', 'domestic', 'overseas'];
+const num = (v: unknown, lo: number, hi: number): number | null => (typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi ? v : null);
+function cleanCtx(c: any): TripContext | null {
+  if (!c || typeof c !== 'object' || typeof c.dest !== 'string' || !/^[A-Z0-9]{2,5}$/.test(c.dest)) return null;
+  return {
+    dir: DIRS.includes(c.dir) ? c.dir : null, intl: typeof c.intl === 'boolean' ? c.intl : null, dest: c.dest, destName: clean(String(c.destName ?? c.dest), 40) || c.dest,
+    lat: num(c.lat, -90, 90), lon: num(c.lon, -180, 180), tempC: num(c.tempC, -90, 60), rain: typeof c.rain === 'boolean' ? c.rain : null, km: num(c.km, 0, 20100), at: num(c.at, 0, 4.1e12) ?? 0,
+  };
+}
 export const bytes = (d: ChecklistData) => new TextEncoder().encode(JSON.stringify(d)).length;
 
 /** The sections the user actually sees, with their edits applied. */
@@ -109,6 +123,11 @@ export const linkFlight = (d: ChecklistData, id: string, flight: Flight | undefi
 const stamp = (t: Trip, itemId: string, now: number) => Math.max(now, Math.abs(t.marks[itemId] ?? 0) + 1); // always newer than the previous mark on this item
 export const tick = (d: ChecklistData, id: string, itemId: string, on: boolean, now = Date.now()) =>
   touchTrip(d, id, (t) => ({ ...t, marks: { ...t.marks, [itemId]: (on ? 1 : -1) * stamp(t, itemId, now) } }), now);
+export const setNights = (d: ChecklistData, id: string, nights: number | null, now = Date.now()) =>
+  touchTrip(d, id, ({ nights: _n, ...t }) => ({ ...t, ...(nights && nights > 0 && nights <= 365 ? { nights: Math.floor(nights) } : {}) }), now, true);
+export const setContext = (d: ChecklistData, id: string, ctx: TripContext | null, now = Date.now()) =>
+  touchTrip(d, id, ({ ctx: _c, ...t }) => ({ ...t, ...(ctx ? { ctx } : {}) }), now, true);
+export const dismiss = (d: ChecklistData, id: string, suggestionId: string, now = Date.now()) => tick(d, id, 'dis.' + suggestionId, true, now);
 export const resetTicks = (d: ChecklistData, id: string, now = Date.now()) =>
   touchTrip(d, id, (t) => ({ ...t, marks: Object.fromEntries(Object.entries(t.marks).map(([k, v]) => [k, v > 0 ? -stamp(t, k, now) : v])) }), now);
 
@@ -152,8 +171,8 @@ export function merge(a: ChecklistData, b: ChecklistData, now = Date.now()): Che
     const marks: Record<string, number> = { ...x.marks };
     for (const [k, v] of Object.entries(y.marks)) if (Math.abs(v) > Math.abs(marks[k] ?? 0)) marks[k] = v;
     for (const [k, v] of Object.entries(marks)) if (v < 0 && -v < now - KEEP_UNTICKS_MS) delete marks[k]; // old "unticked" notes are no longer needed
-    const meta = x.metaAt > y.metaAt || (x.metaAt === y.metaAt && JSON.stringify([x.name, x.flight]) >= JSON.stringify([y.name, y.flight])) ? x : y;
-    return { id: x.id, name: meta.name, ...(meta.flight ? { flight: meta.flight } : {}), metaAt: Math.max(x.metaAt, y.metaAt), updatedAt: Math.max(x.updatedAt, y.updatedAt), marks };
+    const meta = x.metaAt > y.metaAt || (x.metaAt === y.metaAt && JSON.stringify([x.name, x.flight, x.nights, x.ctx]) >= JSON.stringify([y.name, y.flight, y.nights, y.ctx])) ? x : y;
+    return { id: x.id, name: meta.name, ...(meta.flight ? { flight: meta.flight } : {}), ...(meta.nights ? { nights: meta.nights } : {}), ...(meta.ctx ? { ctx: meta.ctx } : {}), metaAt: Math.max(x.metaAt, y.metaAt), updatedAt: Math.max(x.updatedAt, y.updatedAt), marks };
   };
   const byId = new Map<string, Trip>();
   for (const t of [...a.trips, ...b.trips]) { const cur = byId.get(t.id); byId.set(t.id, cur ? mergeTrip(cur, t) : t); }

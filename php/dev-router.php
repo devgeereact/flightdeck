@@ -11,9 +11,12 @@ if (strncmp($path, '/api', 4) === 0 && ($path === '/api' || $path[4] === '/')) {
 }
 $dist = realpath(__DIR__ . '/../dist');
 $file = realpath($dist . $path);
+if ($file !== false && is_dir($file) && is_file($file . '/index.html')) { // like the real host: /privacy/ serves privacy/index.html
+    $file .= '/index.html';
+}
 if ($path !== '/' && $file !== false && is_file($file) && strncmp($file, $dist . '/', strlen($dist) + 1) === 0) {
     $types = ['js' => 'text/javascript', 'css' => 'text/css', 'svg' => 'image/svg+xml', 'html' => 'text/html; charset=utf-8',
-              'webmanifest' => 'application/manifest+json', 'json' => 'application/json'];
+              'webmanifest' => 'application/manifest+json', 'json' => 'application/json', 'xml' => 'application/xml', 'txt' => 'text/plain; charset=utf-8'];
     header('Content-Type: ' . ($types[pathinfo($file, PATHINFO_EXTENSION)] ?? 'application/octet-stream'));
     header('Cache-Control: no-cache');
     readfile($file);

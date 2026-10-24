@@ -35,8 +35,15 @@ final class DevEnv
         if (basename($privateDir) !== 'private' || basename(dirname($privateDir)) !== 'php') {
             return [];
         }
-        $file = dirname($privateDir, 2) . '/.env';
-        $text = is_file($file) ? @file_get_contents($file) : false;
-        return $text === false ? [] : self::parse($text);
+        // Same precedence as Vite: .env first, then .env.local (not committed) on top of it.
+        $out = [];
+        foreach (['.env', '.env.local'] as $name) {
+            $file = dirname($privateDir, 2) . '/' . $name;
+            $text = is_file($file) ? @file_get_contents($file) : false;
+            if ($text !== false) {
+                $out = self::parse($text) + $out;
+            }
+        }
+        return $out;
     }
 }

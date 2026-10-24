@@ -98,6 +98,21 @@ final class Checklists
             if (!$trip['marks']) {
                 $trip['marks'] = new \stdClass();
             }
+            if (isset($t['nights']) && is_int($t['nights']) && $t['nights'] > 0 && $t['nights'] <= 365) {
+                $trip['nights'] = $t['nights'];
+            }
+            $c = $t['ctx'] ?? null;
+            if (is_array($c) && is_string($c['dest'] ?? null) && preg_match('/^[A-Z0-9]{2,5}$/D', $c['dest'])) {
+                $n = static function ($v, float $lo, float $hi) {
+                    return (is_int($v) || is_float($v)) && $v >= $lo && $v <= $hi ? $v + 0 : null;
+                };
+                $trip['ctx'] = [
+                    'dir' => is_string($c['dir'] ?? null) && in_array($c['dir'], ['outbound', 'inbound', 'domestic', 'overseas'], true) ? $c['dir'] : null,
+                    'intl' => is_bool($c['intl'] ?? null) ? $c['intl'] : null, 'dest' => $c['dest'], 'destName' => self::text($c['destName'] ?? null, 40) ?? $c['dest'],
+                    'lat' => $n($c['lat'] ?? null, -90, 90), 'lon' => $n($c['lon'] ?? null, -180, 180), 'tempC' => $n($c['tempC'] ?? null, -90, 60),
+                    'rain' => is_bool($c['rain'] ?? null) ? $c['rain'] : null, 'km' => $n($c['km'] ?? null, 0, 20100), 'at' => self::ts($c['at'] ?? 0),
+                ];
+            }
             $f = $t['flight'] ?? null;
             if (is_array($f) && is_string($f['number'] ?? null) && preg_match('/^[A-Z0-9]{2,3}\d{1,4}[A-Z]?$/D', $f['number']) && is_string($f['date'] ?? null) && preg_match('/^\d{4}-\d{2}-\d{2}$/D', $f['date'])) {
                 $trip['flight'] = ['number' => $f['number'], 'date' => $f['date']];
@@ -114,6 +129,27 @@ final class Checklists
         $active = self::id($d['active'] ?? null);
         $out['active'] = $active !== null ? $active : null;
         return $out;
+    }
+
+    /** Erase everything stored for this user (their right to erasure). Returns true when something was removed. */
+    public function delete(string $sub): bool
+    {
+        $path = $this->path($sub);
+        $lock = @fopen($path . '.lock', 'c');
+        if ($lock !== false) {
+            flock($lock, LOCK_EX);
+        }
+        $had = is_file($path);
+        @unlink($path);
+        foreach (glob($path . '.*.tmp') ?: [] as $t) {
+            @unlink($t);
+        }
+        if ($lock !== false) {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+            @unlink($path . '.lock');
+        }
+        return $had;
     }
 
     /** @return array{rev:int,data:?array} */
