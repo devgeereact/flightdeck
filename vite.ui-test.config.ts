@@ -5,6 +5,6 @@ import {fileURLToPath} from 'node:url';
 export default defineConfig({
   plugins:[react()],
   resolve:{alias:{'virtual:pwa-register':fileURLToPath(new URL('./test/pwa-stub.js',import.meta.url))}},
-  define:{'process.env.NODE_ENV':'"production"'},
+  define:{'process.env.NODE_ENV':'"production"','import.meta.env.VITE_CLERK_PUBLISHABLE_KEY':'""'},
   build:{outDir:'.ui-test-build',emptyOutDir:true,cssCodeSplit:false,minify:false,lib:{entry:'src/main.tsx',formats:['iife'],name:'FlightdeckApp',fileName:()=>'app.js'}}
 });

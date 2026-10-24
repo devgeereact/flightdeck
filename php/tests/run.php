@@ -214,6 +214,54 @@ Flight::combine([], $many, 'BA117', $now, static function () use (&$lookups) {
 });
 check('combine: at most 5 route lookups per search', $lookups === 5);
 check('combine: unknown route -> no geometry invented', Flight::combine([], [$live], 'BA117', $now, $noRoute)[0]['progress'] === null);
+// ---- Direction (inbound/outbound), usual terminals, estimates, usual-route fallback ----
+$mk = static function (string $number, ?string $oc, ?string $dc, string $o = 'LHR', string $d = 'JFK', array $t = []) {
+    $f = Flight::stateToFlight(state('X'), $number);
+    $f['origin'] = ['code' => $o, 'name' => $o . ' airport', 'city' => $o . ' city', 'country' => '', 'countryCode' => $oc, 'timezone' => null, 'lat' => null, 'lon' => null];
+    $f['destination'] = ['code' => $d, 'name' => $d . ' airport', 'city' => $d . ' city', 'country' => '', 'countryCode' => $dc, 'timezone' => null, 'lat' => null, 'lon' => null];
+    return Flight::addDirection(array_merge($f, $t));
+};
+check('direction: leaving the UK is outbound (route)', $mk('BA117', 'GB', 'US')['direction']['type'] === 'outbound' && $mk('BA117', 'GB', 'US')['direction']['basis'] === 'route' && $mk('BA117', 'GB', 'US')['direction']['place'] === 'LHR city (LHR)');
+check('direction: arriving in the UK is inbound, named by the UK airport', $mk('BA118', 'US', 'GB', 'JFK', 'LHR')['direction']['type'] === 'inbound' && $mk('BA118', 'US', 'GB', 'JFK', 'LHR')['direction']['place'] === 'LHR city (LHR)');
+check('direction: UK to UK is domestic; neither end UK is overseas', $mk('BA1300', 'GB', 'GB', 'LHR', 'MAN')['direction']['type'] === 'domestic' && $mk('EK73', 'US', 'FR', 'JFK', 'CDG')['direction']['type'] === 'overseas');
+$noRoute = static function (string $n) {
+    $f = Flight::stateToFlight(state('X'), $n);
+    return Flight::addDirection($f);
+};
+check('direction: BA odd number with unknown route is outbound, labelled by number, no place invented', $noRoute('BA59')['direction']['type'] === 'outbound' && $noRoute('BA59')['direction']['basis'] === 'number' && $noRoute('BA59')['direction']['place'] === null);
+check('direction: BA even number with unknown route is inbound', $noRoute('BA60')['direction']['type'] === 'inbound');
+check('direction: other airline with unknown route gets NO guess', !isset($noRoute('EK2')['direction']) && !isset($noRoute('LH400')['direction']));
+check('direction: route beats the number convention', $mk('BA59', 'ZA', 'GB', 'CPT', 'LHR')['direction']['type'] === 'inbound');
+check('direction: a different home country is respected', Flight::addDirection($mk('BA117', 'GB', 'US'), 'US')['direction']['type'] === 'inbound');
+
+$h = Flight::addTerminalHints($mk('BA59', 'GB', 'ZA', 'LHR', 'CPT'));
+check('terminal hint: BA from LHR with no reported terminal gets usual T5', ($h['terminalOutHint'] ?? null) === '5' && !isset($h['terminalInHint']));
+$h2 = Flight::addTerminalHints($mk('BA60', 'ZA', 'GB', 'CPT', 'LHR'));
+check('terminal hint: BA arriving at LHR gets usual T5 for arrival', ($h2['terminalInHint'] ?? null) === '5' && !isset($h2['terminalOutHint']));
+check('terminal hint: never overrides a reported terminal, never for other airlines or airports', !isset(Flight::addTerminalHints($mk('BA59', 'GB', 'ZA', 'LHR', 'CPT', ['terminalOut' => '3']))['terminalOutHint']) && !isset(Flight::addTerminalHints($mk('EK2', 'GB', 'AE', 'LHR', 'DXB'))['terminalOutHint']) && !isset(Flight::addTerminalHints($mk('BA117', 'GB', 'GB', 'LGW', 'MAN'))['terminalOutHint']));
+
+$before = $adb;
+unset($before['departure']['runwayTime']);
+$before['status'] = 'Expected';
+$before['departure']['runwayTime'] = ['utc' => '2026-10-24 07:50Z', 'local' => '2026-10-24 08:50+01:00'];
+$before['arrival']['runwayTime'] = ['utc' => '2026-10-24 15:25Z', 'local' => '2026-10-24 11:25-04:00'];
+$e = Flight::fromAeroDataBox($before, 'BA117', '2026-10-24');
+check('adb: take-off/touchdown before they happen are ESTIMATES, not actuals', $e['takeoff'] === null && $e['landing'] === null && $e['estimatedTakeoff'] === '2026-10-24T07:50:00.000Z' && $e['estimatedLanding'] === '2026-10-24T15:25:00.000Z');
+check('adb: after departure the runway time is the actual take-off', $m['takeoff'] === '2026-10-24T07:58:00.000Z' && $m['estimatedTakeoff'] === null);
+check('adb: airports carry a country code', $m['origin']['countryCode'] === 'GB' && $m['destination']['countryCode'] === 'US');
+$u = Flight::usualRouteFlight('BA59', '2026-12-01', $r);
+check('usual route flight: route only, no times or status claims', $u['usualRouteOnly'] === true && $u['scheduledOut'] === null && $u['gateOut'] === null && $u['status'] === 'Schedule not published yet' && $u['origin']['code'] === 'LHR');
+
+$two = [$adb, $adb];
+$two[0]['departure']['scheduledTime']['local'] = '2026-10-23 22:30+01:00';
+$two[1]['departure']['scheduledTime']['local'] = '2026-10-24 22:30+01:00';
+[$kept, $exact] = Flight::filterByDepartureDate($two, '2026-10-24');
+check('date filter: only the flight departing on the requested local date is kept', count($kept) === 1 && $exact && $kept[0]['departure']['scheduledTime']['local'] === '2026-10-24 22:30+01:00');
+[$none, $exact2] = Flight::filterByDepartureDate($two, '2026-10-25');
+check('date filter: nothing matches -> provider list returned, flagged inexact', count($none) === 2 && $exact2 === false && Flight::filterByDepartureDate([], '2026-10-25') === [[], true]);
+$idA = Flight::fromAeroDataBox($two[0], 'BA59', '2026-10-24')['id'];
+$two[1]['departure']['scheduledTime']['utc'] = '2026-10-24 21:30Z';
+check('flight ids are unique per departure time', $idA !== Flight::fromAeroDataBox($two[1], 'BA59', '2026-10-24')['id']);
 foreach ([$tmp, $tmp . '-b', $tmp . '-c', $tmp . '-d', $tmp . '-e', $tmp . '-f', $tmp . '-g'] as $dir) {
     exec('rm -rf ' . escapeshellarg($dir));
 }

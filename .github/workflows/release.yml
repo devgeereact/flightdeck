@@ -26,7 +26,11 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
       - run: pnpm test:php
-      - run: pnpm build
+      - name: Build
+        env:
+          # Public by design. Optional: when unset the app is built without login.
+          VITE_CLERK_PUBLISHABLE_KEY: ${{ vars.VITE_CLERK_PUBLISHABLE_KEY }}
+        run: pnpm build
       - name: Release private PHP source (restricted key, additive rsync)
         env:
           RELEASE_SSH_KEY: ${{ secrets.RELEASE_SSH_KEY }}

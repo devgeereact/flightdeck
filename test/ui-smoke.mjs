@@ -56,25 +56,38 @@ async function search(app, number) {
 try {
   if (cfg.liveAvailable) {
     const a = await boot(); await sleep(2500);
-    check('A1 live available: opens on live data, not the demo', val(a, 'select[aria-label="Data source"]') === 'live', val(a, 'select[aria-label="Data source"]'));
-    check('A2 live available: flight number box starts empty', val(a, 'input[aria-label="Flight number"]') === '');
-    check('A3 live available: no sample flight preloaded', !a.text().includes('Sample flight preview') && !a.text().includes('Boeing 777-300ER'));
-    check('A4 live available: shows the "Track a live flight" prompt', a.text().includes('Track a live flight'));
-    await search(a, FLIGHT); await sleep(7000);
-    const t = a.text();
-    const found = t.includes('Your flight') && t.includes(FLIGHT), none = t.includes('No flights found');
-    check(`B1 live search for ${FLIGHT} gives a flight card or an honest "not found"`, found || none, t.slice(300, 500));
-    check('B2 live result is never labelled sample', !t.includes('Sample flight preview') && !t.includes('of journey · illustrative'));
-    if (found) check('B3 provider attribution is shown', /Flight schedule data by AeroDataBox|Live aircraft positions from The OpenSky Network/.test(t));
-    check('B4 no runtime errors', a.errors.length === 0, a.errors.join(' | '));
+    const t0 = a.text();
+    check('A1 no data-source choice is shown and nothing says sample/demo', !a.w.document.querySelector('select') && !/Sample|DATA SOURCE|demo/i.test(t0));
+    check('A2 flight number box starts empty', val(a, 'input[aria-label="Flight number"]') === '');
+    check('A3 shows the "Track a flight" prompt, no flight preloaded', t0.includes('Track a flight') && !a.w.document.querySelector('.flight-card'));
+    await search(a, FLIGHT); await sleep(7500);
+    const t = a.text(), d = a.w.document;
+    const found = !!d.querySelector('.flight-card') && t.includes(FLIGHT), none = t.includes('No flights found');
+    check(`B1 search for ${FLIGHT} gives a flight card or an honest "not found"`, found || none, t.slice(300, 500));
+    if (found) {
+      check('B2 direction is stated (outbound/inbound/domestic/international)', !!d.querySelector('.direction') && /Outbound|Inbound|Domestic|International|Probably/.test(d.querySelector('.direction').textContent), d.querySelector('.direction')?.textContent);
+      const rows = [...d.querySelectorAll('.timeline-row')].map(r => ({label: r.querySelector('strong').textContent, kind: r.querySelector('small').textContent, time: r.lastElementChild.textContent}));
+      check('B3 timeline has 5 steps', rows.length === 5 && rows.map(r => r.label).join() === 'Boarding,Gate out,Take-off,Touchdown,Gate in', JSON.stringify(rows));
+      check('B4 timeline never claims "Actual" without a time, and every time has a kind', rows.every(r => (r.kind !== 'Actual' || r.time !== '—') && r.kind.length > 0), JSON.stringify(rows));
+      check('B5 a step with no time shows a dash, not "Not available"', rows.every(r => r.time === '—' || /\d\d:\d\d/.test(r.time)), JSON.stringify(rows));
+      check('B6 provider attribution is shown', /Flight schedule data by AeroDataBox|Live aircraft positions from The OpenSky Network/.test(t));
+    }
+    check('B7 no runtime errors', a.errors.length === 0, a.errors.join(' | '));
     a.w.close();
+    // Usual-route fallback: a date far beyond the schedule window still says what the flight normally flies
+    const far = new Date(Date.now() + 25 * 86400000).toISOString().slice(0, 10);
+    const f = await boot(); await sleep(2000);
+    f.w.document.querySelector('input[aria-label="Departure date"]');
+    Object.getOwnPropertyDescriptor(f.w.HTMLInputElement.prototype, 'value').set.call(f.w.document.querySelector('input[aria-label="Departure date"]'), far);
+    f.w.document.querySelector('input[aria-label="Departure date"]').dispatchEvent(new f.w.Event('input', {bubbles: true}));
+    await search(f, 'BA59'); await sleep(6000);
+    const tf = f.text();
+    check('B8 far-future date: usual route + outbound shown, no invented times', tf.includes('LHR') && tf.includes('CPT') && /Outbound from London/.test(tf) && tf.includes('not published yet'), tf.slice(300, 700));
+    f.w.close();
   } else console.log('SKIPPED A/B: no live provider keys configured locally');
-  const c = await boot({config: {liveAvailable: false, provider: 'x'}}); await sleep(2500);
-  check('C1 no live providers: falls back to the sample flight', val(c, 'select[aria-label="Data source"]') === 'demo' && c.text().includes('Sample flight preview'));
+  const c = await boot({config: {liveAvailable: false, provider: 'x'}}); await sleep(2000);
+  check('C1 no live providers: says so plainly', c.text().includes('not configured on this server'));
   c.w.close();
-  const d = await boot({storedMode: 'demo'}); await sleep(2500);
-  check('D1 a remembered "Sample flights" choice is respected', val(d, 'select[aria-label="Data source"]') === 'demo' && d.text().includes('Sample flight preview'));
-  d.w.close();
 } finally { stop(); }
 console.log(failed ? `\n${failed} FAILED` : '\nAll UI smoke checks passed');
 process.exit(failed ? 1 : 0);

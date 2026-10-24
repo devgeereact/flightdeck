@@ -3,3 +3,7 @@
 
 .mobile-nav{display:none}@media(max-width:700px){.mobile-nav{display:flex;gap:18px;padding:15px 0 0}.mobile-nav button{display:flex;align-items:center;gap:7px;background:none;border:0;font-size:11px;color:#638055;padding:3px 0}}
 .provider-note{display:block;margin-top:.4rem;color:#8a4b0f}
+.direction{display:flex;align-items:center;gap:10px;margin-top:16px;font-size:11px;color:#4d6b57;line-height:1.5}.direction .pill{background:#e7efdf;border-color:#cddcc0;color:#3f6a3c}.direction.inbound .pill{background:#e4eef5;border-color:#c5d7e4;color:#33607f}.direction.domestic .pill,.direction.overseas .pill{background:#f1efe6;border-color:#e0dcc8;color:#76703f}
+.auth-bar{display:flex;align-items:center;gap:10px;margin-left:14px}.auth-bar .text-button{white-space:nowrap}.text-button.primary{background:#214e3e;color:#fff;border-color:#214e3e}
+.search-card{margin-bottom:24px}
+.updates small{display:block;margin-top:5px}

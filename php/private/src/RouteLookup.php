@@ -73,7 +73,7 @@ final class RouteLookup
         };
         return [
             'code' => $code, 'name' => $str($a['name'] ?? '') ?: $code, 'city' => $str($a['municipality'] ?? ''),
-            'country' => $str($a['country_name'] ?? ''), 'timezone' => null, 'lat' => $lat, 'lon' => $lon,
+            'country' => $str($a['country_name'] ?? ''), 'countryCode' => $str($a['country_iso_name'] ?? '') ?: null, 'timezone' => null, 'lat' => $lat, 'lon' => $lon,
         ];
     }
 }

@@ -7,6 +7,7 @@ return [
     'aerodatabox_key' => '',
     'aerodatabox_monthly_units' => 360, // each flight lookup costs 2 units; stops before the 400 allowance
     'aerodatabox_hourly_calls' => 12,   // global cap so searches by strangers cannot burn the allowance
+    'home_country_code' => 'GB', // flights are labelled Outbound/Inbound relative to this country
     // Per-visitor rate limits behind Cloudflare. The CF-Connecting-IP header is only trusted when the connection really comes from a Cloudflare range.
     'trust_cf_connecting_ip' => false,
 ];

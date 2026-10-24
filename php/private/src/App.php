@@ -35,7 +35,7 @@ final class App
                 ]);
                 return;
             case '/flights':
-                self::flights($opensky, $adb, $routes);
+                self::flights($opensky, $adb, $routes, $config);
                 return;
             case '/weather':
                 self::weather($store);
@@ -50,7 +50,7 @@ final class App
         return isset($_GET[$name]) && is_string($_GET[$name]) ? $_GET[$name] : '';
     }
 
-    private static function flights(OpenSky $opensky, AeroDataBox $adb, RouteLookup $routes): void
+    private static function flights(OpenSky $opensky, AeroDataBox $adb, RouteLookup $routes, array $config): void
     {
         $number = Flight::normalizeNumber(self::param('number'));
         $date = self::param('date');
@@ -86,6 +86,10 @@ final class App
                 if (Flight::scheduleDateOk($date, $now)) {
                     try {
                         [$raw, $c, $t] = $adb->fetch($number, $date);
+                        [$raw, $exact] = Flight::filterByDepartureDate($raw, $date);
+                        if (!$exact) {
+                            $notes[] = 'No departure is scheduled on this date; showing the nearest departures instead.';
+                        }
                         foreach ($raw as $x) {
                             $scheduled[] = Flight::fromAeroDataBox($x, $number, $date);
                         }
@@ -128,6 +132,22 @@ final class App
             if ($flights && !$scheduled) {
                 $sources[] = 'adsbdb routes';
             }
+            if (!$flights) {
+                // Nothing live and nothing scheduled: at least say what this flight number usually flies.
+                foreach (Flight::callsignCandidates($number) as $callsign) {
+                    $route = $routes->lookup($callsign);
+                    if ($route !== null) {
+                        $flights[] = Flight::usualRouteFlight($number, $date, $route);
+                        $sources[] = 'adsbdb routes';
+                        $notes[] = 'No schedule is published for this date yet, so this is the flight\'s usual route only. Times appear closer to departure.';
+                        break;
+                    }
+                }
+            }
+            $home = is_string($config['home_country_code'] ?? null) && strlen($config['home_country_code']) === 2 ? strtoupper($config['home_country_code']) : 'GB';
+            $flights = array_map(static function (array $f) use ($home) {
+                return Flight::addTerminalHints(Flight::addDirection($f, $home));
+            }, $flights);
             $airborne = false;
             foreach ($flights as $f) {
                 $airborne = $airborne || $f['position'] !== null;

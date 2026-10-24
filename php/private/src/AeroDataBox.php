@@ -67,7 +67,7 @@ final class AeroDataBox
             $this->spend();
             [$status, $body] = ($this->http)(
                 'GET',
-                'https://' . $this->host . '/flights/number/' . rawurlencode($number) . '/' . $date . '?dateLocalRole=Both&withAircraftImage=false&withLocation=false&withFlightPlan=false',
+                'https://' . $this->host . '/flights/number/' . rawurlencode($number) . '/' . $date . '?dateLocalRole=Departure&withAircraftImage=false&withLocation=false&withFlightPlan=false',
                 ['X-RapidAPI-Key: ' . $this->key, 'X-RapidAPI-Host: ' . $this->host, 'Accept: application/json'],
                 null,
                 15

@@ -207,7 +207,7 @@ final class Flight
         $name = self::str($a['shortName'] ?? null) ?? self::str($a['name'] ?? null) ?? ($code === '—' ? 'Airport unavailable' : $code);
         return [
             'code' => $code, 'name' => $name, 'city' => self::str($a['municipalityName'] ?? null) ?? '',
-            'country' => self::str($a['countryCode'] ?? null) ?? '', 'timezone' => self::str($a['timeZone'] ?? null),
+            'country' => '', 'countryCode' => self::str($a['countryCode'] ?? null), 'timezone' => self::str($a['timeZone'] ?? null),
             'lat' => $lat, 'lon' => $lon,
         ];
     }
@@ -220,7 +220,8 @@ final class Flight
         $rawStatus = is_string($x['status'] ?? null) ? $x['status'] : 'Unknown';
         $origin = self::adbAirport($dep);
         $destination = self::adbAirport($arr);
-        $f = self::emptyFlight('adb-' . $number . '-' . $date . '-' . $origin['code'] . '-' . $destination['code'], $number);
+        $stamp = substr(preg_replace('/\D/', '', (string) ($dep['scheduledTime']['utc'] ?? '')), 0, 12);
+        $f = self::emptyFlight('adb-' . $number . '-' . ($stamp !== '' ? $stamp : $date) . '-' . $origin['code'] . '-' . $destination['code'], $number);
         $f['airline'] = self::str(is_array($x['airline'] ?? null) ? ($x['airline']['name'] ?? null) : null) ?? 'Airline not reported';
         $f['status'] = self::ADB_STATUS[$rawStatus] ?? 'Status unavailable';
         $f['providerStatus'] = isset(self::ADB_STATUS[$rawStatus]) ? $rawStatus : 'Unknown';
@@ -234,13 +235,22 @@ final class Flight
         $revisedIn = self::adbTime($arr['revisedTime'] ?? null);
         $f['estimatedOut'] = $revisedOut;
         $f['estimatedIn'] = $revisedIn;
+        // runwayTime is actual once it has happened and an estimate before that.
+        $f['estimatedTakeoff'] = null;
+        $f['estimatedLanding'] = null;
+        $runwayOut = self::adbTime($dep['runwayTime'] ?? null);
+        $runwayIn = self::adbTime($arr['runwayTime'] ?? null);
         if (isset(self::GATE_OUT_DONE[$rawStatus])) {
             $f['actualOut'] = $revisedOut;
-            $f['takeoff'] = self::adbTime($dep['runwayTime'] ?? null);
+            $f['takeoff'] = $runwayOut;
+        } else {
+            $f['estimatedTakeoff'] = $runwayOut;
         }
         if ($rawStatus === 'Arrived') {
             $f['actualIn'] = $revisedIn;
-            $f['landing'] = self::adbTime($arr['runwayTime'] ?? null);
+            $f['landing'] = $runwayIn;
+        } else {
+            $f['estimatedLanding'] = $runwayIn;
         }
         $f['gateOut'] = self::str($dep['gate'] ?? null);
         $f['terminalOut'] = self::str($dep['terminal'] ?? null);
@@ -373,5 +383,86 @@ final class Flight
             $flights[] = self::addGeometry($f, $nowMs);
         }
         return $flights;
+    }
+
+    /** Airlines' usual terminals at a hub, shown ONLY when the provider reports none, and always labelled as usual, not confirmed. */
+    private const USUAL_TERMINAL = ['BA@LHR' => '5'];
+    /** Airlines whose flight numbers encode direction (odd = outbound from the UK, even = inbound). Used only when the route is unknown. */
+    private const NUMBER_DIRECTION = ['BA' => true];
+
+    private static function carrierOf(array $f): string
+    {
+        return substr((string) ($f['number'] ?? ''), 0, 2);
+    }
+
+    private static function placeName(array $a): string
+    {
+        $city = $a['city'] ?? '';
+        $name = $a['name'] ?? '';
+        $label = $city !== '' ? $city : $name;
+        return ($a['code'] ?? '—') === '—' ? $label : $label . ' (' . $a['code'] . ')';
+    }
+
+    /**
+     * Work out whether the flight is outbound from, inbound to, or within the home country (default GB).
+     * Route first (accurate); flight-number convention only when the route is missing, and labelled as such.
+     */
+    public static function addDirection(array $f, string $home = 'GB'): array
+    {
+        $oc = $f['origin']['countryCode'] ?? null;
+        $dc = $f['destination']['countryCode'] ?? null;
+        $type = null;
+        $basis = 'route';
+        if ($oc !== null && $dc !== null) {
+            $type = $oc === $home ? ($dc === $home ? 'domestic' : 'outbound') : ($dc === $home ? 'inbound' : 'overseas');
+        } elseif (isset(self::NUMBER_DIRECTION[self::carrierOf($f)]) && preg_match('/^[A-Z0-9]{2}(\d{1,4})/', (string) $f['number'], $m)) {
+            $type = ((int) $m[1]) % 2 === 1 ? 'outbound' : 'inbound';
+            $basis = 'number';
+        }
+        if ($type === null) {
+            return $f;
+        }
+        $place = $type === 'inbound' ? $f['destination'] : $f['origin'];
+        $f['direction'] = ['type' => $type, 'basis' => $basis, 'home' => $home, 'place' => $basis === 'route' ? self::placeName($place) : null];
+        return $f;
+    }
+
+    /** Fill a missing terminal with the airline's usual one, clearly marked as a hint. */
+    public static function addTerminalHints(array $f): array
+    {
+        $carrier = self::carrierOf($f);
+        if (($f['terminalOut'] ?? null) === null && isset(self::USUAL_TERMINAL[$carrier . '@' . ($f['origin']['code'] ?? '')])) {
+            $f['terminalOutHint'] = self::USUAL_TERMINAL[$carrier . '@' . $f['origin']['code']];
+        }
+        if (($f['terminalIn'] ?? null) === null && isset(self::USUAL_TERMINAL[$carrier . '@' . ($f['destination']['code'] ?? '')])) {
+            $f['terminalInHint'] = self::USUAL_TERMINAL[$carrier . '@' . $f['destination']['code']];
+        }
+        return $f;
+    }
+
+    /** A flight we only know by its usual route (no schedule for the requested date yet). */
+    public static function usualRouteFlight(string $number, string $date, array $route): array
+    {
+        $f = self::emptyFlight('route-' . $number . '-' . $date, $number);
+        $f['status'] = 'Schedule not published yet';
+        $f['origin'] = $route['origin'];
+        $f['destination'] = $route['destination'];
+        $f['routeSource'] = 'adsbdb';
+        $f['usualRouteOnly'] = true;
+        return $f;
+    }
+
+    /**
+     * The provider also returns the flight that ARRIVES on the requested date (e.g. last night's departure). Keep only flights whose
+     * scheduled departure date at the departure airport matches. Returns [flights, exact]; when nothing matches, all are returned
+     * with exact=false so the caller can say so instead of silently showing the wrong day.
+     */
+    public static function filterByDepartureDate(array $raw, string $date): array
+    {
+        $match = array_values(array_filter($raw, static function ($x) use ($date) {
+            $local = is_array($x) ? ($x['departure']['scheduledTime']['local'] ?? null) : null;
+            return is_string($local) && substr($local, 0, 10) === $date;
+        }));
+        return $match ? [$match, true] : [$raw, $raw === []];
     }
 }

@@ -17,3 +17,6 @@ Provider availability/licences may change. Before activation consult current off
 - adsbdb (api.adsbdb.com/v0/callsign/{callsign}): free, no key; route data by David Taylor and Jim Mason, not to be copied into other databases; short cache only.
 - AeroDataBox (RapidAPI, host aerodatabox.p.rapidapi.com, GET /flights/number/{number}/{date}): free Basic plan 400 units a month, 1 request a second, personal use, visible attribution required (shown in the app). Key goes in php/private/config.php as aerodatabox_key (server only, never VITE_). Spend limits in config.example.php.
 - Google: no public flight API (QPX Express closed 2018).
+
+## Clerk (accounts)
+Application "Flightdeck" in the owner's Clerk workspace, development instance, publishable key in .env as VITE_CLERK_PUBLISHABLE_KEY (public by design). Test user for local checks: flightdeck+clerk_test@example.com (Clerk's "+clerk_test" addresses accept the fixed development code 424242; this user has no password). Going to production needs a Clerk PRODUCTION instance for flightdeck.gakinz.com plus DNS records in the gakinz.com Cloudflare zone, then the new pk_live key as the GitHub variable VITE_CLERK_PUBLISHABLE_KEY (the release workflow already passes it to the build).
