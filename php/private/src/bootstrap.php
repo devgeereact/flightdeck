@@ -8,6 +8,7 @@ require __DIR__ . '/DevEnv.php';
 require __DIR__ . '/ClerkAuth.php';
 require __DIR__ . '/Checklists.php';
 require __DIR__ . '/Metrics.php';
+require __DIR__ . '/Mailer.php';
 require __DIR__ . '/Enquiries.php';
 require __DIR__ . '/ClerkApi.php';
 require __DIR__ . '/Admin.php';
@@ -47,6 +48,9 @@ $config['opensky_client_id'] = $config['opensky_client_id'] ?? $env('OPENSKY_CLI
 $config['opensky_client_secret'] = $config['opensky_client_secret'] ?? $env('OPENSKY_CLIENT_SECRET', 'clientSecret');
 $config['admin_user_ids'] = $config['admin_user_ids'] ?? array_values(array_filter(array_map('trim', explode(',', (string) $env('FLIGHTDECK_ADMIN_IDS')))));
 $config['owner_email'] = $config['owner_email'] ?? $env('OWNER_EMAIL');
+foreach (['smtp_host' => 'SMTP_HOST', 'smtp_port' => 'SMTP_PORT', 'smtp_secure' => 'SMTP_SECURE', 'smtp_user' => 'SMTP_USER', 'smtp_pass' => 'SMTP_PASS', 'mail_from' => 'MAIL_FROM'] as $k => $e) {
+    $config[$k] = $config[$k] ?? $env($e);
+}
 $config['clerk_secret_key'] = $config['clerk_secret_key'] ?? $env('CLERK_SECRET_KEY');
 $config['ga_property_id'] = $config['ga_property_id'] ?? $env('GA_PROPERTY_ID');
 $config['ga_service_account_file'] = $config['ga_service_account_file'] ?? $env('GA_SERVICE_ACCOUNT_FILE');

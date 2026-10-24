@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 // Mirrors server/flight.test.ts. Run: php php/tests/run.php
-foreach (['Http', 'DevEnv', 'ClerkAuth', 'Checklists', 'Metrics', 'Enquiries', 'ClerkApi', 'Admin', 'GoogleAnalytics', 'Store', 'CloudflareIps', 'Geo', 'Flight', 'OpenSky', 'RouteLookup', 'AeroDataBox'] as $f) {
+foreach (['Http', 'DevEnv', 'ClerkAuth', 'Checklists', 'Metrics', 'Mailer', 'Enquiries', 'ClerkApi', 'Admin', 'GoogleAnalytics', 'Store', 'CloudflareIps', 'Geo', 'Flight', 'OpenSky', 'RouteLookup', 'AeroDataBox'] as $f) {
     require __DIR__ . '/../private/src/' . $f . '.php';
 }
 
@@ -455,6 +455,56 @@ $noMail = new Enquiries($tmp . '-n', static function () {
     throw new \RuntimeException('smtp down');
 });
 check('enquiry: a broken mail system never loses the message', $noMail->submit($ok, 'owner@example.com', 'n@x.com', $nowMs + 9000)['ok'] && $noMail->list()['total'] >= 4);
+
+// --- replying from the console (own mailbox / SMTP)
+$replyMails = [];
+$replier = new Enquiries($tmp . '-r', static function ($to, $subject, $body, $headers) use (&$replyMails) {
+    $replyMails[] = compact('to', 'subject', 'body', 'headers');
+    return true;
+});
+$rid = $replier->submit($ok, null, 'noreply@x.com', $nowMs)['id'];
+$rr = $replier->reply($rid, "Thanks Sam.\nTerminal 3 is on the list.", 'info@flightdeck.gakinz.com', 'owner@example.com', $nowMs + 1000);
+$saved = $replier->list()['items'][0];
+check('reply: goes to the visitor from the site mailbox, replies route to the owner, quotes the original', $rr['ok'] && $replyMails[0]['to'] === 'sam@example.com' && in_array('Reply-To: owner@example.com', $replyMails[0]['headers'], true) && in_array('From: Flightdeck <info@flightdeck.gakinz.com>', $replyMails[0]['headers'], true) && strpos($replyMails[0]['body'], 'Hello Sam') === 0 && strpos($replyMails[0]['body'], '> Hello, can you add Terminal 3') !== false);
+check('reply: the enquiry is marked replied and keeps the reply text', $saved['status'] === 'replied' && $saved['replies'][0]['text'] === "Thanks Sam.\nTerminal 3 is on the list." && $replier->unread() === 0);
+$noAddr = $replier->submit(['kind' => 'feedback', 'message' => 'No email here at all', 'elapsed' => 5000, 'email' => ''], null, 'n@x.com', $nowMs + 2000)['id'];
+check('reply: refused when there is no email address, nothing is sent', $replier->reply($noAddr, 'Hi', 'n@x.com', null)['status'] === 422 && count($replyMails) === 1);
+check('reply: empty, oversized and badly-identified replies are refused', $replier->reply($rid, ' ', 'n@x.com', null)['status'] === 422 && $replier->reply($rid, str_repeat('x', 4001), 'n@x.com', null)['status'] === 413 && $replier->reply('../../etc/passwd', 'Hello there', 'n@x.com', null)['status'] === 404 && count($replyMails) === 1);
+$failing = new Enquiries($tmp . '-r', static function () {
+    return false;
+});
+$fid = $failing->submit($ok, null, 'n@x.com', $nowMs + 3000)['id'];
+$rf2 = $failing->reply($fid, 'Hello Sam', 'n@x.com', null);
+check('reply: a failed send returns 502 and leaves the enquiry new', $rf2['status'] === 502 && array_values(array_filter($failing->list()['items'], static function ($i) use ($fid) { return $i['id'] === $fid; }))[0]['status'] === 'new');
+
+// --- SMTP conversation against a scripted fake server
+final class FakeSmtp
+{
+    public $sent = [];
+    private $replies;
+    public function __construct(array $replies) { $this->replies = $replies; }
+    public function read(): string { return array_shift($this->replies) ?? ''; }
+    public function write(string $s): void { $this->sent[] = $s; }
+    public function startTls(): void { $this->sent[] = '[TLS]'; }
+}
+$script = ["220 hi\r\n", "250-mail\r\n250 AUTH LOGIN\r\n", "334 VXNlcm5hbWU6\r\n", "334 UGFzc3dvcmQ6\r\n", "235 ok\r\n", "250 ok\r\n", "250 ok\r\n", "354 go\r\n", "250 queued\r\n"];
+$c = new FakeSmtp($script);
+$sentOk = \Flightdeck\Mailer::deliver($c, 'mail.example.com', 'info@x.com', 's3cret', 'info@x.com', 'sam@example.com', 'Re: hi', "Line1\n.dot line\nLine3", ['From: Flightdeck <info@x.com>', "Evil: a\r\nBcc: v@x.com", 'Reply-To: o@x.com']);
+$wire = implode('', $c->sent);
+check('smtp: full login and delivery conversation succeeds with the right commands', $sentOk && strpos($wire, "AUTH LOGIN\r\n") !== false && strpos($wire, base64_encode('info@x.com') . "\r\n") !== false && strpos($wire, base64_encode('s3cret') . "\r\n") !== false && strpos($wire, "MAIL FROM:<info@x.com>\r\n") !== false && strpos($wire, "RCPT TO:<sam@example.com>\r\n") !== false);
+check('smtp: dot-stuffing, CRLF and header-injection safety in the message', strpos($wire, "\r\n..dot line\r\n") !== false && strpos($wire, "\r\n.\r\n") !== false && strpos($wire, 'Bcc: v@x.com') === false && strpos($wire, 'Subject: Re: hi') !== false && strpos($wire, 'Reply-To: o@x.com') !== false);
+$bad = new FakeSmtp(["220 hi\r\n", "250 ok\r\n", "334 a\r\n", "334 b\r\n", "535 auth failed\r\n"]);
+$threw = false;
+try {
+    \Flightdeck\Mailer::deliver($bad, 'm', 'u', 'wrong', 'a@x.com', 'b@x.com', 's', 'b', []);
+} catch (\RuntimeException $e) {
+    $threw = true;
+}
+check('smtp: a refused login is an error, not a silent success', $threw);
+check('smtp: addresses with line breaks are refused before any connection', !\Flightdeck\Mailer::deliver(new FakeSmtp([]), 'm', '', '', 'a@x.com', "b@x.com\r\nBcc: v@x.com", 's', 'b', []));
+$tls = new FakeSmtp(["220 hi\r\n", "250 ok\r\n", "220 go\r\n", "250 ok\r\n", "250 ok\r\n", "250 ok\r\n", "354 go\r\n", "250 q\r\n"]);
+check('smtp: STARTTLS upgrades the connection before login or sending', \Flightdeck\Mailer::deliver($tls, 'm', '', '', 'a@x.com', 'b@x.com', 's', 'b', [], true) && array_search('[TLS]', $tls->sent, true) !== false && array_search('[TLS]', $tls->sent, true) < count($tls->sent) - 4);
+check('mailer: without smtp_host the factory returns a callable (mail() fallback)', is_callable(\Flightdeck\Mailer::make([])) && is_callable(\Flightdeck\Mailer::make(['smtp_host' => 'mail.example.com', 'smtp_user' => 'a@x.com', 'smtp_pass' => 'p'])));
 
 $clerkCalls = [];
 $clerkFake = static function ($method, $url, $headers) use (&$clerkCalls) {

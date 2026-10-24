@@ -7,7 +7,8 @@ import {SplitText} from 'gsap/SplitText';
 import {MotionPathPlugin} from 'gsap/MotionPathPlugin';
 import {DrawSVGPlugin} from 'gsap/DrawSVGPlugin';
 import {track,trackOnce,ga} from './track';
-import SiteFooter from './SiteFooter';
+import {HEADER_LINKS,FOOTER_GROUPS,FOOTER_NOTE} from './siteNav';
+const LEGAL_LINKS=FOOTER_GROUPS.flatMap(g=>g.links).filter(l=>['Privacy','Cookies','Terms','Contact us'].includes(l.label));
 gsap.registerPlugin(useGSAP,SplitText,MotionPathPlugin,DrawSVGPlugin);
 
 // One calm hero: headline, two actions, and an illustrative flight drawn in the app's own look.
@@ -24,7 +25,7 @@ export default function Landing(){
    const stage=q('.chip-status')[0] as HTMLElement,togo=q('.chip-togo')[0] as HTMLElement;
    const prog={v:0};
    const intro=gsap.timeline({defaults:{ease:'power3.out'}});
-   intro.from(q('.land-nav'),{autoAlpha:0,y:-16,duration:.6})
+   intro.from(q('.land-nav .brand'),{autoAlpha:0,x:-14,duration:.6}).from(q('.land-menu > *'),{autoAlpha:0,y:-12,duration:.5,stagger:.06},'<.1').from(q('.land-bottom > *, .land-bottom nav a'),{autoAlpha:0,y:12,duration:.5,stagger:.05},0.5)
     .from(q('.eyebrow'),{autoAlpha:0,y:14,duration:.5},'<.1')
     .from(q('.hero-sub,.hero-cta,.hero-points li'),{autoAlpha:0,y:22,duration:.65,stagger:.09},'>-.1')
     .from(q('.hero-panel'),{autoAlpha:0,scale:.94,y:24,duration:.9},'<.1')
@@ -43,6 +44,15 @@ export default function Landing(){
     .to(q('.plane'),{duration:8,ease:'power1.inOut',motionPath:{path:routeBase,align:routeBase,alignOrigin:[.5,.5],autoRotate:90}},0)
     .to(prog,{v:1,duration:8,ease:'power1.inOut',onUpdate:()=>{let label=STAGES[0][1];for(const [at,t] of STAGES)if(prog.v>=at)label=t;if(stage.textContent!==label)stage.textContent=label;const km=Math.max(0,Math.round(5540*(1-prog.v)));const txt=prog.v<.06?'Ready for departure':km===0?'Arrived':`${km.toLocaleString('en-GB')} km to go`;if(togo.textContent!==txt)togo.textContent=txt}},0)
     .set(q('.plane'),{autoAlpha:0},8).set(q('.plane'),{autoAlpha:1},9.6);
+   // Calls to action lean a few pixels toward the pointer (only where there is a real pointer), and the tick marks pop in one by one.
+   if(window.matchMedia('(hover: hover)').matches){
+    q('.cta').forEach((btn:Element)=>{
+     const el=btn as HTMLElement,qx=gsap.quickTo(el,'x',{duration:.5,ease:'power3.out'}),qy=gsap.quickTo(el,'y',{duration:.5,ease:'power3.out'});
+     const mv=(e:PointerEvent)=>{const r=el.getBoundingClientRect();qx((e.clientX-(r.left+r.width/2))*.18);qy((e.clientY-(r.top+r.height/2))*.28)},lv=()=>{qx(0);qy(0)};
+     el.addEventListener('pointermove',mv);el.addEventListener('pointerleave',lv);
+    });
+   }
+   gsap.from(q('.hero-points svg'),{scale:0,rotation:-90,duration:.5,ease:'back.out(2.4)',stagger:.12,delay:1.1,transformOrigin:'50% 50%'});
    // Chips drift gently; the panel leans a few pixels toward the pointer on devices that have one.
    q('.chip').forEach((el:Element,i:number)=>gsap.to(el,{y:`+=${i%2?9:-9}`,duration:'random(2.4,3.6)',ease:'sine.inOut',yoyo:true,repeat:-1,delay:i*.2+2}));
    const panel=q('.hero-panel')[0] as HTMLElement;
@@ -55,7 +65,7 @@ export default function Landing(){
   });
  },{scope:root});
  return <div className="landing" ref={root}>
-  <header className="land-nav"><a className="brand" href="#"><span className="brand-mark"><Plane size={23}/></span>flightdeck<span className="brand-dot">.</span></a><SignInButton mode="modal"><button className="text-button">Sign in</button></SignInButton></header>
+  <header className="land-nav"><a className="brand" href="/"><span className="brand-mark"><Plane size={23}/></span>flightdeck<span className="brand-dot">.</span></a><nav className="land-menu" aria-label="Main">{HEADER_LINKS.map(l=><a key={l.label} href={l.href}>{l.label}</a>)}<SignInButton mode="modal"><button className="land-signin">Sign in</button></SignInButton></nav></header>
   <section className="hero" aria-labelledby="hero-title">
    <div className="hero-copy">
     <span className="eyebrow">YOUR JOURNEY, IN VIEW</span>
@@ -87,6 +97,6 @@ export default function Landing(){
     </div>
    </div>
   </section>
-  <div className="land-foot"><SiteFooter/></div>
+  <footer className="land-bottom"><span>© {new Date().getFullYear()} Flightdeck</span><nav aria-label="Legal">{LEGAL_LINKS.map(l=><a key={l.label} href={l.href}>{l.label}</a>)}</nav><span className="land-note">{FOOTER_NOTE}</span></footer>
  </div>
 }

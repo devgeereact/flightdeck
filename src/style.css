@@ -143,3 +143,36 @@ footer>span:nth-child(2){flex:1 1 260px;text-align:center;font-size:11.5px;color
 @media(max-width:700px){.ck-board{columns:1}.ck-board>.ck-sec>summary{padding:16px 18px 6px}.ck-board .ck-list,.ck-board .ck-sec-foot{padding-left:18px;padding-right:18px}.ck-board .ck-sec-hint{padding-left:58px}}
 @media print{.ck-board{columns:2;column-gap:10px}.ck-board>.ck-sec{margin-bottom:8px}.ck-board .ck-sec-title{font-size:12pt}.ck-board .ck-check{padding:2px 0;font-size:10pt}.ck-board>.ck-sec>summary{padding:6px 8px 2px}.ck-board .ck-list,.ck-board .ck-sec-foot{padding-left:8px;padding-right:8px}.ck-n{display:none}}
 .app .sf{padding-bottom:84px}@media(max-width:700px){.app .sf{padding-bottom:96px}}
+
+/* Landing: one full-screen hero, menu on the top line, legal menu on the bottom line, no page scroll. */
+.landing{height:100vh;height:100dvh;min-height:0;overflow:hidden}
+.land-nav{flex:none;padding:18px clamp(20px,5vw,64px);gap:20px}
+.land-menu{display:flex;align-items:center;gap:4px}
+.land-menu a{padding:9px 14px;border-radius:8px;font:600 13.5px 'DM Sans',system-ui,sans-serif;color:#4d5f55}
+.land-menu a:hover{background:#edf2e8;color:#244b38}
+.land-signin{margin-left:8px;border:0;border-radius:9px;background:#214e3e;color:#fff;padding:10px 18px;font:600 13.5px 'DM Sans',system-ui,sans-serif}
+.land-signin:hover{background:#1a4033}
+.landing .hero{flex:1;min-height:0;padding-top:0;padding-bottom:0}
+.landing .hero-title{font-size:clamp(2.2rem,min(5.4vw,9vh),5rem)}
+.landing .hero-sub{margin-top:min(26px,3vh)}.landing .hero-cta{margin-top:min(34px,4vh)}.landing .hero-points{margin-top:min(30px,3.5vh)}
+.landing .hero-map{max-height:60vh;width:100%}
+.land-bottom{flex:none;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px clamp(20px,5vw,64px);border-top:1px solid #e1e6da;font-size:12.5px;color:#5d6e64;white-space:nowrap}
+.land-bottom nav{display:flex;gap:4px}.land-bottom nav a{padding:6px 12px;border-radius:8px;font-weight:600;color:#4d5f55}.land-bottom nav a:hover{background:#edf2e8;color:#244b38}
+@media(max-height:760px){.landing .hero-points{display:none}}
+@media(max-width:900px){.landing .hero{grid-template-columns:1fr;align-content:center}.landing .hero-visual{display:none}.land-menu a{display:none}.land-note{display:none}.land-bottom{justify-content:center;flex-wrap:wrap;white-space:normal}.landing .hero-title{font-size:clamp(2.1rem,9.5vw,3.4rem)}}
+
+.topbar .auth-bar{display:flex;align-items:center;gap:12px}.user-name{font:600 13px 'DM Sans',system-ui,sans-serif;color:#2d4b3d;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:700px){.user-name{display:none}}
+
+.ad-reply{margin:10px 0 0;padding:12px 16px;border-left:3px solid #759966;background:#f4f8f1;border-radius:0 10px 10px 0}.ad-reply>span{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#4d6455}.ad-reply p{margin:6px 0 0;font-size:14px;line-height:1.65;white-space:pre-wrap;color:#2d4b3d}
+.ad-reply-form{margin-top:14px}.ad-reply-form label span{display:block;font-size:12px;font-weight:600;color:#4d6455;margin-bottom:6px}.ad-reply-form textarea{width:100%;font:14px/1.6 'DM Sans',system-ui,sans-serif;border:1px solid #cfdcd2;border-radius:10px;padding:12px 14px;color:#2d4b3d;background:#fff;resize:vertical}.ad-reply-form .cta{padding:11px 18px;font-size:13px}.ad-reply-form small{margin-left:auto;color:#5d6e64}
+
+/* Console = same look as the app: app heading, pill tabs, 12px cards on one 20px rhythm, charts in pairs. */
+.ad{margin-bottom:0;gap:0}
+.ad-head.heading{padding:38px 0 18px}.ad-head h1{font-size:35px;margin-top:0}.ad-head p{margin-top:10px}
+.ad-tabs{border-bottom:0;padding-bottom:0;margin:0 0 22px}.ad-tabs button{padding:10px 14px;font:600 12.5px 'DM Sans',system-ui,sans-serif;color:#5d6e64}.ad-tabs button:hover{background:#f1f4ee}
+.ad-body{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start}.ad-body>*{grid-column:1/-1}.ad-body>.ad-chart{grid-column:span 1}.ad-body>.ad-chart.wide{grid-column:1/-1}
+.ad-body>.ad-grid2,.ad-body>.ad-kpis{margin:0}
+.ad-kpi{padding:20px 22px;border-radius:12px}.ad-kpi span{font-size:9px}.ad-grid2{gap:20px}.ad-kpis{gap:20px}
+.ad-enq{gap:20px}
+@media(max-width:1100px){.ad-body{grid-template-columns:1fr}.ad-body>.ad-chart{grid-column:1/-1}}

@@ -15,6 +15,8 @@ return [
     'admin_user_ids' => [],      // exact Clerk user ids allowed into the owner console, e.g. ['user_abc123']
     'owner_email' => '',         // new enquiries are also emailed here
     'mail_from' => 'noreply@flightdeck.gakinz.com',
+    // Optional: send through your own mailbox (needed for replies from the owner console to land reliably). Leave smtp_host out to use PHP mail().
+    // 'smtp_host' => 'mail.example.com', 'smtp_port' => 465, 'smtp_secure' => 'ssl', 'smtp_user' => 'info@example.com', 'smtp_pass' => '',
     'ga_property_id' => '',      // numeric GA4 property id (Admin > Property details), for the console's Analytics tab
     'ga_service_account_file' => '', // path inside this private folder to the service-account JSON key (mode 600)
     'clerk_secret_key' => '',    // Clerk SECRET key (sk_live_...) for the Users view only; never commit it

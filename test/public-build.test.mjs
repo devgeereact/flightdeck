@@ -189,7 +189,9 @@ test('one shared link list: the same footer on every page, header links match, a
   for (const [p, h] of html(b)) {
     const foot = h.slice(h.indexOf('<footer'), h.indexOf('</footer>'));
     assert.deepEqual([...foot.matchAll(/<li><a href="([^"]+)"/g)].map((m) => m[1]).filter((x) => x !== '#'), want, p + ' footer');
-    assert.ok(foot.includes('data-fd-cookie-settings'), p + ' has the cookie settings link');
+    assert.ok(!foot.includes('data-fd-cookie-settings'), p + ' footer has no cookie settings link');
+    const sizes = [...foot.matchAll(/<ul>([\s\S]*?)<\/ul>/g)].map((m) => (m[1].match(/<li>/g) || []).length);
+    assert.ok(sizes.length === FOOTER_GROUPS.length && new Set(sizes).size === 1, p + ' footer menus are not equal length');
     const head = h.slice(h.indexOf('<header'), h.indexOf('</header>'));
     assert.deepEqual([...head.matchAll(/<a href="([^"]+)"( aria-current="page")?>(?!Open)/g)].map((m) => m[1]).filter((x) => x !== '/'), HEADER_LINKS.map((l) => l.href), p + ' header');
   }

@@ -28,7 +28,7 @@ final class App
         } elseif ($route === '/event' || $route === '/contact') {
             $allowed = ['POST'];
         } elseif (strpos($route, '/admin/enquiries/') === 0) {
-            $allowed = ['PATCH'];
+            $allowed = substr($route, -6) === '/reply' ? ['POST'] : ['PATCH'];
         }
         if (!in_array($method, $allowed, true)) {
             header('Allow: ' . implode(', ', $allowed));
@@ -143,7 +143,7 @@ final class App
             return;
         }
         $from = is_string($config['mail_from'] ?? null) && filter_var($config['mail_from'], FILTER_VALIDATE_EMAIL) ? $config['mail_from'] : 'noreply@flightdeck.gakinz.com';
-        $r = (new Enquiries($varDir))->submit($b, is_string($config['owner_email'] ?? null) ? $config['owner_email'] : null, $from);
+        $r = (new Enquiries($varDir, Mailer::make($config)))->submit($b, is_string($config['owner_email'] ?? null) ? $config['owner_email'] : null, $from);
         if (!$r['ok']) {
             Http::json($r['status'], ['error' => $r['error']]);
             return;
@@ -163,7 +163,7 @@ final class App
     private static function admin(string $route, string $method, array $config, Store $store, string $varDir, string $sub, string $privateDir): void
     {
         $metrics = Metrics::instance();
-        $enq = new Enquiries($varDir);
+        $enq = new Enquiries($varDir, Mailer::make($config));
         if ($route === '/admin/overview') {
             $days = max(1, min(90, (int) ($_GET['days'] ?? 30)));
             Metrics::flushNow();
@@ -177,6 +177,24 @@ final class App
         }
         if ($route === '/admin/enquiries' && $method === 'GET') {
             Http::json(200, $enq->list(50, max(0, (int) ($_GET['offset'] ?? 0))));
+            return;
+        }
+        if (preg_match('#^/admin/enquiries/(\d{14}-[0-9a-f]{6})/reply$#D', $route, $m) && $method === 'POST') {
+            if (!$store->rateAllow('reply:' . $sub, 30, 3600000)) {
+                Http::json(429, ['error' => 'Too many replies this hour. Please wait a little.']);
+                return;
+            }
+            $b = self::jsonBody(Enquiries::MAX_MESSAGE * 4 + 1024);
+            $from = is_string($config['mail_from'] ?? null) && filter_var($config['mail_from'], FILTER_VALIDATE_EMAIL) ? $config['mail_from'] : 'noreply@flightdeck.gakinz.com';
+            $r = is_array($b) && is_string($b['message'] ?? null)
+                ? $enq->reply($m[1], $b['message'], $from, is_string($config['owner_email'] ?? null) ? $config['owner_email'] : null)
+                : ['ok' => false, 'status' => 422, 'error' => 'Write your reply first.'];
+            if ($r['ok']) {
+                Admin::audit($varDir, $sub, 'enquiry ' . $m[1] . ' replied');
+                Http::json(200, ['ok' => true, 'unread' => $enq->unread()]);
+            } else {
+                Http::json($r['status'], ['error' => $r['error']]);
+            }
             return;
         }
         if (strpos($route, '/admin/enquiries/') === 0 && $method === 'PATCH') {

@@ -10,17 +10,16 @@ export const HEADER_LINKS: SiteLink[] = [
   { label: 'Contact', href: '/contact/' },
 ];
 
+// Two groups of four so no menu is longer than another.
 export const FOOTER_GROUPS: SiteLinkGroup[] = [
   { title: 'Explore', links: [
     { label: 'Flight tracker', href: '/', appHref: '#/' },
     { label: 'Packing list', href: '/travel-checklist/', appHref: '#/checklist' },
     { label: 'Travel guides', href: '/guides/' },
-  ] },
-  { title: 'Company', links: [
     { label: 'About', href: '/about/' },
-    { label: 'Contact us', href: '/contact/' },
   ] },
-  { title: 'Legal', links: [
+  { title: 'Help and legal', links: [
+    { label: 'Contact us', href: '/contact/' },
     { label: 'Privacy', href: '/privacy/' },
     { label: 'Cookies', href: '/cookies/' },
     { label: 'Terms', href: '/terms/' },

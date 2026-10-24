@@ -123,7 +123,7 @@ export default function Checklist({saved,signedIn,userId,request,onRequestDone,o
  </section>;
 
  const flightLabel=trip.flight?tripNameFor(trip.flight):'';
- return <section className="cl" aria-label="Travel checklist"><h1 className="sr-only">Travel checklist</h1>
+ return <section className="cl" aria-label="Packing list"><h1 className="sr-only">Packing list</h1>
   <div className="ck-top panel">
    <div className="ck-tripbar"><div className="ck-tabs" role="tablist" aria-label="Your trips">
     {data.trips.map(t=><button key={t.id} role="tab" aria-selected={t.id===trip.id} className={t.id===trip.id?'ck-tab active':'ck-tab'} onClick={()=>{commit(d=>({...d,active:t.id}));setConfirmReset(false)}}>{t.name}</button>)}</div>

@@ -126,6 +126,63 @@ final class Enquiries
         return $this->list(0, 0)['unread'];
     }
 
+    /**
+     * Email a reply to the person who wrote in, from the owner's mailbox, and keep a copy on the enquiry. Replies to the reply go to
+     * the owner address. The enquiry is marked "replied" only when the mail was really accepted for delivery.
+     * @return array{ok:bool,status:int,error:?string}
+     */
+    public function reply(string $id, string $message, string $mailFrom, ?string $ownerEmail, ?int $nowMs = null): array
+    {
+        $fail = static function (int $status, string $error): array {
+            return ['ok' => false, 'status' => $status, 'error' => $error];
+        };
+        if (!preg_match('/^\d{14}-[0-9a-f]{6}$/D', $id)) {
+            return $fail(404, 'That message was not found.');
+        }
+        $path = $this->dir . '/' . $id . '.json';
+        $d = json_decode((string) @file_get_contents($path), true);
+        if (!is_array($d)) {
+            return $fail(404, 'That message was not found.');
+        }
+        $to = is_string($d['email'] ?? null) ? trim($d['email']) : '';
+        if ($to === '' || filter_var($to, FILTER_VALIDATE_EMAIL) === false || preg_match('/[\r\n]/', $to)) {
+            return $fail(422, 'This message has no email address to reply to.');
+        }
+        $message = trim(str_replace("\r\n", "\n", $message));
+        if (mb_strlen($message) < 2) {
+            return $fail(422, 'Write your reply first.');
+        }
+        if (mb_strlen($message) > self::MAX_MESSAGE) {
+            return $fail(413, 'That reply is too long. Please keep it under 4,000 characters.');
+        }
+        $name = is_string($d['name'] ?? null) ? $d['name'] : '';
+        $quoted = '> ' . str_replace("\n", "\n> ", mb_substr((string) ($d['message'] ?? ''), 0, 1500));
+        $body = ($name !== '' ? 'Hello ' . $name . ",\n\n" : "Hello,\n\n") . $message . "\n\n--\nFlightdeck\n\nYou wrote on " . gmdate('j M Y', intdiv((int) ($d['createdAt'] ?? 0), 1000)) . ":\n" . $quoted . "\n";
+        $subject = 'Re: ' . self::oneLine('Your message to Flightdeck: ' . (string) ($d['message'] ?? ''), 70);
+        $headers = ['MIME-Version: 1.0', 'Content-Type: text/plain; charset=UTF-8', 'From: Flightdeck <' . $mailFrom . '>'];
+        if (is_string($ownerEmail) && filter_var($ownerEmail, FILTER_VALIDATE_EMAIL) !== false) {
+            $headers[] = 'Reply-To: ' . $ownerEmail;
+        }
+        try {
+            $sent = (bool) ($this->mailer)($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $body, $headers);
+        } catch (\Throwable $e) {
+            $sent = false;
+        }
+        if (!$sent) {
+            return $fail(502, 'The email could not be sent. Check the mail settings, then try again.');
+        }
+        $now = $nowMs ?? Store::nowMs();
+        $d['replies'] = array_slice(array_merge(is_array($d['replies'] ?? null) ? $d['replies'] : [], [['at' => $now, 'text' => $message]]), -20);
+        $d['status'] = 'replied';
+        $d['updatedAt'] = $now;
+        $tmp = $path . '.tmp';
+        if (@file_put_contents($tmp, json_encode($d, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) === false || !@rename($tmp, $path)) {
+            return $fail(500, 'The reply was sent but could not be saved on the message.');
+        }
+        @chmod($path, 0600);
+        return ['ok' => true, 'status' => 200, 'error' => null];
+    }
+
     public function setStatus(string $id, string $status): bool
     {
         if (!preg_match('/^\d{14}-[0-9a-f]{6}$/D', $id) || !in_array($status, self::STATUSES, true)) {
