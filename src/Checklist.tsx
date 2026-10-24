@@ -2,10 +2,12 @@ import {useEffect,useRef,useState} from 'react';
 import {Plus,Printer,RotateCcw,Pencil,X,Trash2,Plane,Eye,EyeOff,Check,ListChecks,Link2} from 'lucide-react';
 import * as M from './checklistModel';
 import {TEMPLATE} from './checklistTemplate';
-import {loadLocal,saveLocal} from './checklistStore';
+import {loadLocal,saveLocal,getOwner,setOwner,clearLocal} from './checklistStore';
+import {syncOnce,httpApi} from './checklistSync';
+import {apiFetch} from './api';
 
 type Saved={number:string;date:string};
-type Props={saved:Saved[];signedIn:boolean;request:Saved|null;onRequestDone:()=>void;onTrack:(n:string,d:string)=>void};
+type Props={saved:Saved[];signedIn:boolean;userId:string|null;request:Saved|null;onRequestDone:()=>void;onTrack:(n:string,d:string)=>void};
 const shortDate=(d:string)=>{const t=new Date(d+'T12:00:00');return isNaN(+t)?d:new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short'}).format(t)};
 const tripNameFor=(f:Saved)=>`${f.number} · ${shortDate(f.date)}`;
 
@@ -14,8 +16,12 @@ function Ring({percent,size=64}:{percent:number;size?:number}){
  return <svg className="cl-ring" width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`${percent}% packed`}><circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#e3eadf" strokeWidth="6"/><circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#214e3e" strokeWidth="6" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c*(1-percent/100)} transform={`rotate(-90 ${size/2} ${size/2})`} style={{transition:'stroke-dashoffset .4s ease'}}/><text x="50%" y="50%" textAnchor="middle" dominantBaseline="central" className="cl-ring-text">{percent}%</text></svg>
 }
 
-export default function Checklist({saved,signedIn,request,onRequestDone,onTrack}:Props){
- const [data,setData]=useState<M.ChecklistData>(()=>loadLocal());
+type SyncState='local'|'syncing'|'synced'|'offline'|'error';
+export default function Checklist({saved,signedIn,userId,request,onRequestDone,onTrack}:Props){
+ // A list left on this device by a different account is never shown to this one.
+ const [data,setData]=useState<M.ChecklistData>(()=>{const owner=getOwner();if(userId&&owner&&owner!==userId){clearLocal();return M.emptyData()}return loadLocal()});
+ const [sync,setSync]=useState<SyncState>('local');
+ const syncing=useRef(false),again=useRef(false),timer=useRef<ReturnType<typeof setTimeout>|null>(null);
  const dataRef=useRef(data);
  const [msg,setMsg]=useState('');
  const [edit,setEdit]=useState(false);
@@ -31,7 +37,29 @@ export default function Checklist({saved,signedIn,request,onRequestDone,onTrack}
   if(!M.fits(next)){setMsg('Your checklist is full. Remove a trip or some of your own items first.');return}
   dataRef.current=next;setData(next);setMsg('');
   if(!saveLocal(next))setMsg('Your browser could not save this. Changes will be lost when you close the page.');
+  scheduleSync();
  };
+
+ // Reconcile with the account copy: pull, merge, push. Failures never lose anything; the list stays on this device and retries later.
+ const runSync=async()=>{
+  if(!userId)return;
+  if(syncing.current){again.current=true;return}
+  syncing.current=true;setSync('syncing');
+  try{
+   const res=await syncOnce(dataRef.current,httpApi(apiFetch));
+   const final={...M.merge(dataRef.current,res),rev:res.rev};
+   dataRef.current=final;setData(final);saveLocal(final);setOwner(userId);setSync('synced');
+  }catch{setSync(navigator.onLine?'error':'offline')}
+  finally{syncing.current=false;if(again.current){again.current=false;void runSync()}}
+ };
+ function scheduleSync(){if(!userId)return;if(timer.current)clearTimeout(timer.current);timer.current=setTimeout(()=>{void runSync()},900)}
+ useEffect(()=>{
+  if(!userId)return;
+  void runSync();
+  const online=()=>{void runSync()};
+  window.addEventListener('online',online);
+  return()=>{window.removeEventListener('online',online);if(timer.current)clearTimeout(timer.current)};
+ },[userId]);
 
  // "Make a checklist for this flight" from the saved-flights list.
  useEffect(()=>{
@@ -111,6 +139,6 @@ export default function Checklist({saved,signedIn,request,onRequestDone,onTrack}
    </details>})}
 
   {(hiddenTotal>0)&&<p className="cl-restore">{hiddenTotal} item{hiddenTotal>1?'s':''} hidden from your list. <button className="text-button" onClick={()=>commit(d=>M.restoreAll(d))}>Restore all</button></p>}
-  <p className="cl-note">Your list is kept {signedIn?'on your account and on this device':'on this device only. Sign in to keep it across devices'}, and works without a connection.</p>
+  <p className="cl-note" aria-live="polite">{!signedIn?'Your list is kept on this device only. Sign in to keep it across devices. It works without a connection.':sync==='syncing'?'Saving to your account…':sync==='synced'?'Saved to your account and on this device. It works without a connection.':sync==='offline'?'You are offline. Your changes are saved on this device and will sync when you are back online.':sync==='error'?'Could not reach your account just now. Your changes are safe on this device and will sync later.':'Saved on this device.'}</p>
  </section>
 }

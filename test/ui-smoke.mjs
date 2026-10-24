@@ -101,7 +101,7 @@ try {
     check('K3 sections run in trip order, ending with the night before and last minute', [...d.querySelectorAll('.cl-sec-title')].map(e => e.textContent).join('|') === 'Days in advance|Clothes and accessories|Bathroom bag|Accessories|Papers and documents|Mostly work related|The night before|Last minute');
     const passport = byText(d, '.cl-check', 'Passport');
     click(k.w, passport.querySelector('input')); await sleep(400);
-    check('K4 ticking Passport updates the count and keeps it on the device', k.text().includes('1 of 101 packed') && JSON.parse(k.w.localStorage.getItem('flightdeck-checklist')).trips[0].done.length === 1);
+    check('K4 ticking Passport updates the count and keeps it on the device', k.text().includes('1 of 101 packed') && Object.values(JSON.parse(k.w.localStorage.getItem('flightdeck-checklist')).trips[0].marks).filter(v => v > 0).length === 1);
     const saved = k.w.localStorage.getItem('flightdeck-checklist');
     const k2 = await boot({hash: '#/checklist', storage: {'flightdeck-checklist': saved}}); await sleep(1500);
     const d2 = k2.w.document;

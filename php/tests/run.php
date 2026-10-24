@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 // Mirrors server/flight.test.ts. Run: php php/tests/run.php
-foreach (['Http', 'DevEnv', 'ClerkAuth', 'Store', 'CloudflareIps', 'Geo', 'Flight', 'OpenSky', 'RouteLookup', 'AeroDataBox'] as $f) {
+foreach (['Http', 'DevEnv', 'ClerkAuth', 'Checklists', 'Store', 'CloudflareIps', 'Geo', 'Flight', 'OpenSky', 'RouteLookup', 'AeroDataBox'] as $f) {
     require __DIR__ . '/../private/src/' . $f . '.php';
 }
 
@@ -9,6 +9,7 @@ use Flightdeck\AeroDataBox;
 use Flightdeck\AeroDataBoxError;
 use Flightdeck\CloudflareIps;
 use Flightdeck\ClerkAuth;
+use Flightdeck\Checklists;
 use Flightdeck\DevEnv;
 use Flightdeck\Flight;
 use Flightdeck\Geo;
@@ -325,7 +326,42 @@ check('auth: disabled (no issuer) lets everything through; bad issuer config dis
 check('auth: issuer derived from real Clerk publishable keys', ClerkAuth::issuerFromPublishableKey('pk_test_ZGV2b3RlZC1tYXN0b2Rvbi03NTk5LmNsZXJrLmFjY291bnRzLmRldiQ') === 'https://devoted-mastodon-7599.clerk.accounts.dev' && ClerkAuth::issuerFromPublishableKey('pk_live_Y2xlcmsuZmxpZ2h0ZGVjay5nYWtpbnouY29tJA') === 'https://clerk.flightdeck.gakinz.com' && ClerkAuth::issuerFromPublishableKey('sk_live_abc') === null && ClerkAuth::issuerFromPublishableKey(null) === null);
 check('auth: bearer parsing', ClerkAuth::tokenFrom('Bearer abc.def.ghi', null) === 'abc.def.ghi' && ClerkAuth::tokenFrom('bearer  x.y.z', null) === 'x.y.z' && ClerkAuth::tokenFrom(null, 'p.q.r') === 'p.q.r' && ClerkAuth::tokenFrom('Basic dXNlcjpwYXNz', null) === null && ClerkAuth::tokenFrom('', '') === null);
 
-foreach ([$tmp, $tmp . '-b', $tmp . '-c', $tmp . '-d', $tmp . '-e', $tmp . '-f', $tmp . '-g', $tmp . '-h', $tmp . '-i', $tmp . '-j', $tmp . '-k'] as $dir) {
+// ---- Checklist storage (per signed-in user) ----
+$doc = ['v' => 1, 'tpl' => ['updatedAt' => 1800000000000, 'hidden' => ['cl.work.1'], 'renamed' => ['cl.papers.2' => '  Passport   (valid) '], 'added' => [['id' => 'cx.a1', 'sec' => 'last', 'text' => 'Umbrella']]],
+    'trips' => [['id' => 'trip.1', 'name' => 'Cape Town', 'updatedAt' => 1800000000001, 'marks' => ['cl.papers.2' => 1800000000001, 'cx.a1' => -1800000000000], 'flight' => ['number' => 'BA59', 'date' => '2026-10-24'], 'evil' => '<script>']],
+    'gone' => ['trip.0' => 1799999999999], 'active' => 'trip.1', 'extra' => 'dropped'];
+$v = Checklists::validate($doc);
+check('checklist: a valid document is accepted, cleaned and unknown keys dropped', $v !== null && !isset($v['extra']) && !isset($v['trips'][0]['evil']) && $v['tpl']['renamed']['cl.papers.2'] === 'Passport (valid)' && $v['trips'][0]['marks'] == ['cl.papers.2' => 1800000000001, 'cx.a1' => -1800000000000] && $v['trips'][0]['metaAt'] === 1800000000001 && $v['trips'][0]['flight']['number'] === 'BA59');
+check('checklist: rejects the wrong version, wrong types and junk', Checklists::validate(null) === null && Checklists::validate(['v' => 2]) === null && Checklists::validate('x') === null && Checklists::validate([]) === null);
+$tooMany = $doc;
+$tooMany['trips'] = array_fill(0, 13, $doc['trips'][0]);
+check('checklist: more than 12 trips is refused, not truncated', Checklists::validate($tooMany) === null);
+$bad = $doc;
+$bad['trips'][0]['flight'] = ['number' => '<b>', 'date' => 'soon'];
+$bad['trips'][0]['marks'] = ['ok.id' => 5, '../../etc/passwd' => 5, 'zero' => 0, 'huge' => 9e15, str_repeat('a', 200) => 5, 'str' => 'x'];
+$bad['tpl']['added'][] = ['id' => '../x', 'sec' => 'last', 'text' => 'nope'];
+$vb = Checklists::validate($bad);
+check('checklist: bad ids, paths, flights and labels are dropped individually', $vb !== null && !isset($vb['trips'][0]['flight']) && array_keys((array) $vb['trips'][0]['marks']) === ['ok.id'] && count($vb['tpl']['added']) === 1);
+$longLabel = $doc;
+$longLabel['tpl']['added'][0]['text'] = str_repeat('é', 500);
+check('checklist: long labels are cut to 80 characters (multibyte safe)', mb_strlen(Checklists::validate($longLabel)['tpl']['added'][0]['text']) === 80);
+
+$lists = new Checklists($tmp . '-l');
+check('checklist: a new user has nothing stored (rev 0)', $lists->get('user_a') === ['rev' => 0, 'data' => null]);
+$r1 = $lists->put('user_a', $v, 0);
+check('checklist: first save succeeds at revision 1 and can be read back', $r1['ok'] && $r1['rev'] === 1 && $lists->get('user_a')['rev'] === 1 && $lists->get('user_a')['data']['trips'][0]['name'] === 'Cape Town');
+$stale = $lists->put('user_a', $v, 0);
+check('checklist: a save based on an old revision is a conflict and returns the current copy', !$stale['ok'] && $stale['rev'] === 1 && $stale['data']['trips'][0]['id'] === 'trip.1');
+$r2 = $lists->put('user_a', $v, 1);
+check('checklist: a save based on the latest revision moves it to 2', $r2['ok'] && $r2['rev'] === 2);
+check('checklist: users never see each other\'s data', $lists->get('user_b') === ['rev' => 0, 'data' => null] && $lists->put('user_b', $v, 0)['rev'] === 1 && $lists->get('user_a')['rev'] === 2);
+$files = glob($tmp . '-l/checklists/*') ?: [];
+$names = implode(' ', array_map('basename', $files));
+check('checklist: files are named by a hash (never the user id), mode 600, no temp files left', strpos($names, 'user_a') === false && count(array_filter($files, static function ($f) {
+    return substr($f, -4) === '.tmp';
+})) === 0 && fileperms($tmp . '-l/checklists/' . hash('sha256', 'user_a') . '.json') % 01000 === 0600);
+
+foreach ([$tmp, $tmp . '-b', $tmp . '-c', $tmp . '-d', $tmp . '-e', $tmp . '-f', $tmp . '-g', $tmp . '-h', $tmp . '-i', $tmp . '-j', $tmp . '-k', $tmp . '-l'] as $dir) {
     exec('rm -rf ' . escapeshellarg($dir));
 }
 

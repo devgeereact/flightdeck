@@ -6,6 +6,7 @@ ini_set('display_errors', '0');
 require __DIR__ . '/Http.php';
 require __DIR__ . '/DevEnv.php';
 require __DIR__ . '/ClerkAuth.php';
+require __DIR__ . '/Checklists.php';
 require __DIR__ . '/CloudflareIps.php';
 require __DIR__ . '/Store.php';
 require __DIR__ . '/Geo.php';

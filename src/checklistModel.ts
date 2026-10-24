@@ -3,7 +3,11 @@
 import { TEMPLATE, type TemplateSection } from './checklistTemplate';
 
 export type Flight = { number: string; date: string };
-export type Trip = { id: string; name: string; flight?: Flight; updatedAt: number; done: string[] };
+// marks: item id -> timestamp of its last tick (positive) or untick (negative). Merging keeps the newest mark per ITEM, so ticks made on
+// two devices both survive. (A plain "newest trip copy wins" silently dropped one device's ticks.)
+export type Trip = { id: string; name: string; flight?: Flight; metaAt: number; updatedAt: number; marks: Record<string, number> };
+export const doneIds = (t: Trip) => Object.entries(t.marks).filter(([, v]) => v > 0).map(([k]) => k);
+const KEEP_UNTICKS_MS = 60 * 24 * 3600 * 1000;
 export type Added = { id: string; sec: string; text: string };
 export type ChecklistData = {
   v: 1;
@@ -43,11 +47,19 @@ export function sanitize(raw: unknown): ChecklistData {
   if (Array.isArray(r.trips)) {
     out.trips = r.trips
       .filter((x: any) => x && typeof x.id === 'string' && typeof x.name === 'string')
-      .slice(0, LIMITS.trips).map((x: any): Trip => ({
-        id: x.id, name: clean(x.name, LIMITS.name) || 'My trip', updatedAt: Number.isFinite(x.updatedAt) ? x.updatedAt : 0,
-        done: Array.isArray(x.done) ? [...new Set<string>(x.done.filter((d: unknown) => typeof d === 'string'))].slice(0, 500) : [],
-        ...(x.flight && typeof x.flight.number === 'string' && typeof x.flight.date === 'string' ? { flight: { number: x.flight.number.slice(0, 12), date: x.flight.date.slice(0, 10) } } : {}),
-      }));
+      .slice(0, LIMITS.trips).map((x: any): Trip => {
+        const updatedAt = Number.isFinite(x.updatedAt) ? x.updatedAt : 0;
+        const marks: Record<string, number> = {};
+        if (x.marks && typeof x.marks === 'object') {
+          for (const [k, v] of Object.entries(x.marks).slice(0, 500)) if (Number.isFinite(v) && v !== 0 && Math.abs(v as number) < 4.1e12) marks[k] = v as number;
+        } else if (Array.isArray(x.done)) {
+          for (const k of x.done.slice(0, 500)) if (typeof k === 'string') marks[k] = Math.max(1, updatedAt); // older saved lists stored a plain list of ticked ids
+        }
+        return {
+          id: x.id, name: clean(x.name, LIMITS.name) || 'My trip', metaAt: Number.isFinite(x.metaAt) ? x.metaAt : updatedAt, updatedAt, marks,
+          ...(x.flight && typeof x.flight.number === 'string' && typeof x.flight.date === 'string' ? { flight: { number: x.flight.number.slice(0, 12), date: x.flight.date.slice(0, 10) } } : {}),
+        };
+      });
   }
   if (r.gone && typeof r.gone === 'object') for (const [k, v] of Object.entries(r.gone)) if (Number.isFinite(v)) out.gone[k] = v as number;
   out.active = typeof r.active === 'string' && out.trips.some((x) => x.id === r.active) ? r.active : out.trips[0]?.id ?? null;
@@ -59,7 +71,7 @@ export const bytes = (d: ChecklistData) => new TextEncoder().encode(JSON.stringi
 /** The sections the user actually sees, with their edits applied. */
 export function view(d: ChecklistData, tripId: string | null, sections: TemplateSection[] = TEMPLATE): ViewSection[] {
   const trip = d.trips.find((t) => t.id === tripId);
-  const done = new Set(trip?.done ?? []);
+  const done = new Set(trip ? doneIds(trip) : []);
   const hidden = new Set(d.tpl.hidden);
   return sections.map((sec) => {
     const all = [
@@ -77,13 +89,13 @@ export function progress(sections: ViewSection[]) {
   return { total, done, percent: total ? Math.round((done / total) * 100) : 0 };
 }
 
-const touchTrip = (d: ChecklistData, id: string, fn: (t: Trip) => Trip, now: number): ChecklistData =>
-  ({ ...d, trips: d.trips.map((t) => (t.id === id ? { ...fn(t), updatedAt: now } : t)) });
+const touchTrip = (d: ChecklistData, id: string, fn: (t: Trip) => Trip, now: number, meta = false): ChecklistData =>
+  ({ ...d, trips: d.trips.map((t) => (t.id === id ? { ...fn(t), updatedAt: now, ...(meta ? { metaAt: now } : {}) } : t)) });
 const touchTpl = (d: ChecklistData, tpl: Partial<ChecklistData['tpl']>, now: number): ChecklistData => ({ ...d, tpl: { ...d.tpl, ...tpl, updatedAt: now } });
 
 export function addTrip(d: ChecklistData, name: string, flight?: Flight, now = Date.now()): ChecklistData {
   if (d.trips.length >= LIMITS.trips) return d;
-  const t: Trip = { id: uid('trip', now), name: clean(name, LIMITS.name) || 'My next trip', updatedAt: now, done: [], ...(flight ? { flight } : {}) };
+  const t: Trip = { id: uid('trip', now), name: clean(name, LIMITS.name) || 'My next trip', metaAt: now, updatedAt: now, marks: {}, ...(flight ? { flight } : {}) };
   return { ...d, trips: [...d.trips, t], active: t.id };
 }
 export function removeTrip(d: ChecklistData, id: string, now = Date.now()): ChecklistData {
@@ -91,12 +103,14 @@ export function removeTrip(d: ChecklistData, id: string, now = Date.now()): Chec
   return { ...d, trips, gone: { ...d.gone, [id]: now }, active: d.active === id ? trips[0]?.id ?? null : d.active };
 }
 export const renameTrip = (d: ChecklistData, id: string, name: string, now = Date.now()) =>
-  touchTrip(d, id, (t) => ({ ...t, name: clean(name, LIMITS.name) || t.name }), now);
+  touchTrip(d, id, (t) => ({ ...t, name: clean(name, LIMITS.name) || t.name }), now, true);
 export const linkFlight = (d: ChecklistData, id: string, flight: Flight | undefined, now = Date.now()) =>
-  touchTrip(d, id, ({ flight: _old, ...t }) => ({ ...t, ...(flight ? { flight } : {}) }), now);
+  touchTrip(d, id, ({ flight: _old, ...t }) => ({ ...t, ...(flight ? { flight } : {}) }), now, true);
+const stamp = (t: Trip, itemId: string, now: number) => Math.max(now, Math.abs(t.marks[itemId] ?? 0) + 1); // always newer than the previous mark on this item
 export const tick = (d: ChecklistData, id: string, itemId: string, on: boolean, now = Date.now()) =>
-  touchTrip(d, id, (t) => ({ ...t, done: on ? [...new Set([...t.done, itemId])] : t.done.filter((x) => x !== itemId) }), now);
-export const resetTicks = (d: ChecklistData, id: string, now = Date.now()) => touchTrip(d, id, (t) => ({ ...t, done: [] }), now);
+  touchTrip(d, id, (t) => ({ ...t, marks: { ...t.marks, [itemId]: (on ? 1 : -1) * stamp(t, itemId, now) } }), now);
+export const resetTicks = (d: ChecklistData, id: string, now = Date.now()) =>
+  touchTrip(d, id, (t) => ({ ...t, marks: Object.fromEntries(Object.entries(t.marks).map(([k, v]) => [k, v > 0 ? -stamp(t, k, now) : v])) }), now);
 
 export function addItem(d: ChecklistData, sec: string, text: string, now = Date.now()): ChecklistData {
   const t = clean(text, LIMITS.label);
@@ -113,7 +127,7 @@ export function renameItem(d: ChecklistData, id: string, text: string, now = Dat
 /** Template items are hidden (and can be restored); items the user added are deleted outright. */
 export function removeItem(d: ChecklistData, id: string, now = Date.now()): ChecklistData {
   if (d.tpl.added.some((a) => a.id === id)) {
-    return { ...touchTpl(d, { added: d.tpl.added.filter((a) => a.id !== id) }, now), trips: d.trips.map((t) => ({ ...t, done: t.done.filter((x) => x !== id) })) };
+    return { ...touchTpl(d, { added: d.tpl.added.filter((a) => a.id !== id) }, now), trips: d.trips.map((t) => { const { [id]: _gone, ...marks } = t.marks; return { ...t, marks }; }) };
   }
   return touchTpl(d, { hidden: [...new Set([...d.tpl.hidden, id])] }, now);
 }
@@ -131,14 +145,18 @@ export const showSection = (d: ChecklistData, sectionId: string, now = Date.now(
  * Merge two copies (this device and the server). Template edits: the newer copy wins as a whole. Trips: matched by id, the newer
  * updatedAt wins; a delete beats an older copy of the trip. Deterministic and symmetric, so repeated merges converge.
  */
-export function merge(a: ChecklistData, b: ChecklistData): ChecklistData {
+export function merge(a: ChecklistData, b: ChecklistData, now = Date.now()): ChecklistData {
   const gone: Record<string, number> = { ...a.gone };
   for (const [k, v] of Object.entries(b.gone)) gone[k] = Math.max(gone[k] ?? 0, v);
+  const mergeTrip = (x: Trip, y: Trip): Trip => {
+    const marks: Record<string, number> = { ...x.marks };
+    for (const [k, v] of Object.entries(y.marks)) if (Math.abs(v) > Math.abs(marks[k] ?? 0)) marks[k] = v;
+    for (const [k, v] of Object.entries(marks)) if (v < 0 && -v < now - KEEP_UNTICKS_MS) delete marks[k]; // old "unticked" notes are no longer needed
+    const meta = x.metaAt > y.metaAt || (x.metaAt === y.metaAt && JSON.stringify([x.name, x.flight]) >= JSON.stringify([y.name, y.flight])) ? x : y;
+    return { id: x.id, name: meta.name, ...(meta.flight ? { flight: meta.flight } : {}), metaAt: Math.max(x.metaAt, y.metaAt), updatedAt: Math.max(x.updatedAt, y.updatedAt), marks };
+  };
   const byId = new Map<string, Trip>();
-  for (const t of [...a.trips, ...b.trips]) {
-    const cur = byId.get(t.id);
-    if (!cur || t.updatedAt > cur.updatedAt || (t.updatedAt === cur.updatedAt && JSON.stringify(t) > JSON.stringify(cur))) byId.set(t.id, t);
-  }
+  for (const t of [...a.trips, ...b.trips]) { const cur = byId.get(t.id); byId.set(t.id, cur ? mergeTrip(cur, t) : t); }
   const trips = [...byId.values()].filter((t) => !(gone[t.id] >= t.updatedAt)).sort((x, y) => x.id.localeCompare(y.id)).slice(0, LIMITS.trips);
   const tpl = a.tpl.updatedAt > b.tpl.updatedAt || (a.tpl.updatedAt === b.tpl.updatedAt && JSON.stringify(a.tpl) >= JSON.stringify(b.tpl)) ? a.tpl : b.tpl;
   const active = trips.some((t) => t.id === a.active) ? a.active : trips[0]?.id ?? null;

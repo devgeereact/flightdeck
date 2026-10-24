@@ -17,20 +17,30 @@ final class App
             Http::json(429, ['error' => 'Too many requests. Please wait a minute.']);
             return;
         }
-        if (!in_array($_SERVER['REQUEST_METHOD'] ?? 'GET', ['GET', 'HEAD'], true)) {
-            header('Allow: GET, HEAD');
+        $allowed = ['GET', 'HEAD'];
+        if ($route === '/checklist') {
+            $allowed[] = 'PUT';
+        }
+        if (!in_array($_SERVER['REQUEST_METHOD'] ?? 'GET', $allowed, true)) {
+            header('Allow: ' . implode(', ', $allowed));
             Http::json(405, ['error' => 'Method not allowed']);
             return;
         }
 
         $auth = new ClerkAuth($config['clerk_issuer'] ?? null, $store, null, is_array($config['clerk_authorized_parties'] ?? null) ? $config['clerk_authorized_parties'] : []);
-        if ($auth->enabled() && ($route === '/flights' || $route === '/weather')) {
+        $sub = null;
+        if ($route === '/checklist' && !$auth->enabled()) {
+            Http::json(503, ['error' => 'Saving your list to your account needs sign-in, which is not enabled on this server.']);
+            return;
+        }
+        if ($auth->enabled() && ($route === '/flights' || $route === '/weather' || $route === '/checklist')) {
             $token = ClerkAuth::tokenFrom($_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? null, $_SERVER['HTTP_X_SESSION_TOKEN'] ?? null);
             $verdict = $auth->check($token);
             if (!$verdict['ok']) {
                 Http::json($verdict['status'], ['error' => $verdict['error']]);
                 return;
             }
+            $sub = $verdict['sub'];
         }
         $opensky = new OpenSky($config['opensky_client_id'] ?? null, $config['opensky_client_secret'] ?? null, $store);
         $adb = new AeroDataBox($config, $store);
@@ -50,9 +60,48 @@ final class App
             case '/weather':
                 self::weather($store);
                 return;
+            case '/checklist':
+                self::checklist(new Checklists($privateDir . '/var'), (string) $sub);
+                return;
             default:
                 Http::json(404, ['error' => 'Unknown endpoint']);
         }
+    }
+
+    /** GET returns the signed-in user's checklist document; PUT {baseRev, data} stores it if baseRev is still the latest. */
+    private static function checklist(Checklists $lists, string $sub): void
+    {
+        if ($sub === '') {
+            Http::json(401, ['error' => 'Sign in to keep your checklist.']);
+            return;
+        }
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'PUT') {
+            $cur = $lists->get($sub);
+            Http::json(200, ['rev' => $cur['rev'], 'data' => $cur['data'], 'limits' => ['bytes' => Checklists::MAX_BYTES, 'trips' => Checklists::MAX_TRIPS, 'items' => Checklists::MAX_ADDED]]);
+            return;
+        }
+        $raw = file_get_contents('php://input', false, null, 0, Checklists::MAX_BYTES + 1);
+        if ($raw === false || strlen($raw) > Checklists::MAX_BYTES) {
+            Http::json(413, ['error' => 'Your checklist is too large to save. Remove a trip or some of your own items.']);
+            return;
+        }
+        $body = json_decode($raw, true);
+        $doc = is_array($body) ? Checklists::validate($body['data'] ?? null) : null;
+        $base = is_array($body) && isset($body['baseRev']) && is_int($body['baseRev']) && $body['baseRev'] >= 0 ? $body['baseRev'] : null;
+        if ($doc === null || $base === null) {
+            Http::json(422, ['error' => 'That checklist could not be saved because it is not valid.']);
+            return;
+        }
+        if (strlen((string) json_encode($doc)) > Checklists::MAX_BYTES) {
+            Http::json(413, ['error' => 'Your checklist is too large to save. Remove a trip or some of your own items.']);
+            return;
+        }
+        $r = $lists->put($sub, $doc, $base);
+        if (!$r['ok']) {
+            Http::json(409, ['error' => 'conflict', 'rev' => $r['rev'], 'data' => $r['data']]);
+            return;
+        }
+        Http::json(200, ['rev' => $r['rev']]);
     }
 
     private static function param(string $name): string

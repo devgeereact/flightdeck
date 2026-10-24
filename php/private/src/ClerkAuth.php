@@ -70,14 +70,14 @@ final class ClerkAuth
             return ['ok' => true, 'status' => 200, 'error' => null, 'sub' => null];
         }
         if ($token === null || strlen($token) > self::MAX_TOKEN || !preg_match('/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/D', $token)) {
-            return $deny(401, 'Sign in to search flights.');
+            return $deny(401, 'Please sign in to continue.');
         }
         [$h64, $p64, $s64] = explode('.', $token);
         $header = json_decode((string) self::b64($h64), true);
         $claims = json_decode((string) self::b64($p64), true);
         $sig = self::b64($s64);
         if (!is_array($header) || !is_array($claims) || $sig === null || ($header['alg'] ?? null) !== 'RS256' || !is_string($header['kid'] ?? null)) {
-            return $deny(401, 'Sign in to search flights.');
+            return $deny(401, 'Please sign in to continue.');
         }
         $keys = $this->keys(false);
         if ($keys === null) {
