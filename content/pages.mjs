@@ -77,6 +77,8 @@ export const pages = (s) => [
 <tbody>
 <tr><td>Clerk sign-in cookies (for example <code>__session</code>, <code>__client_uat</code>)</td><td>Keep you signed in and prove who you are to our server.</td><td>While you are signed in, up to about a week</td></tr>
 <tr><td><code>flightdeck-saved</code>, <code>flightdeck-checklist</code> (browser storage)</td><td>Keep your saved flights and packing list on this device so they work offline.</td><td>Until you sign out (if tied to an account) or clear your browser data</td></tr>
+<tr><td><code>flightdeck-last-results</code> (browser storage)</td><td>Keeps the last few flight results you looked at, so a flight can still be read without a connection. It is always shown as "last fetched at", never as live.</td><td>Up to six results; cleared when you sign out</td></tr>
+<tr><td><code>flightdeck-public-packing</code> (browser storage)</td><td>Remembers which boxes you ticked on the printable packing list page.</td><td>Until you clear your browser data</td></tr>
 <tr><td><code>fd-consent</code> (browser storage)</td><td>Remembers your cookie choice.</td><td>Until you change it or clear your browser data</td></tr>
 <tr><td>App files (service worker cache)</td><td>Lets the app load quickly and work without a connection.</td><td>Until the app updates</td></tr>
 </tbody></table>

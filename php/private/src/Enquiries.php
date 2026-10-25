@@ -161,7 +161,7 @@ final class Enquiries
         }
         $name = is_string($d['name'] ?? null) ? $d['name'] : '';
         $quoted = '> ' . str_replace("\n", "\n> ", mb_substr((string) ($d['message'] ?? ''), 0, 1500));
-        $body = ($name !== '' ? 'Hello ' . $name . ",\n\n" : "Hello,\n\n") . $message . "\n\n--\nFlightdeck\n\nYou wrote on " . gmdate('j M Y', intdiv((int) ($d['createdAt'] ?? 0), 1000)) . ":\n" . $quoted . "\n";
+        $body = ($name !== '' ? 'Hello ' . $name . ",\n\n" : "Hello,\n\n") . $message . "\n\n--\nFlightdeck\n\nYou wrote on " . (new \DateTimeImmutable('@' . intdiv((int) ($d['createdAt'] ?? 0), 1000)))->setTimezone(new \DateTimeZone('Europe/London'))->format('j M Y') . ":\n" . $quoted . "\n";
         $subject = 'Re: ' . self::oneLine('Your message to Flightdeck: ' . (string) ($d['message'] ?? ''), 70);
         $headers = ['MIME-Version: 1.0', 'Content-Type: text/plain; charset=UTF-8', 'From: Flightdeck <' . $mailFrom . '>'];
         if (is_string($ownerEmail) && filter_var($ownerEmail, FILTER_VALIDATE_EMAIL) !== false) {

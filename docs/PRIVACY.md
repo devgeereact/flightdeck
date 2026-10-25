@@ -17,3 +17,10 @@ The published notice is generated from content/pages.mjs (privacy, cookies) and 
 | Advertising | Not shown. If ever enabled: certified consent tool first; see docs/MONETISATION.md | n/a |
 
 Not implemented: payments, precise location, AI processing of user text (phase 8 is flagged off; when enabled it must be disclosed here first). Audience is general public; the notice says the service is not aimed at under-13s.
+
+## Added 25 Oct 2026
+| Data / flow | Handling | Retention / control |
+|---|---|---|
+| Last flight results (`flightdeck-last-results`, browser storage) | Up to six recent results kept on the device so a flight can be read offline; shown only as "last fetched at" | Cleared on sign-out; browser data |
+| Public packing list ticks (`flightdeck-public-packing`, browser storage) | Which boxes were ticked on the printable list page | Browser data |
+| Shared flight links | The address contains only the flight number and date | Not stored by us |
