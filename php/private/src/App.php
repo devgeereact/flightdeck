@@ -10,13 +10,14 @@ final class App
         $varDir = $privateDir . '/var';
         $store = new Store($varDir);
         Metrics::init($varDir);
+        Health::init($varDir);
         $method = (string) ($_SERVER['REQUEST_METHOD'] ?? 'GET');
         $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
         $pos = strpos($path, '/api');
         $route = rtrim($pos === false ? $path : substr($path, $pos + 4), '/');
 
         $ip = CloudflareIps::clientIp((string) ($_SERVER['REMOTE_ADDR'] ?? 'local'), isset($_SERVER['HTTP_CF_CONNECTING_IP']) ? (string) $_SERVER['HTTP_CF_CONNECTING_IP'] : null, !empty($config['trust_cf_connecting_ip']));
-        if (!$store->rateAllow($ip, 30, 60000)) {
+        if (!$store->rateAllow($ip, max(1, (int) ($config['rate_per_minute'] ?? 30)), 60000)) {
             Metrics::count('rate_limited');
             Http::json(429, ['error' => 'Too many requests. Please wait a minute.']);
             return;
@@ -29,6 +30,8 @@ final class App
             $allowed = ['POST'];
         } elseif (strpos($route, '/admin/enquiries/') === 0) {
             $allowed = substr($route, -6) === '/reply' ? ['POST'] : ['PATCH'];
+        } elseif (Cms::handles($route)) {
+            $allowed = Cms::METHODS;
         }
         if (!in_array($method, $allowed, true)) {
             header('Allow: ' . implode(', ', $allowed));
@@ -99,6 +102,12 @@ final class App
             case $route === '/contact':
                 self::contact($store, $varDir, $config, $ip);
                 return;
+            case $route === '/site':
+                self::site($varDir);
+                return;
+            case $isAdminRoute && Cms::handles($route):
+                Cms::handle($route, $method, $config, $store, $varDir, (string) $sub);
+                return;
             case $isAdminRoute:
                 self::admin($route, $method, $config, $store, $varDir, (string) $sub, $privateDir);
                 return;
@@ -144,6 +153,35 @@ final class App
     }
 
     /** Small JSON request body, hard-capped. */
+    /** For Cms: the same bounded JSON body reader. */
+    public static function jsonBodyPublic(int $max): ?array
+    {
+        return self::jsonBody($max);
+    }
+
+    /**
+     * Public: what the app needs from the CMS. Announcements meant for the app (within their time window), the footer links and the
+     * public settings. Nothing private is in published content, and this returns only these fields.
+     */
+    private static function site(string $varDir): void
+    {
+        $c = (new Content\ContentStore($varDir))->published();
+        $now = time();
+        $ann = [];
+        foreach ($c['announcements'] as $a) {
+            $from = ($a['start'] ?? '') !== '' ? strtotime((string) $a['start']) : false;
+            $to = ($a['end'] ?? '') !== '' ? strtotime((string) $a['end']) : false;
+            if (!empty($a['unpublished']) || !in_array($a['where'] ?? 'site', ['app', 'both'], true) || ($from !== false && $now < $from) || ($to !== false && $now >= $to)) {
+                continue;
+            }
+            $href = Content\Markdown::safeHref((string) ($a['linkHref'] ?? ''));
+            $ann[] = ['id' => $a['id'], 'message' => $a['message'], 'level' => $a['level'] ?? 'info', 'linkLabel' => $href !== null ? ($a['linkLabel'] ?? '') : '', 'linkHref' => $href ?? ''];
+        }
+        $s = $c['settings'];
+        Http::json(200, ['announcements' => $ann, 'footer' => $c['navigation']['footer'] ?? [],
+            'settings' => ['siteName' => $s['siteName'] ?? 'Flightdeck', 'footerBlurb' => $s['footerBlurb'] ?? '', 'footerNote' => $s['footerNote'] ?? '']]);
+    }
+
     private static function jsonBody(int $max): ?array
     {
         $raw = file_get_contents('php://input', false, null, 0, $max + 1);
@@ -244,13 +282,15 @@ final class App
             return;
         }
         if (strpos($route, '/admin/enquiries/') === 0 && $method === 'PATCH') {
-            $b = self::jsonBody(512);
+            $b = self::jsonBody(Enquiries::MAX_NOTE * 4 + 512);
             $id = substr($route, strlen('/admin/enquiries/'));
-            if (!is_array($b) || !is_string($b['status'] ?? null) || !$enq->setStatus($id, $b['status'])) {
+            $hasStatus = is_array($b) && is_string($b['status'] ?? null);
+            $hasNote = is_array($b) && is_string($b['note'] ?? null);
+            if (!$hasStatus && !$hasNote || ($hasStatus && !$enq->setStatus($id, $b['status'])) || ($hasNote && !$enq->setNote($id, $b['note']))) {
                 Http::json(422, ['error' => 'That change could not be saved.']);
                 return;
             }
-            Admin::audit($varDir, $sub, 'enquiry ' . $id . ' -> ' . $b['status']);
+            Admin::audit($varDir, $sub, 'enquiry ' . $id . ($hasStatus ? ' -> ' . $b['status'] : '') . ($hasNote ? ' note' : ''));
             Http::json(200, ['ok' => true, 'unread' => $enq->unread()]);
             return;
         }
@@ -480,6 +520,7 @@ final class App
             10
         );
         $d = $status === 200 ? json_decode($body, true) : null;
+        Health::record('openmeteo', is_array($d) && !empty($d['current']), $status);
         if (!is_array($d) || empty($d['current']) || !is_array($d['current'])) {
             Http::json(502, ['error' => 'Weather is temporarily unavailable.']);
             return;

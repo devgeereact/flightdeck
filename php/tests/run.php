@@ -4,7 +4,9 @@ declare(strict_types=1);
 foreach (['Http', 'DevEnv', 'ClerkAuth', 'Checklists', 'Metrics', 'Mailer', 'Enquiries', 'ClerkApi', 'Admin', 'GoogleAnalytics', 'Store', 'CloudflareIps', 'Geo', 'Flight', 'OpenSky', 'RouteLookup', 'AeroDataBox', 'App'] as $f) {
     require __DIR__ . '/../private/src/' . $f . '.php';
 }
-require __DIR__ . '/../private/src/Content/Markdown.php';
+foreach (['Health', 'Content/Markdown', 'Content/Validator', 'Content/ContentStore', 'Content/Media', 'Site/Site', 'Cms'] as $f) {
+    require __DIR__ . '/../private/src/' . $f . '.php';
+}
 
 use Flightdeck\AeroDataBox;
 use Flightdeck\AeroDataBoxError;
@@ -730,6 +732,40 @@ check('markdown: duplicate headings get unique ids; the toc lists h2 only', \Fli
 check('markdown: #cookie-settings reopens the cookie choice', $md('[Cookie settings](#cookie-settings)') === '<p><a href="#cookie-settings" data-fd-cookie-settings>Cookie settings</a></p>');
 check('markdown: safeHref allows site paths, https and mailto only', \Flightdeck\Content\Markdown::safeHref('/a/') === '/a/' && \Flightdeck\Content\Markdown::safeHref('https://x.org') === 'https://x.org' && \Flightdeck\Content\Markdown::safeHref('javascript:x') === null && \Flightdeck\Content\Markdown::safeHref('//x.org') === null);
 check('markdown: multibyte text survives', $md('Café — naïve “quotes” 日本') === '<p>Café — naïve “quotes” 日本</p>');
+
+// ------------------------------------------------------------------ CMS: media, health, enquiry notes
+$mdir = sys_get_temp_dir() . '/fd-media-' . bin2hex(random_bytes(3));
+$media = new \Flightdeck\Content\Media($mdir);
+$im = imagecreatetruecolor(1200, 630);
+imagefilledrectangle($im, 0, 0, 1199, 629, imagecolorallocate($im, 19, 60, 53));
+ob_start();
+imagepng($im);
+$png = (string) ob_get_clean();
+$up = $media->store($png . 'hidden-trailer-bytes');
+check('media: a real PNG is re-encoded (trailing data dropped) and stored under its hash', $up['ok'] === true && preg_match('#^/media/[0-9a-f]{64}\.png$#', $up['url']) === 1 && strpos((string) file_get_contents($mdir . '/media/' . basename($up['url'])), 'hidden-trailer') === false);
+check('media: small, oversized, SVG and non-image uploads are refused', !$media->store(substr($png, 0, 40))['ok'] && !$media->store('<svg onload="x"/>')['ok'] && $media->store(str_repeat('a', \Flightdeck\Content\Media::MAX_BYTES + 1))['status'] === 413);
+$tiny = imagecreatetruecolor(100, 100);
+ob_start();
+imagepng($tiny);
+check('media: images smaller than a link preview are refused with a size hint', $media->store((string) ob_get_clean())['status'] === 422);
+check('media: file() only serves hash names', $media->file(basename($up['url'])) !== null && $media->file('../x.png') === null && $media->file('a.php') === null);
+
+$hdir = sys_get_temp_dir() . '/fd-health-' . bin2hex(random_bytes(3));
+\Flightdeck\Health::init($hdir);
+\Flightdeck\Health::record('opensky', true, 200, 1700000000);
+\Flightdeck\Health::record('aerodatabox', false, 429, 1700000100);
+\Flightdeck\Health::record('aerodatabox', false, 0, 1700000200);
+\Flightdeck\Health::flush();
+$hh = \Flightdeck\Health::read($hdir);
+check('health: last success, last failure and its category are kept; never-called providers stay empty', $hh['opensky']['lastOk'] === gmdate('c', 1700000000) && $hh['aerodatabox']['lastFailCategory'] === 'no_response' && $hh['aerodatabox']['consecutiveFailures'] === 2 && $hh['openmeteo']['lastOk'] === null);
+check('health: status categories', \Flightdeck\Health::category(401) === 'rejected_credentials' && \Flightdeck\Health::category(429) === 'limit_reached' && \Flightdeck\Health::category(503) === 'provider_error');
+
+$edir = sys_get_temp_dir() . '/fd-enq-' . bin2hex(random_bytes(3));
+$enqT = new Enquiries($edir, static function (): bool { return true; });
+$sent = $enqT->submit(['kind' => 'contact', 'message' => 'Hello there, a question.', 'email' => 'a@example.com', 'elapsed' => 9000], null, 'noreply@example.com');
+$eid = (string) $sent['id'];
+check('enquiries: resolved is a status and records when', $enqT->setStatus($eid, 'resolved') && ($enqT->list()['items'][0]['resolvedAt'] ?? null) !== null);
+check('enquiries: a private note can be added, is length-limited, and an empty note removes it', $enqT->setNote($eid, "Called back.\nAll sorted.") && $enqT->list()['items'][0]['note'] === "Called back.\nAll sorted." && !$enqT->setNote($eid, str_repeat('x', Enquiries::MAX_NOTE + 1)) && $enqT->setNote($eid, '') && !isset($enqT->list()['items'][0]['note']));
 
 echo $failed ? "\n$failed FAILED\n" : "\nAll passed\n";
 exit($failed ? 1 : 0);

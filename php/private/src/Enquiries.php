@@ -11,7 +11,8 @@ namespace Flightdeck;
 final class Enquiries
 {
     public const KINDS = ['contact', 'feedback', 'bug'];
-    public const STATUSES = ['new', 'read', 'replied', 'archived'];
+    public const STATUSES = ['new', 'read', 'replied', 'resolved', 'archived'];
+    public const MAX_NOTE = 2000;
     public const MIN_FILL_MS = 2500;
     public const MAX_MESSAGE = 4000;
     public const MAX_STORED = 5000; // a hard ceiling so a flood cannot fill the disk
@@ -195,6 +196,27 @@ final class Enquiries
         }
         return $this->update($id, static function (array $d) use ($status): array {
             $d['status'] = $status;
+            $d['updatedAt'] = Store::nowMs();
+            if ($status === 'resolved') {
+                $d['resolvedAt'] = $d['updatedAt'];
+            }
+            return $d;
+        });
+    }
+
+    /** A private note for the owner (never emailed, never shown to the sender). An empty note removes it. */
+    public function setNote(string $id, string $note): bool
+    {
+        $note = trim(str_replace(["\r\n", "\r"], "\n", preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]+/u', '', $note) ?? ''));
+        if (!preg_match('/^\d{14}-[0-9a-f]{6}$/D', $id) || mb_strlen($note) > self::MAX_NOTE) {
+            return false;
+        }
+        return $this->update($id, static function (array $d) use ($note): array {
+            if ($note === '') {
+                unset($d['note']);
+            } else {
+                $d['note'] = $note;
+            }
             $d['updatedAt'] = Store::nowMs();
             return $d;
         });

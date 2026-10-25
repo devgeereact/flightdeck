@@ -44,6 +44,7 @@ final class RouteLookup
         }
         Metrics::count('route_lookup');
         [$status, $body] = ($this->http)('GET', 'https://api.adsbdb.com/v0/callsign/' . rawurlencode($callsign), ['User-Agent: Flightdeck/1.0 (+https://flightdeck.gakinz.com)', 'Accept: application/json'], null, 8);
+        Health::record('adsbdb', in_array($status, [200, 400, 404], true), $status); // 404: no route known, a valid answer
         if ($status === 404 || $status === 400) {
             $this->store->put($key, 'none', self::MISS_MS);
             return null;

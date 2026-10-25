@@ -18,7 +18,7 @@ final class Admin
 
     public static function audit(string $varDir, string $sub, string $action): void
     {
-        $line = gmdate('c') . ' ' . substr(hash('sha256', $sub), 0, 10) . ' ' . preg_replace('/[^A-Za-z0-9_:. -]/', '', $action) . "\n";
+        $line = gmdate('c') . ' ' . substr(hash('sha256', $sub), 0, 10) . ' ' . preg_replace('/[^A-Za-z0-9_:. \/~>-]/', '', $action) . "\n";
         $f = $varDir . '/admin-audit.log';
         @file_put_contents($f, $line, FILE_APPEND | LOCK_EX);
         @chmod($f, 0600);

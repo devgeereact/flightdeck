@@ -20,6 +20,13 @@ require __DIR__ . '/Flight.php';
 require __DIR__ . '/OpenSky.php';
 require __DIR__ . '/RouteLookup.php';
 require __DIR__ . '/AeroDataBox.php';
+require __DIR__ . '/Health.php';
+require __DIR__ . '/Content/Markdown.php';
+require __DIR__ . '/Content/Validator.php';
+require __DIR__ . '/Content/ContentStore.php';
+require __DIR__ . '/Content/Media.php';
+require __DIR__ . '/Site/Site.php';
+require __DIR__ . '/Cms.php';
 require __DIR__ . '/App.php';
 
 set_exception_handler(static function (\Throwable $e): void {

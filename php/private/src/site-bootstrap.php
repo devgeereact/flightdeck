@@ -6,7 +6,9 @@ ini_set('display_errors', '0');
 require __DIR__ . '/DevEnv.php';
 require __DIR__ . '/ClerkAuth.php';
 require __DIR__ . '/Content/Markdown.php';
+require __DIR__ . '/Content/Validator.php';
 require __DIR__ . '/Content/ContentStore.php';
+require __DIR__ . '/Content/Media.php';
 require __DIR__ . '/Site/Site.php';
 
 use Flightdeck\Content\ContentStore;
@@ -44,6 +46,21 @@ if ($method !== 'GET' && $method !== 'HEAD') {
 try {
     [$config, $privateDir] = require __DIR__ . '/loadConfig.php';
     $store = new ContentStore($privateDir . '/var');
+    if (strncmp($path, '/media/', 7) === 0) { // branding images uploaded in the console; names are content hashes, so they never change
+        $f = (new \Flightdeck\Content\Media($store->dir()))->file(substr($path, 7));
+        if ($f === null) {
+            $send(404, 'Not found', 'text/plain; charset=utf-8');
+            return;
+        }
+        header('Content-Type: ' . $f['type']);
+        header('Cache-Control: public, max-age=31536000, immutable');
+        header('X-Content-Type-Options: nosniff');
+        header('Content-Length: ' . filesize($f['path']));
+        if ($method !== 'HEAD') {
+            readfile($f['path']);
+        }
+        return;
+    }
     $content = $store->published();
     $a = $assets($publicDir);
     // Announcements have start and end times, so a cached copy is trusted for five minutes at most.

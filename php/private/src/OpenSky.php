@@ -71,6 +71,7 @@ final class OpenSky
             if ($status !== 200) {
                 Metrics::count('opensky_error');
             }
+            Health::record('opensky', $status === 200, $status);
             if ($status === 401) {
                 $this->store->forget('token');
                 throw new OpenSkyError('OpenSky rejected the API credentials.');

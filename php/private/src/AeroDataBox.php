@@ -81,6 +81,7 @@ final class AeroDataBox
             if ($status !== 200 && $status !== 204) {
                 Metrics::count('adb_error');
             }
+            Health::record('aerodatabox', $status === 200 || $status === 204, $status);
             if ($status === 401 || $status === 403) {
                 $this->store->put('adb-cooldown', 1, 300000);
                 throw new AeroDataBoxError(stripos($body, 'not subscribed') !== false

@@ -151,7 +151,7 @@ final class Site
         $fullTitle = !empty($o['bareTitle']) ? $title : $title . ' · ' . ($this->s['siteName'] ?? 'Flightdeck');
         $url = $o['url'];
         $here = $o['here'];
-        $img = !empty($this->s['socialImage']) ? (string) $this->s['socialImage'] : rtrim((string) $this->s['siteUrl'], '/') . '/og-image.png';
+        $img = rtrim((string) $this->s['siteUrl'], '/') . (!empty($this->s['socialImage']) ? (string) $this->s['socialImage'] : '/og-image.png');
         $ld = implode('', array_map(static function (array $obj): string {
             return '<script type="application/ld+json">' . str_replace('<', '<', (string) json_encode($obj, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) . '</script>';
         }, $o['ld'] ?? []));

@@ -16,6 +16,7 @@ RewriteRule ^api(/.*)?$ api/index.php [L,QSA]
 RewriteRule ^(index\.html)?$ site.php [L]
 RewriteRule ^(about|contact|privacy|cookies|terms|travel-checklist|guides|help|coverage|how-it-works|accessibility)(/.*)?$ site.php [L]
 RewriteRule ^(sitemap\.xml|ads\.txt|404\.html)$ site.php [L]
+RewriteRule ^media/ site.php [L]
 
 # The app: its own files are served as they are; anything else under /app/ gets the app shell (hash routes).
 RewriteRule ^app$ /app/ [R=301,L]
