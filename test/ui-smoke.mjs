@@ -103,7 +103,7 @@ try {
     check('B12 the in-app footer has two equal menus, the right links, and no cookie settings', (() => { const cols = [...d.querySelectorAll('footer.sf .sf-col')]; const n = cols.map(c => c.querySelectorAll('a').length); return cols.length === 2 && n[0] === n[1] && !d.querySelector('[data-fd-cookie-settings]') && [...d.querySelectorAll('footer.sf a')].some(x => x.getAttribute('href') === '#/checklist'); })());
     check('B13 a countdown is shown from the reported times', /Leaves in|Was due to leave/.test(a.text()), a.text().slice(0, 200));
     check('B14 the address becomes a shareable flight link', /^#\/flight\/BA59\/\d{4}-\d{2}-\d{2}$/.test(a.w.location.hash), a.w.location.hash);
-    check('B15 a Share button is offered', [...d.querySelectorAll('.fv-bar button')].some(b => b.textContent.trim() === 'Share'));
+    check('B15 Share and Add to calendar are offered when the times are known', [...d.querySelectorAll('.fv-bar button')].some(b => b.textContent.trim() === 'Share') && [...d.querySelectorAll('.fv-bar button')].some(b => b.textContent.trim() === 'Add to calendar'));
     // offline: the network fails, so the last copy is shown and clearly marked as such
     Object.defineProperty(a.w.navigator, 'onLine', {get: () => false, configurable: true});
     const realFetch = a.w.fetch; a.w.fetch = async (input, init) => { if (String(input).includes('/api/flights')) throw new TypeError('Failed to fetch'); return realFetch(input, init); };

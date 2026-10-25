@@ -1,12 +1,13 @@
 import {useRef,useState,useEffect} from 'react';
 import gsap from 'gsap';
 import {useGSAP} from '@gsap/react';
-import {Plane,ArrowUpRight,Clock,MapPin,RefreshCw,CloudSun,Luggage,Navigation,Check,Radio,Info,Globe,Wind,Bookmark,Compass,Share2,Timer} from 'lucide-react';
+import {Plane,ArrowUpRight,Clock,MapPin,RefreshCw,CloudSun,Luggage,Navigation,Check,Radio,Info,Globe,Wind,Bookmark,Compass,Share2,Timer,CalendarPlus} from 'lucide-react';
 import type {Airport,Flight,FlightResponse} from './types';
 import {destinations} from './destinations';
 import {apiFetch} from './api';
 import {summarise} from './summary';
 import {countdown} from './countdown';
+import {flightIcs} from './ics';
 import {withMotion,fromAny} from './motion';
 import {time,day,airlines,regionName,withHint,weatherLabel,directionText,journeySteps} from './flightFormat';
 gsap.registerPlugin(useGSAP);
@@ -54,6 +55,9 @@ export default function FlightView({flight,data,now,busy,auto,setAuto,changes,on
   const [panel,setPanel]=useState<Panel>('journey');
   const root=useRef<HTMLDivElement>(null);
   const steps=journeySteps(flight);
+  // Calendar file from the times on screen; offered only when both ends have a time.
+  const ics=flightIcs(flight,`${location.origin}/#/flight/${flight.number}/${(flight.scheduledOut||flight.estimatedOut||'').slice(0,10)}`);
+  const addToCalendar=()=>{if(!ics)return;const url=URL.createObjectURL(new Blob([ics],{type:'text/calendar;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=`${flight.number}-${(flight.scheduledOut||'').slice(0,10)}.ics`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)};
   const delayed=flight.cancelled||(flight.delayMinutes!=null&&flight.delayMinutes>0);
   const progressText=flight.progress!==null
     ?`${flight.progress}% of the way${flight.progressBasis==='position'?' (from live position)':flight.progressBasis==='times'?' (from flight times)':flight.progressBasis==='status'?'':''}`
@@ -72,7 +76,7 @@ export default function FlightView({flight,data,now,busy,auto,setAuto,changes,on
     withMotion(()=>{fromAny(gsap,q('.fv-body > *'),{autoAlpha:0,y:12,duration:.4,ease:'power2.out',stagger:.05})});
   },{scope:root,dependencies:[panel,flight.id]});
   return <div className="fv" ref={root}>
-    <div className="fv-bar"><div className="fv-title"><h2>Your flight</h2>{countdown(flight,now.getTime())&&<span className="fv-countdown"><Timer size={14}/>{countdown(flight,now.getTime())}</span>}</div><div>{shareNote&&<span className="fv-share-note" role="status">{shareNote}</span>}{onShare&&<button className="text-button" onClick={onShare}><Share2 size={15}/>Share</button>}<span className="updated">Updated {time(data.fetchedAt,here())}</span><button className="icon-button" aria-label="Refresh flight" onClick={onRefresh} disabled={busy}><RefreshCw size={16} className={busy?'spin':''}/></button><button className="text-button" onClick={onSave}><Bookmark size={15}/>Save flight</button></div></div>
+    <div className="fv-bar"><div className="fv-title"><h2>Your flight</h2>{countdown(flight,now.getTime())&&<span className="fv-countdown"><Timer size={14}/>{countdown(flight,now.getTime())}</span>}</div><div>{shareNote&&<span className="fv-share-note" role="status">{shareNote}</span>}{ics&&<button className="text-button" onClick={addToCalendar}><CalendarPlus size={15}/>Add to calendar</button>}{onShare&&<button className="text-button" onClick={onShare}><Share2 size={15}/>Share</button>}<span className="updated">Updated {time(data.fetchedAt,here())}</span><button className="icon-button" aria-label="Refresh flight" onClick={onRefresh} disabled={busy}><RefreshCw size={16} className={busy?'spin':''}/></button><button className="text-button" onClick={onSave}><Bookmark size={15}/>Save flight</button></div></div>
     <div className="fv-top">
       <section className="panel flight-card">
         <div className="flight-header"><div className="airline-icon"><Plane size={21}/></div><div><h3>{flight.airline}</h3><span>{flight.number} · {flight.aircraft||'Aircraft not reported'}</span></div><span className={'status '+(delayed?'delayed':'')}><span className="dot"/>{flight.status}</span></div>
