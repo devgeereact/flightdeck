@@ -21,3 +21,13 @@ Push to the `production` branch (or run the "Production release" workflow manual
 
 ## Replying to enquiries from the console (SMTP)
 The Enquiries tab has "Reply by email". The reply is sent from `mail_from` to the visitor, with `Reply-To` set to `owner_email`, and the enquiry is marked replied only when the mail server accepted it. By default it uses the server's own mail (PHP mail()). To send through a specific mailbox, add to ~/flightdeck-private/config.php: `'smtp_host' => 'mail.flightdeck.gakinz.com', 'smtp_port' => 465, 'smtp_secure' => 'ssl', 'smtp_user' => 'info@flightdeck.gakinz.com', 'smtp_pass' => '<mailbox password>'` (587 with `'tls'` also works). The password stays in that private file (mode 600). Local testing: `node test/fake-smtp.mjs` and start the dev server with SMTP_HOST=127.0.0.1 SMTP_PORT=2525 SMTP_SECURE=none (the "none" mode is refused for any non-loopback host).
+
+## Website and CMS operations (25 Oct 2026, after the rebrand release)
+
+- **Edit the site:** app -> Owner console -> Content (docs/CMS.md). Nothing goes live until Publish.
+- **Undo a change:** open the item -> History -> Restore to draft -> Publish.
+- **Site shows wrong content everywhere:** move `~/flightdeck-private/var/content/published.json` aside (for example to `published.json.bak-<date>`); the site falls back to the built-in seed at once. Put it back to undo.
+- **Site shows "briefly unavailable" (503):** site.php could not load its code or content. Check that `~/flightdeck-private/src/site-bootstrap.php` exists (the release rsyncs it) and the PHP error log (`flightdeck site: <class> at <file>:<line>`).
+- **Backups:** the nightly `~/flightdeck-backup.sh` must include `var/content` and `var/health` (confirm before the release; see the release plan).
+- **Provider problems:** Owner console -> Operations -> Provider health shows when each source last answered and why it failed (category only).
+- **Old static pages on the server:** after the rebrand release the old `about/`, `guides/…`, `privacy/`… folders, `404.html`, `page.js`, `js/contact.js`, `js/travel-checklist.js`, root `index.html` and `sitemap.xml` are bypassed by `.htaccess`. Delete them only with the owner's approval, from the exact list in the release plan.

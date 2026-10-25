@@ -1,13 +1,13 @@
 schema_version: 1
 name: Flightdeck
-last_reviewed: "2026-10-24"
-status: local-prototype
+last_reviewed: "2026-10-25"
+status: live   # personal, free, non-commercial (owner, 25 Oct 2026)
 current:
   frontend: react-typescript-vite-pwa
-  backend: node-express-tsx   # reference; php/private + public/api implemented locally, not deployed
-  styling: plain-css
+  backend: php-on-cpanel   # php/private/src behind public/api/index.php and public/site.php; server/ (Node) is an outdated reference
+  styling: plain-css-with-tokens   # src/styles/tokens.css
   database: none
-  authentication: none
+  authentication: clerk   # production instance; API verifies tokens; owner = admin_user_ids in server config
   git_repository: true   # initialised 24 Oct 2026, branch main
   github_remote: https://github.com/gsakinz/flightdeck   # private
   deployed: true   # staging/first release live at https://flightdeck.gakinz.com (24 Oct 2026), manual upload via scripts/deploy-staging.sh
@@ -29,3 +29,10 @@ constraints:
   conserve_github_actions_minutes: true
   no_fabricated_live_flights: true
   no_deploy_in_documentation_task: true
+route:
+  mode: A   # rebrand inside the existing project, confirmed by the owner 25 Oct 2026
+  project: /Users/realmrgee/Developer/Projects/flightdeck
+  reference_kit: /Users/realmrgee/Downloads/Rebrand-and-Restructure   # read only
+  plan: docs/RESTRUCTURE-PLAN.md
+  public_site: server-rendered-php-at-root   # ADR-015; app at /app/
+  cms: file-based-private-var-content        # ADR-016

@@ -25,3 +25,17 @@ Test locally FIRST, then push. Required before pushing main or asking for a rele
 
 ## UI smoke test data (25 Oct 2026)
 `pnpm test:ui` runs the real built app in jsdom against fixed flight and weather data, so it gives the same result at any hour and spends no provider units. To also run one check against the real providers, use `UI_TEST_LIVE=1 pnpm test:ui`.
+
+## Rebrand and CMS tests (25 Oct 2026)
+
+| Command | What it proves |
+|---|---|
+| `pnpm test` | Unit and page tests, plus `test/site.test.mjs` (every public page rendered by PHP: document structure, no third parties, safe links, legal wording, ads gate, JSON-LD, shared links, announcements) and `test/cms-http.test.mjs` (real PHP router, throwaway private folder, locally signed tokens: 401/403 on every CMS route, draft vs live, conflict, restore, XSS, pages, FAQs, announcements, settings, navigation, operations). 106 tests. |
+| `pnpm test:php` | PHP suite, including Markdown XSS cases, media re-encoding, health and enquiry notes (media tests skip where GD is missing). |
+| `pnpm test:ui` | The app in jsdom (47 checks). Uses the real php/private folder and .env keys, as before. |
+| `pnpm test:console` | The owner console in jsdom against a throwaway server (16 checks: edit, field error, draft, preview, publish, history restore, new FAQ, resolve enquiry, health, audit, non-owner refused). |
+| `node scripts/seed-content.mjs --check` | The CMS seed matches its sources (also run inside `pnpm test`). |
+| `bash scripts/check-apache-routes.sh` | macOS only: dist/ under Apache + PHP-FPM in the host's layout, with stale static pages present: 22 route and header checks. |
+| `npx vite build -c vite.console-test.config.ts && node test/console-ui.mjs` | Serves the console harness for a manual look or screenshots (prints an owner URL with a test token). |
+
+The release workflow runs `pnpm test` and `pnpm test:php`. `test:ui`, `test:console` and the Apache check are local gates before a release.

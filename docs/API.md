@@ -32,3 +32,24 @@ Runtime schema validation, documented input enums, cost controls, bounded shared
 
 ## Flight fields added 24 Oct 2026
 `direction` {type outbound|inbound|domestic|overseas, basis route|number, home (country code, default GB, config home_country_code), place}: from the route's country codes; only when the route is unknown a flight-number convention is used (BA odd = outbound from the UK, even = inbound) and it is labelled basis "number" with no place. `terminalOutHint`/`terminalInHint`: the airline's usual terminal (only British Airways at LHR, Terminal 5) and ONLY when the provider reports no terminal; the UI shows it as "usual, not confirmed". `estimatedTakeoff`/`estimatedLanding`: runway times before they happen (after they happen they are takeoff/landing, the actuals). `usualRouteOnly`: no schedule for that date; origin and destination come from adsbdb and nothing else is invented. Airports carry `countryCode`. Flights are matched on the SCHEDULED DEPARTURE DATE at the departure airport: the provider also returns the flight that merely arrives on that date, so those are filtered out (if nothing matches, the nearest departures are returned with a note). Flight ids include the departure time.
+
+## Website, CMS and console routes (25 Oct 2026, local, not released)
+
+Public website paths (`/`, `/<slug>/`, `/guides/<slug>/`, `/sitemap.xml`, `/ads.txt`, `/media/<sha256>.<ext>`) are served by `public/site.php` (HTML, ETag, `no-cache`; 404/405/503 pages). The app moved to `/app/`.
+
+| Method/route | Who | Input | Success | Errors |
+|---|---|---|---|---|
+| GET /api/site | anyone | none | `{announcements[] (app/both, in their time window), footer[], settings{siteName,footerBlurb,footerNote}}` | none |
+| GET /api/admin/content/{type} | owner | type: page, faq, announcement, navigation, settings | `{items[{id,label,kind,category,published,unpublished,hasDraft,draftRev,updatedAt,required}], categories, seed}` | 401, 403 |
+| GET /api/admin/content/{type}/{id} | owner | `?revision=<name>` for one old version | `{published, draft, revisions[], required}` / `{data}` | 404, 422 bad id |
+| PUT /api/admin/content/{type}/{id} | owner | `{baseRev:int, data}` | `{draft{rev,data,…}}` | 409 stale baseRev, 422 `{errors{field.path:message}}` |
+| POST /api/admin/content/{type}/{id} | owner | `{action: publish|unpublish|republish|discard|restore, revision?}` | `{ok, draft?}` | 404, 409 nothing to publish, 422 not allowed (required pages) |
+| DELETE /api/admin/content/{type}/{id} | owner | none | `{ok}` | 422 required page |
+| POST /api/admin/preview | owner | `{type, id, data}` | `{html, path}` (noindex) | 422 `{errors}` |
+| GET /api/admin/media | owner | none | `{available, items[{url,bytes,at}], maxBytes}` | |
+| POST /api/admin/media | owner | raw body, Content-Type image/png, image/jpeg or image/webp, ≤ 2 MB, 600×315..4000×4000 | `{url, width, height}` | 413, 415, 422, 429 (20/hour), 503 no GD |
+| GET /api/admin/health | owner | none | `{providers{opensky,aerodatabox,adsbdb,openmeteo:{name,lastOk,lastFail,lastFailCategory,consecutiveFailures}}, cache{files,bytes,snapshotFetchedAt,snapshotAircraft}, allowance}` | |
+| GET /api/admin/audit | owner | `?offset=` | `{entries[{at,by,action}] (100, newest first), you}` | |
+| PATCH /api/admin/enquiries/{id} | owner | `{status?: new|read|replied|resolved|archived, note?: string ≤ 2000}` | `{ok, unread}` | 422 |
+
+"Owner" = verified Clerk token AND user id in `admin_user_ids`; 401 without a valid token, 403 otherwise (tested end to end, `test/cms-http.test.mjs`). Admin routes count toward the per-visitor limit (30 a minute by default). Writes are audited. Field-error paths use dots, for example `hero.title`, `steps.0.text`, `footer.1.links.0.href`, `link.href`.

@@ -70,3 +70,22 @@ php 134/134 (counters: daily sums, key cleaning, salted hashes with no raw ids, 
 
 ## Release of 24 Oct 2026 (phases 4-7)
 Local: pnpm test 68/68, php tests all pass, UI smoke passes, public pages and footers checked in Chrome at desktop and 390px. Live (run 40127353904): home, privacy, packing list, sitemap 200; GA ID present, no googletagmanager before consent; /api/me and /api/admin/overview 401 without a token; empty contact post 422. Not yet verified live as the owner: console login, Analytics tab against the real service account, test enquiry email delivery, consent banner in a private window.
+
+## Rebrand, public website and CMS, 25 October 2026 (local, NOT pushed, NOT released)
+
+Environment: macOS, Node 24.22.1, pnpm 12.15.0, PHP 8.5.12 (CLI, built-in server, PHP-FPM), Apache 2.4.67, Chrome headless shell 156 (Puppeteer cache). Final commit: see `git log -1`.
+
+| Check | Result |
+|---|---|
+| `pnpm build` (tsc, Vite, public assets) | PASS |
+| `pnpm test` | PASS 106/106 (includes 25 site-render tests and 11 end-to-end CMS HTTP tests) |
+| `pnpm test:php` | PASS (all; adds Markdown XSS, media, health, enquiry-note checks) |
+| `pnpm test:ui` (app in jsdom) | PASS 47/47 |
+| `pnpm test:console` (console in jsdom, real API) | PASS 16/16 |
+| `node scripts/seed-content.mjs --check` | PASS |
+| `scripts/check-apache-routes.sh` (Apache + PHP-FPM, host layout, stale static pages present) | PASS 22/22 |
+| Anonymous / non-owner / owner on every CMS route | 401 / 403 / 200 (HTTP tests with locally signed RS256 tokens; forged, expired and wrong-issuer tokens 401) |
+| Contrast of text token pairs | all ≥ 4.5:1 (lowest 4.76) |
+| Visual (headless Chrome screenshots) | site home 1440/375, guide 1280, coverage/help/contact 375, 404 375/1280, sign-in 1280/375, console pages/editor/inbox/health 1440: no overflow, labels and states as designed |
+
+NOT tested: the live server (LiteSpeed, its PHP 8.4 and GD), a real phone (installed-app forwarding, PWA update across the /app/ move), Clerk production sign-in with the new /app/ path, a real screen reader, real provider calls through the new health recorder (unit-tested only). These are in the release plan (docs/RELEASE-PLAN-REBRAND.md, step 4).

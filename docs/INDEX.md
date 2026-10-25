@@ -1,9 +1,12 @@
 # Flightdeck documentation
 
-Reviewed 24 October 2026. Current prototype and proposed cPanel/PHP target are deliberately separate.
+Reviewed 25 October 2026.
 
 - [Prd](PRD.md)
 - [Design](DESIGN.md)
+- [CMS (owner console)](CMS.md)
+- [Restructure plan (rebrand and CMS)](RESTRUCTURE-PLAN.md)
+- [Release plan: rebrand](RELEASE-PLAN-REBRAND.md)
 - [Architecture](ARCHITECTURE.md)
 - [Schema](SCHEMA.md)
 - [Api](API.md)

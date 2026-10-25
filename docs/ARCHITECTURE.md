@@ -1,28 +1,52 @@
 # Flightdeck architecture
 
-## CURRENT — implemented
-React 19 + strict TypeScript + Vite frontend. Express 5 API in server/index.ts, executed through tsx. Shared contracts in src/types.ts. In-memory caches and per-IP limiter; browser-local saved flights. No Clerk, PHP, database, queue, paid deployment service or account system is implemented.
+Reviewed 25 October 2026. "Live" means the production release of 25 Oct (731dae7). "Local" means committed on `main` after it and not released (rebrand and CMS, see RESTRUCTURE-PLAN.md).
+
+## Shape
 
 ```text
-Browser React → /api/config, /api/flights, /api/weather
-             → Express → sample adapter OR OpenSky (client credentials required)
-                       → Open-Meteo current weather
-Browser localStorage → saved search inputs
+flightdeck.gakinz.com (Cloudflare Full strict -> cPanel, LiteSpeed/Apache rules in public/.htaccess)
+  /                 public website   -> site.php -> ~/flightdeck-private/src/Site (PHP renders CMS content)   [local]
+  /guides/ /help/…  public website   -> site.php                                                              [local]
+  /app/             signed-in app    -> app/index.html (React SPA, hash routes)                               [local; live at /]
+  /api/*            API              -> api/index.php -> ~/flightdeck-private/src (App, Cms, providers)       [live + local CMS routes]
+  /media/<hash>     branding images  -> site.php (from private var/content/media)                             [local]
+Private, outside every webroot: ~/flightdeck-private/{src, config.php, var/}
 ```
 
-Vite dev port 5173 proxies /api to loopback 3001. Production local preview serves dist through Express. Current pnpm build checks all TypeScript and builds frontend only; it does not emit a PHP API or compiled production server. pnpm start needs tsx, currently a dev dependency. Paths to dist assume the project working directory. These facts prevent a blind “upload dist and everything works” deployment.
+No database: shared state is small JSON files under private `var/` written with a lock, a unique temp file and a rename (cache, rate limits, counters, checklists, enquiries, CMS content, provider health). Clerk handles accounts; the API verifies its session tokens itself (JWKS, no Clerk secret needed for that). Releases: push to `production` -> GitHub Actions tests, builds, rsyncs `php/private/src` over a restricted key, then uploads `dist/` over FTPS additively (DEPLOYMENT.md).
 
-## Source map
-src/main.tsx: app state, search/refresh, presentational components and effects. src/style.css: responsive CSS. src/destinations.ts: curated guides. src/types.ts: contracts. server/flight.ts: normalisation/validation/samples. server/index.ts: upstream requests/cache/rate limiting/HTTP/static serving. server/flight.test.ts: four domain tests. public/icon.svg, vite.config.ts: PWA resources/config. .vscode and mise.toml: workspace tasks/runtime pins.
+## Public website (server-rendered)
 
-## PHP API — IMPLEMENTED LOCALLY 24 Oct 2026 (approved; not deployed or cPanel-tested)
-public/api/index.php is the only public PHP file; it loads php/private/src/bootstrap.php from a private folder outside the webroot (FLIGHTDECK_PRIVATE, default ../flightdeck-private next to the docroot). Config comes from private config.php or environment. Cache, OpenSky token, shared snapshot and rate-limit counters are files under private var/ (0600). Contracts match the Node reference except the two intentional differences in MIGRATION-PHP.md. See docs/MIGRATION-PHP.md for evidence.
+`public/site.php` loads `src/site-bootstrap.php`, which reads the published CMS snapshot (`Content/ContentStore`, or the seed until the first publish) and renders the requested path with `Site/Site.php`: one layout (announcement, header, footer from CMS navigation), page kinds home, page, guide, guide index, packing list, contact, help, 404 and 503, plus `sitemap.xml` and (only when the ads gate in the server config is fully open) `ads.txt`. Body text is the safe Markdown subset (`Content/Markdown.php`). Responses carry an ETag and `Cache-Control: no-cache`; security headers and the CSP come from `.htaccess`. Pages load only our own files: `/consent.js`, `site-<hash>.css/js`, and on two pages `js/contact-<hash>.js` and `js/travel-checklist-<hash>.js`. Asset names come from `site-build.json`, written by `scripts/build-public.mjs`.
 
-## TARGET — hosting shape
-Static React/PWA frontend on a dedicated cPanel document root (flightdeck.gakinz.com). PHP backend and private configuration outside every webroot, with a public API entrypoint and equivalent contracts. No mandatory hosted Node runtime. MariaDB only if shared persistent features are later approved; Clerk only if accounts are needed. Cloudflare DNS/HTTPS and low-minutes deliberate GitHub FTPS releases after target confirmation.
+`.htaccess` order: API, then the known site paths BEFORE the real-file check (releases are additive, so stale static copies of old pages are bypassed), then `/app/` (real files or the app shell), Clerk return paths, real files, and finally everything else to `site.php` (new CMS pages or a true 404). Tested under Apache with `scripts/check-apache-routes.sh`.
 
-## Migration boundary
-Preserve Node prototype as reference. Inventory current endpoints and fixtures, add contract tests, approve PHP parity scope, implement PHP provider/weather/cache/validation adapters, compare sample/live/unavailable behaviour, test cPanel PHP/extensions/private layout, and switch routing only after acceptance and rollback. Do not claim a PHP migration exists or change app behaviour through docs. See MIGRATION-PHP.md.
+## App (`/app/`)
 
-## Risks
-OpenSky state vectors are checked by a light guard (isState) only; deeper runtime schema validation is still needed; explicit any remains in adapters/frontend weather. Main component is large and warrants scoped extraction later. Cache/rate maps are process-local; limiter map has no expiry eviction of old IP entries. Airport timezone fallback uses UTC when absent. Hosting process exhaustion was observed despite successful SSH. No live deployment or end-to-end provider test is proven.
+React 19 + strict TypeScript + Vite, PWA via vite-plugin-pwa (manifest `id: '/'`, `start_url: '/app/'`, scope `/`; service worker at `/sw.js`; offline fallback only for `/app/`). Signed-out visitors see a sign-in screen that names the flight from a shared link; signed-in users get the tracker, saved flights, packing list and, for the owner, the console. Old `/#/flight/...` links and installed apps opening `/` are forwarded by `site.js`.
+
+```text
+src/main.tsx                   app shell: router, dashboard, PWA update, Clerk provider
+src/app/                       sign-in screen, Clerk glue (token bridge, account bar, saved-flight sync, shared-device clean-up),
+                               saved-flight and offline helpers, install help, announcements, feedback
+src/features/flight/           flight view, formatting (time rules ADR-012), summary, countdown, calendar file, destinations
+src/features/checklist/        packing list UI, model, storage, sync, rules, template, board styles
+src/console/                   owner console: shell, operations (Ops.tsx), inbox, provider health, audit, content editor
+src/shared/                    API client (token in Authorization and X-Session-Token), tracking, motion, tab keys, smooth scroll
+src/styles/                    tokens.css (design tokens), site.css (public site), console.css; src/style.css (app)
+src/site/                      public site scripts (site.js, contact.js, travel-checklist.js)
+src/siteNav.ts                 default links (app footer, CMS seed)    src/types.ts  flight contracts
+```
+
+## PHP (`php/private/src`)
+
+`bootstrap.php` (API) and `site-bootstrap.php` (site) share `loadConfig.php` (private config.php, environment, and locally only the project's .env). API: `App.php` (routing, limits, auth gate, owner gate), `Cms.php` (console content, preview, media, health, audit routes), `ClerkAuth.php`, `Admin.php`, `Metrics.php`, `Health.php`, `Enquiries.php`, `Mailer.php`, `Checklists.php`, `ClerkApi.php`, `GoogleAnalytics.php`; flight data: `AeroDataBox.php`, `OpenSky.php`, `RouteLookup.php` (adsbdb), `Flight.php`, `Geo.php`; storage: `Store.php`. CMS: `Content/{Markdown,Validator,ContentStore,Media}.php`, `Content/seed.json`. Site: `Site/Site.php`.
+
+## Node reference server
+
+`server/` (Express) is the original prototype. It does not have sign-in, the console, enquiries, the CMS or the site; production does not run it and the release workflow does not test it. Archiving it is a pending owner decision (RESTRUCTURE-PLAN.md section 8).
+
+## Known limits
+
+Provider payload validation is light (guards, not schemas). File storage assumes one server (no shared cache across machines); fine for cPanel. Rendering is per request with no server-side HTML cache; pages are small and revalidated with ETags, so this has not been a measured problem. The live server's GD support (for branding uploads) is unconfirmed.

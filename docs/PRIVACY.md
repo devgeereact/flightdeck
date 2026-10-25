@@ -24,3 +24,10 @@ Not implemented: payments, precise location, AI processing of user text (phase 8
 | Last flight results (`flightdeck-last-results`, browser storage) | Up to six recent results kept on the device so a flight can be read offline; shown only as "last fetched at" | Cleared on sign-out; browser data |
 | Public packing list ticks (`flightdeck-public-packing`, browser storage) | Which boxes were ticked on the printable list page | Browser data |
 | Shared flight links | The address contains only the flight number and date | Not stored by us |
+
+## Added 25 Oct 2026 (rebrand and CMS, not released)
+
+- New device storage: `flightdeck-dismissed` (ids of app announcements the user closed, at most 20). Listed on the cookies page.
+- Enquiries can carry a private owner note and a resolved date. The privacy page now says messages are kept "to read and answer you, and to keep a short private note of what was done about it".
+- The CMS audit log and content history store a 10-character fingerprint of the owner's account, not the account id; they hold no visitor data.
+- Public website pages are rendered by our server and still load nothing from third parties. Uploaded branding images are re-encoded (metadata removed).

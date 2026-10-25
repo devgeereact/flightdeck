@@ -44,3 +44,12 @@ Decision: the two unauthenticated write routes accept only same-site JSON; conta
 
 ## ADR-014: shareable flight links and offline fallback (25 Oct 2026)
 Decision: a searched flight gets the address `#/flight/<number>/<date>` (Share copies it); the last six results stay on the device and are shown only when the network fails, always labelled "last fetched at". Calendar files are generated in UTC and only when both times are known. Why: people share flights and lose signal at airports; accuracy rule: never show stored data as live.
+
+## ADR-015: public website at `/`, app at `/app/` (25 Oct 2026)
+Decision (owner, 25 Oct 2026): the public website is rendered by PHP from CMS content at `/` and the public paths; the React app moves to `/app/`. Why: search engines and link previews need readable HTML, and the CMS can only edit the home page without a code release if the server renders it. How old links keep working: `site.js` forwards `/#/flight/...` and other app hash routes, and installed apps that open `/` (standalone display mode), to `/app/`. The manifest keeps `id: '/'` so existing installs keep their identity; `start_url` is `/app/`; the service worker stays at `/sw.js` (scope `/`) and falls back only for `/app/`. `.htaccess` sends the known site paths to `site.php` before the real-file check, because additive releases leave the old static pages on the server. Cost: two entry points (site.php, app/index.html).
+
+## ADR-016: file-based CMS in private `var/content` (25 Oct 2026)
+Decision (owner chose the recommendation): CMS content, drafts, history and media are JSON and image files in the private folder, like the existing checklists and enquiries; no database. Why: one editor, small volumes, the project has no database, and the brief said not to change the database architecture for a template. Writes take one lock and use atomic renames; history is immutable. If several editors or large volumes appear, move to cPanel MariaDB with restricted users (SCHEMA.md).
+
+## ADR-017: safe Markdown, no HTML, for every CMS text (25 Oct 2026)
+Decision: the CMS stores a Markdown subset, rendered server-side by a small escaping renderer that can only produce a fixed tag set and safe links. Why: the brief forbids editors publishing executable HTML/JavaScript; an HTML sanitiser is harder to get right than a renderer that never passes HTML through. Existing pages were converted once (scripts/seed-content.mjs) and compared by tests (headings, links, legal wording). One reserved link, `#cookie-settings`, reopens the cookie choice.

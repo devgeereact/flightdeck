@@ -1,6 +1,6 @@
 # Flightdeck rebrand and CMS: restructure plan
 
-Status: **PROPOSED, awaiting owner approval.** Nothing in this plan has been implemented. Written 25 October 2026.
+Status: **APPROVED 25 Oct 2026; phases 1-8 IMPLEMENTED and verified locally; phase 9 docs done; release and clean-up await separate approval.** Written 25 October 2026. Actual results: section 12.
 
 ## 0. Route, paths and decisions
 
@@ -35,7 +35,7 @@ Status: **PROPOSED, awaiting owner approval.** Nothing in this plan has been imp
 - Clerk sign-in. Server-side RS256 verification on `/api/flights`, `/weather`, `/checklist`, `/me` and `/admin/*`. Owner check by exact user id. Lookups stay sign-in-only (cost protection, ADR-010).
 - Owner console: overview, usage, costs and limits, users, enquiries with email reply, Google Analytics, system.
 - Contact and feedback forms with all ADR-013 abuse limits. First-party anonymous counters. Consent banner and GA4 only after opt-in.
-- All 15 guides and their URLs, breadcrumbs, sitemap and robots. Ads gate stays closed.
+- All 11 guides and their URLs, breadcrumbs, sitemap and robots. Ads gate stays closed.
 - PWA: install, update banner, offline shell. Security headers and the enforced CSP. The release workflow (production branch, additive uploads).
 - Provider attribution (AeroDataBox, OpenSky, adsbdb, Open-Meteo).
 
@@ -60,7 +60,7 @@ Status: **PROPOSED, awaiting owner approval.** Nothing in this plan has been imp
 | `/how-it-works/` | Step by step, from typing a number to the data sources answering | Plain English, no claims beyond what the code does |
 | `/coverage/` | Data sources and attribution, freshness (cache times, AeroDataBox window yesterday to +3 days), limits (no ocean positions, monthly allowance, usual-route-only cases) | Values come from the real config defaults |
 | `/help/` | Help and FAQ (CMS FAQs grouped by category) | Visible Q&A; FAQPage schema only if the owner wants it |
-| `/guides/` and 15 `/guides/*` | Unchanged URLs, now CMS-managed | Imported from `content/pages.mjs` |
+| `/guides/` and 11 `/guides/*` | Unchanged URLs, now CMS-managed | Imported from `content/pages.mjs` |
 | `/travel-checklist/` | Printable packing list | Template stays in code (`checklistTemplate.ts`); intro copy is CMS |
 | `/about/`, `/contact/` | About; contact form (existing endpoint) | |
 | `/privacy/`, `/cookies/`, `/terms/` | Legal, CMS-editable with an enforced "last reviewed" date | Wording updated for the new storage and the new pages |
@@ -179,3 +179,16 @@ PRD, DESIGN (tokens and components), ARCHITECTURE, SCHEMA (content storage), API
 - Server: does PHP have GD (or Imagick) for branding uploads? I'll check read-only at release time with your approval.
 - Release approval, pinned server backup, deletion of old static files: separate approvals.
 - Node reference archive: yes or no (section 8).
+
+## 12. What was actually done (25 Oct 2026)
+
+Commits on `main` (not pushed): df91923 plan · 0475ff5 tokens, PHP-rendered site, app at /app/ · db7d2ee CMS server side · cfcb738 console · 1d0a197 feature folders · fd3898c polish and Apache check · 0bcbefc legal wording · e242967 release script fix · then docs.
+
+Differences from the plan:
+- The console keeps its address `#/admin` (sections `#/admin/<section>/<id>`); no rename to `#/console` was needed.
+- The site renders per request with ETag revalidation; no server-side HTML cache was built (not needed at this size).
+- The ads gate moved from `site.config.json` to the server config (`ads_enabled`, `ads_licence_cleared`, `ads_cmp_ready`, `ads_pub_id`, `ads_slots`); still closed.
+- Found and fixed during the work: the release script would have failed the next release (expected `dist/index.html` and a React home page); `.htaccess` is now uploaded last. The guide count is 11 (older notes said 15).
+- Not done: cleanup (section 8) and anything on the server.
+
+Before → after (app source): `src/{main,FlightView,Checklist,Admin,Landing,…}.tsx` flat → `src/{app,features/flight,features/checklist,console,shared,styles,site}/`, `main.tsx` 24 KB → 18 KB; `Landing.tsx` replaced by the server-rendered home and `app/SignInScreen.tsx`; `Admin.tsx` → `console/`. PHP: added `Content/`, `Site/`, `Cms.php`, `Health.php`, `loadConfig.php`, `site-bootstrap.php`; `public/site.php`. Content: `content/pages.mjs` (HTML strings) → seed JSON in safe Markdown (`scripts/seed-content.mjs`, `content/site-content.mjs`).

@@ -25,3 +25,6 @@ User approved the PHP backend (picked as best option). PHP API implemented and l
 
 ## Update 24 Oct 2026 (agent Skyhook)
 Production release pipeline built and proven: `production` branch + .github/workflows/release.yml, restricted rsync-only SSH key for ~/flightdeck-private/src, additive FTPS for the public root. Cloudflare SSL strict verified; hostname-scoped cache rule respects origin headers; manifest MIME fixed. Open: trust_cf_connecting_ip (shared rate bucket) awaits user approval; PWA update test on a device. See docs/DEPLOYMENT.md.
+
+## Update 25 Oct 2026: rebrand and CMS (Route A)
+Owner decisions: audience personal and free (non-commercial, not promoted); evolve the green identity; public site at `/` rendered by PHP from CMS content, app at `/app/` (ADR-015); CMS = content, settings and branding, inbox and operations; owner only, no editor role; file-based storage (ADR-016); safe Markdown only (ADR-017). Built and verified locally (VERIFICATION.md), not released. Backup: `~/repo-backups/flightdeck-2026-10-25-1808-pre-rebrand` (verified bundle, source, private files). Release plan: RELEASE-PLAN-REBRAND.md. Open: server GD and backup scope, release approval, clean-up approval, Node reference archive decision.
