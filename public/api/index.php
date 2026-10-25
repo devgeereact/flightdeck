@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+header_remove('X-Powered-By');
+
 // Public API entrypoint. All logic, config and cache live in a private folder outside the webroot.
 $private = getenv('FLIGHTDECK_PRIVATE') ?: dirname(__DIR__, 2) . '/flightdeck-private';
 if (!is_file($private . '/src/bootstrap.php')) {

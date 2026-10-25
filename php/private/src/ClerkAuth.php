@@ -138,9 +138,12 @@ final class ClerkAuth
         [$status, $body] = ($this->http)('GET', $this->issuer . '/.well-known/jwks.json', ['Accept: application/json'], null, 8);
         $d = $status === 200 ? json_decode($body, true) : null;
         if (!is_array($d) || !is_array($d['keys'] ?? null) || !$d['keys']) {
-            return is_array($cached) ? $cached : null;
+            // Clerk unreachable: keep using the last keys we had (kept for a week) rather than signing everyone out.
+            $stale = $this->store->get('clerk-jwks-stale');
+            return is_array($cached) ? $cached : (is_array($stale) ? $stale : null);
         }
         $this->store->put('clerk-jwks', $d['keys'], self::JWKS_TTL_MS);
+        $this->store->put('clerk-jwks-stale', $d['keys'], 7 * 86400000);
         return $d['keys'];
     }
 

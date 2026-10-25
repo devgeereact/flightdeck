@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 // Mirrors server/flight.test.ts. Run: php php/tests/run.php
-foreach (['Http', 'DevEnv', 'ClerkAuth', 'Checklists', 'Metrics', 'Mailer', 'Enquiries', 'ClerkApi', 'Admin', 'GoogleAnalytics', 'Store', 'CloudflareIps', 'Geo', 'Flight', 'OpenSky', 'RouteLookup', 'AeroDataBox'] as $f) {
+foreach (['Http', 'DevEnv', 'ClerkAuth', 'Checklists', 'Metrics', 'Mailer', 'Enquiries', 'ClerkApi', 'Admin', 'GoogleAnalytics', 'Store', 'CloudflareIps', 'Geo', 'Flight', 'OpenSky', 'RouteLookup', 'AeroDataBox', 'App'] as $f) {
     require __DIR__ . '/../private/src/' . $f . '.php';
 }
 
@@ -20,6 +20,7 @@ use Flightdeck\Flight;
 use Flightdeck\Geo;
 use Flightdeck\RouteLookup;
 use Flightdeck\Store;
+use Flightdeck\App;
 
 $failed = 0;
 function check(string $name, bool $ok): void
@@ -615,6 +616,44 @@ check('cf: ordinary and malformed addresses are not Cloudflare', !CloudflareIps:
 check('cf: header honoured only from a Cloudflare peer', CloudflareIps::clientIp('104.21.4.95', '198.51.100.7', true) === '198.51.100.7');
 check('cf: spoofed header from a direct connection is ignored', CloudflareIps::clientIp('203.0.113.9', '198.51.100.7', true) === '203.0.113.9');
 check('cf: trust off, garbage or missing header fall back to the peer', CloudflareIps::clientIp('104.21.4.95', '198.51.100.7', false) === '104.21.4.95' && CloudflareIps::clientIp('104.21.4.95', 'junk', true) === '104.21.4.95' && CloudflareIps::clientIp('104.21.4.95', null, true) === '104.21.4.95');
+
+// --- abuse protection on public write routes
+$js = ['CONTENT_TYPE' => 'application/json', 'HTTP_HOST' => 'flightdeck.gakinz.com'];
+check('cross-site: a same-site JSON request is accepted', App::refuseCrossSite($js) === null && App::refuseCrossSite($js + ['HTTP_ORIGIN' => 'https://flightdeck.gakinz.com', 'HTTP_SEC_FETCH_SITE' => 'same-origin']) === null);
+check('cross-site: a form or text post (no preflight) is refused', App::refuseCrossSite(['CONTENT_TYPE' => 'text/plain'] + $js) !== null && App::refuseCrossSite(['CONTENT_TYPE' => 'application/x-www-form-urlencoded', 'HTTP_HOST' => 'x']) !== null && App::refuseCrossSite(['HTTP_HOST' => 'x']) !== null);
+check('cross-site: another site in Origin or Sec-Fetch-Site is refused', App::refuseCrossSite($js + ['HTTP_ORIGIN' => 'https://evil.example']) !== null && App::refuseCrossSite($js + ['HTTP_SEC_FETCH_SITE' => 'cross-site']) !== null && App::refuseCrossSite($js + ['HTTP_SEC_FETCH_SITE' => 'same-site']) !== null);
+check('cross-site: local development (origin with port) still works', App::refuseCrossSite(['CONTENT_TYPE' => 'application/json; charset=utf-8', 'HTTP_HOST' => '127.0.0.1:3998', 'HTTP_ORIGIN' => 'http://127.0.0.1:3998']) === null);
+check('rate key: IPv6 is limited per /64, IPv4 per address', App::visitorKey('2001:db8:1:2:aaaa::1') === App::visitorKey('2001:db8:1:2:ffff::9') && App::visitorKey('2001:db8:1:3::1') !== App::visitorKey('2001:db8:1:2::1') && App::visitorKey('198.51.100.7') === '198.51.100.7');
+
+$cs = new Store($tmp . '-sweep');
+$cs->put('old', ['x' => 1], -1000);
+$cs->put('fresh', ['x' => 2], 600000);
+check('store: reading an expired entry deletes its file', $cs->get('old') === null && !is_file($tmp . '-sweep/cache/old.json') && $cs->get('fresh') === ['x' => 2]);
+$cs->put('old2', 1, -1000);
+check('store: sweep removes expired entries and keeps live ones', $cs->sweep() === 1 && $cs->get('fresh') === ['x' => 2]);
+
+$capDir = $tmp . '-cap';
+@mkdir($capDir . '/enquiries', 0700, true);
+for ($i = 0; $i < Enquiries::MAX_STORED; $i++) { touch(sprintf('%s/enquiries/2026010100%04d-%06x.json', $capDir, $i % 10000, $i)); }
+$capped = (new Enquiries($capDir, static function () { return true; }))->submit($ok, null, 'n@x.com', $nowMs);
+check('enquiry: storage has a hard ceiling (a flood cannot fill the disk)', $capped['status'] === 503);
+array_map('unlink', glob($capDir . '/enquiries/*.json') ?: []);
+
+$race = new Enquiries($tmp . '-race', static function () { return true; });
+$rid2 = $race->submit($ok, null, 'n@x.com', $nowMs)['id'];
+$race->reply($rid2, 'First reply', 'info@x.com', null, $nowMs + 1);
+$race->setStatus($rid2, 'archived');
+$after = $race->list()['items'][0];
+check('enquiry: a status change keeps the replies already saved', $after['status'] === 'archived' && count($after['replies']) === 1 && !glob($tmp . '-race/enquiries/*.tmp'));
+
+$staleStore = new Store($tmp . '-stale');
+$staleStore->put('clerk-jwks-stale', json_decode($jwks, true)['keys'], 86400000);
+$staleAuth = new ClerkAuth($iss, $staleStore, static function () { return [503, '']; });
+$claimsNow = ['iss' => $iss, 'sub' => 'user_1', 'exp' => time() + 60, 'nbf' => time() - 10];
+check('auth: when Clerk is unreachable, the last known keys (kept a week) still verify sign-ins', $staleAuth->check($mint($claimsNow), time())['ok'] === true);
+$freshStore = new Store($tmp . '-stale2');
+(new ClerkAuth($iss, $freshStore, $jwksUp))->check($mint($claimsNow), time());
+check('auth: every successful key fetch also keeps a long-lived copy', is_array($freshStore->get('clerk-jwks-stale')));
 
 echo $failed ? "\n$failed FAILED\n" : "\nAll passed\n";
 exit($failed ? 1 : 0);

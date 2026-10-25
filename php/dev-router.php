@@ -1,7 +1,10 @@
 <?php
 $csp = file_get_contents(__DIR__ . '/../public/.htaccess');
 // FLIGHTDECK_NO_CSP=1 lets a test page frame the app (for phone-width checks); the real policy is always on in production.
-if (getenv('FLIGHTDECK_NO_CSP') !== '1' && preg_match('/Content-Security-Policy "([^"]+)"/', $csp, $m)) { header('Content-Security-Policy: ' . $m[1]); }
+if (getenv('FLIGHTDECK_NO_CSP') !== '1' && preg_match('/Content-Security-Policy "([^"]+)"/', $csp, $m)) {
+    // Locally the app signs in with Clerk's development instance, which production does not allow.
+    header('Content-Security-Policy: ' . preg_replace('/(script-src|connect-src|frame-src) /', '$1 https://*.clerk.accounts.dev https://clerk-telemetry.com ', $m[1]));
+}
 
 // Local only: php -S 127.0.0.1:3998 php/dev-router.php
 // Provider keys come from the project's .env automatically (see php/private/src/DevEnv.php); nothing has to be exported.

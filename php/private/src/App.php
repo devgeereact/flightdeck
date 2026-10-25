@@ -107,6 +107,42 @@ final class App
         }
     }
 
+    /**
+     * Public write routes accept only a JSON body sent from this site. A JSON content type forces browsers to ask first (CORS
+     * preflight), which other sites never get past; Sec-Fetch-Site and Origin, when present, must say "same site".
+     * @return string|null the reason to refuse, or null when the request is fine
+     */
+    public static function refuseCrossSite(array $server): ?string
+    {
+        $ct = strtolower((string) ($server['CONTENT_TYPE'] ?? $server['HTTP_CONTENT_TYPE'] ?? ''));
+        if (strpos($ct, 'application/json') !== 0) {
+            return 'Send the request as JSON.';
+        }
+        $fetchSite = strtolower((string) ($server['HTTP_SEC_FETCH_SITE'] ?? ''));
+        if ($fetchSite !== '' && !in_array($fetchSite, ['same-origin', 'none'], true)) {
+            return 'Requests from other sites are not accepted.';
+        }
+        $origin = (string) ($server['HTTP_ORIGIN'] ?? '');
+        if ($origin !== '' && $origin !== 'null') {
+            $o = parse_url($origin);
+            $originHost = strtolower(($o['host'] ?? '') . (isset($o['port']) ? ':' . $o['port'] : ''));
+            if ($originHost === '' || $originHost !== strtolower((string) ($server['HTTP_HOST'] ?? ''))) {
+                return 'Requests from other sites are not accepted.';
+            }
+        }
+        return null;
+    }
+
+    /** Rate-limit key for a visitor: the address, or its /64 network for IPv6 (one home or phone usually owns a whole /64). */
+    public static function visitorKey(string $ip): string
+    {
+        $bin = @inet_pton($ip);
+        if ($bin !== false && strlen($bin) === 16) {
+            return bin2hex(substr($bin, 0, 8)) . '::/64';
+        }
+        return $ip;
+    }
+
     /** Small JSON request body, hard-capped. */
     private static function jsonBody(int $max): ?array
     {
@@ -121,6 +157,10 @@ final class App
     /** Anonymous, whitelisted, counter-only events from the app (no cookies, no identifiers). */
     private static function event(): void
     {
+        if (($why = self::refuseCrossSite($_SERVER)) !== null) {
+            Http::json(403, ['error' => $why]);
+            return;
+        }
         $b = self::jsonBody(512);
         $name = is_array($b) && is_string($b['name'] ?? null) ? $b['name'] : '';
         if (!in_array($name, Admin::EVENTS, true)) {
@@ -133,7 +173,11 @@ final class App
 
     private static function contact(Store $store, string $varDir, array $config, string $ip): void
     {
-        if (!$store->rateAllow('contact:' . $ip, 3, 3600000)) {
+        if (($why = self::refuseCrossSite($_SERVER)) !== null) {
+            Http::json(403, ['error' => $why]);
+            return;
+        }
+        if (!$store->rateAllow('contact:' . self::visitorKey($ip), 3, 3600000)) {
             Http::json(429, ['error' => 'You have sent a few messages already. Please try again in an hour.']);
             return;
         }
@@ -143,7 +187,9 @@ final class App
             return;
         }
         $from = is_string($config['mail_from'] ?? null) && filter_var($config['mail_from'], FILTER_VALIDATE_EMAIL) ? $config['mail_from'] : 'noreply@flightdeck.gakinz.com';
-        $r = (new Enquiries($varDir, Mailer::make($config)))->submit($b, is_string($config['owner_email'] ?? null) ? $config['owner_email'] : null, $from);
+        // Across the whole site, at most 20 messages an hour are emailed; beyond that they are still kept for the console, so a flood cannot fill the owner's inbox.
+        $emailIt = $store->rateAllow('contact:global', 20, 3600000);
+        $r = (new Enquiries($varDir, Mailer::make($config)))->submit($b, $emailIt && is_string($config['owner_email'] ?? null) ? $config['owner_email'] : null, $from);
         if (!$r['ok']) {
             Http::json($r['status'], ['error' => $r['error']]);
             return;
@@ -414,9 +460,10 @@ final class App
             Http::json(400, ['error' => 'Valid airport coordinates are required.']);
             return;
         }
-        $lat = (float) $latRaw;
-        $lon = (float) $lonRaw;
-        $key = 'weather-' . sprintf('%.2f,%.2f', $lat, $lon);
+        // 0.1 degree (about 11 km) is plenty for airport weather and keeps the number of cached places small.
+        $lat = round((float) $latRaw, 1);
+        $lon = round((float) $lonRaw, 1);
+        $key = 'weather-' . sprintf('%.1f,%.1f', $lat, $lon);
         $hit = $store->get($key);
         if (is_array($hit)) {
             Http::json(200, $hit);

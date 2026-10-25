@@ -156,7 +156,7 @@ export default function Admin({onUnread}:{onUnread:(n:number)=>void}){
 
   {tab==='enquiries'&&(!enq?<p className="ad-loading">Loading…</p>:enq.items.length===0?<section className="panel ad-emptybox"><Inbox size={28}/><h3 role="heading" aria-level={2}>No messages yet</h3><p>When someone uses the Feedback button or the contact form, it appears here and is emailed to you if an address is set up.</p></section>:
    <>{sentNote&&<div role="status" className="notice"><CheckCircle2 size={16}/>{sentNote}</div>}<ul className="ad-enq">{enq.items.map((m:any)=><li key={m.id} className={'panel '+(m.status==='new'?'new':'')}>
-    <div className="ad-enq-top"><span className="pill">{m.kind.toUpperCase()}</span><strong>{m.name||'Anonymous'}</strong>{m.email&&<a href={`mailto:${m.email}?subject=${encodeURIComponent('Re: your message to Flightdeck')}`}><Mail size={12}/>{m.email}</a>}<time>{when(m.createdAt)}</time><span className={'pill st-'+m.status}>{m.status.toUpperCase()}</span></div>
+    <div className="ad-enq-top"><span className="pill">{m.kind.toUpperCase()}</span><strong>{m.name||'Anonymous'}</strong>{m.email&&<a href={`mailto:${encodeURIComponent(m.email)}?subject=${encodeURIComponent('Re: your message to Flightdeck')}`}><Mail size={12}/>{m.email}</a>}<time>{when(m.createdAt)}</time><span className={'pill st-'+m.status}>{m.status.toUpperCase()}</span></div>
     <p className="ad-enq-msg">{m.message}</p>
     {(m.replies||[]).map((r:any,i:number)=><div className="ad-reply" key={i}><span><Reply size={12}/>You replied · {when(r.at)}</span><p>{r.text}</p></div>)}
     {replyFor===m.id?<form className="ad-reply-form" onSubmit={e=>{e.preventDefault();void sendReply(m.id)}}>

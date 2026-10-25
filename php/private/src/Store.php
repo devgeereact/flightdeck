@@ -33,6 +33,9 @@ final class Store
         $raw = @file_get_contents($this->path($name));
         $d = $raw === false ? null : json_decode($raw, true);
         if (!is_array($d) || !isset($d['expires']) || $d['expires'] <= self::nowMs() || !array_key_exists('data', $d)) {
+            if ($raw !== false) {
+                @unlink($this->path($name)); // expired or broken: remove it so the cache folder cannot grow forever
+            }
             return null;
         }
         return $d['data'];
@@ -40,6 +43,9 @@ final class Store
 
     public function put(string $name, $data, int $ttlMs): void
     {
+        if (mt_rand(1, 200) === 1) {
+            $this->sweep();
+        }
         $path = $this->path($name);
         $tmp = $path . '.' . bin2hex(random_bytes(4)) . '.tmp';
         if (@file_put_contents($tmp, json_encode(['expires' => self::nowMs() + $ttlMs, 'data' => $data])) === false) {
@@ -47,6 +53,25 @@ final class Store
         }
         @chmod($tmp, 0600);
         @rename($tmp, $path);
+    }
+
+    /** Remove cache files that have expired (and stray temp files), now and then, so unused keys do not pile up. */
+    public function sweep(): int
+    {
+        $now = self::nowMs();
+        $removed = 0;
+        foreach (glob($this->dir . '/cache/*.json') ?: [] as $f) {
+            $d = json_decode((string) @file_get_contents($f), true);
+            if (!is_array($d) || !isset($d['expires']) || $d['expires'] <= $now) {
+                $removed += @unlink($f) ? 1 : 0;
+            }
+        }
+        foreach (glob($this->dir . '/cache/*.tmp') ?: [] as $f) {
+            if (@filemtime($f) < time() - 600) {
+                @unlink($f);
+            }
+        }
+        return $removed;
     }
 
     public function forget(string $name): void

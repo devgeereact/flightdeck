@@ -14,6 +14,7 @@ final class Enquiries
     public const STATUSES = ['new', 'read', 'replied', 'archived'];
     public const MIN_FILL_MS = 2500;
     public const MAX_MESSAGE = 4000;
+    public const MAX_STORED = 5000; // a hard ceiling so a flood cannot fill the disk
 
     private $dir;
     private $mailer;
@@ -72,6 +73,9 @@ final class Enquiries
         }
         if (preg_match_all('#https?://#i', $message) > 2) {
             return $fail(422, 'Please remove the links from your message.');
+        }
+        if (count(glob($this->dir . '/*.json') ?: []) >= self::MAX_STORED) {
+            return $fail(503, 'Messages are paused for a moment. Please try again later.');
         }
         $id = gmdate('YmdHis', intdiv($now, 1000)) . '-' . bin2hex(random_bytes(3));
         $record = [
@@ -172,14 +176,15 @@ final class Enquiries
             return $fail(502, 'The email could not be sent. Check the mail settings, then try again.');
         }
         $now = $nowMs ?? Store::nowMs();
-        $d['replies'] = array_slice(array_merge(is_array($d['replies'] ?? null) ? $d['replies'] : [], [['at' => $now, 'text' => $message]]), -20);
-        $d['status'] = 'replied';
-        $d['updatedAt'] = $now;
-        $tmp = $path . '.tmp';
-        if (@file_put_contents($tmp, json_encode($d, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) === false || !@rename($tmp, $path)) {
+        $saved = $this->update($id, static function (array $cur) use ($now, $message): array {
+            $cur['replies'] = array_slice(array_merge(is_array($cur['replies'] ?? null) ? $cur['replies'] : [], [['at' => $now, 'text' => $message]]), -20);
+            $cur['status'] = 'replied';
+            $cur['updatedAt'] = $now;
+            return $cur;
+        });
+        if (!$saved) {
             return $fail(500, 'The reply was sent but could not be saved on the message.');
         }
-        @chmod($path, 0600);
         return ['ok' => true, 'status' => 200, 'error' => null];
     }
 
@@ -188,18 +193,37 @@ final class Enquiries
         if (!preg_match('/^\d{14}-[0-9a-f]{6}$/D', $id) || !in_array($status, self::STATUSES, true)) {
             return false;
         }
+        return $this->update($id, static function (array $d) use ($status): array {
+            $d['status'] = $status;
+            $d['updatedAt'] = Store::nowMs();
+            return $d;
+        });
+    }
+
+    /** Read, change and write one enquiry under a lock, with a unique temp file, so a reply and a status change at the same moment cannot undo each other. */
+    private function update(string $id, callable $change): bool
+    {
         $path = $this->dir . '/' . $id . '.json';
-        $d = json_decode((string) @file_get_contents($path), true);
-        if (!is_array($d)) {
-            return false;
+        $h = @fopen($path . '.lock', 'c');
+        if ($h !== false) {
+            flock($h, LOCK_EX);
         }
-        $d['status'] = $status;
-        $d['updatedAt'] = Store::nowMs();
-        $tmp = $path . '.tmp';
-        if (@file_put_contents($tmp, json_encode($d, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) === false) {
-            return false;
+        try {
+            $d = json_decode((string) @file_get_contents($path), true);
+            if (!is_array($d)) {
+                return false;
+            }
+            $tmp = $path . '.' . bin2hex(random_bytes(4)) . '.tmp';
+            if (@file_put_contents($tmp, json_encode($change($d), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) === false) {
+                return false;
+            }
+            @chmod($tmp, 0600);
+            return @rename($tmp, $path);
+        } finally {
+            if ($h !== false) {
+                flock($h, LOCK_UN);
+                fclose($h);
+            }
         }
-        @chmod($tmp, 0600);
-        return @rename($tmp, $path);
     }
 }
