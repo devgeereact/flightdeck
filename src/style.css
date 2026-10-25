@@ -235,3 +235,5 @@ main>.sf{width:calc(100% + 2 * var(--gutter));max-width:none;margin:0 calc(-1 * 
 .fv-share-note{font-size:13px;color:#2f5a3a;max-width:420px;overflow-wrap:anywhere}
 .saved-day{color:#4d5f55;font-weight:600}.saved-row .pill{margin-left:4px}
 .install-help .ih-body{padding:6px 24px 24px}.install-help p{font-size:14px;line-height:1.65;color:#2d4b3d;margin:0 0 12px}.install-help ul{margin:0 0 18px;padding-left:20px;display:grid;gap:8px;font-size:14px;line-height:1.55;color:#2d4b3d}
+
+.fv .timeline-row>span:last-child{display:flex;flex-direction:column;gap:2px}.step-day{font:600 11.5px 'DM Sans',system-ui,sans-serif;color:#5d6e64;letter-spacing:0}
