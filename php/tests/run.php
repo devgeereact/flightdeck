@@ -105,7 +105,26 @@ $cx['status'] = 'Canceled';
 check('adb: cancelled flag', Flight::fromAeroDataBox($cx, 'BA117', '2026-10-24')['cancelled'] === true);
 
 $now = (int) strtotime('2026-10-24 12:00:00 UTC') * 1000;
-check('schedule window: yesterday..+3 days only', Flight::scheduleDateOk('2026-10-23', $now) && Flight::scheduleDateOk('2026-10-27', $now) && !Flight::scheduleDateOk('2026-10-22', $now) && !Flight::scheduleDateOk('2026-10-28', $now));
+// At 12:00 UTC on 24 Oct it is already 25 Oct 02:00 at UTC+14 (so +3 days there is 28 Oct) and still 24 Oct at UTC-12.
+check('schedule window: yesterday..+3 days for any local date on Earth, nothing further', Flight::scheduleDateOk('2026-10-23', $now) && Flight::scheduleDateOk('2026-10-27', $now) && Flight::scheduleDateOk('2026-10-28', $now) && !Flight::scheduleDateOk('2026-10-22', $now) && !Flight::scheduleDateOk('2026-10-29', $now));
+$ukJustAfterMidnight = (int) strtotime('2026-06-30 23:30:00 UTC') * 1000; // 00:30 BST on 1 July in the UK, still 30 June in UTC
+check('schedule window: UK just after midnight in summer accepts the UK yesterday, today and +3 days', Flight::scheduleDateOk('2026-06-30', $ukJustAfterMidnight) && Flight::scheduleDateOk('2026-07-01', $ukJustAfterMidnight) && Flight::scheduleDateOk('2026-07-04', $ukJustAfterMidnight));
+$laEvening = (int) strtotime('2026-10-25 02:00:00 UTC') * 1000; // 19:00 PDT on 24 Oct in Los Angeles
+check('schedule window: a user in the Americas in the evening keeps their yesterday', Flight::scheduleDateOk('2026-10-23', $laEvening) && Flight::scheduleDateOk('2026-10-24', $laEvening));
+$aucklandMorning = (int) strtotime('2026-10-24 12:00:00 UTC') * 1000; // 01:00 NZDT on 25 Oct in Auckland
+check('schedule window: a user in New Zealand after midnight gets their +3 days', Flight::scheduleDateOk('2026-10-28', $aucklandMorning));
+$gmtDay = (int) strtotime('2026-10-25 00:30:00 UTC') * 1000; // 00:30 GMT on 25 Oct 2026, just before the clocks went back
+check('schedule window: clock-change day (25 Oct 2026) is today in the UK', Flight::scheduleDateOk('2026-10-25', $gmtDay) && Flight::scheduleDateOk('2026-10-24', $gmtDay) && Flight::scheduleDateOk('2026-10-28', $gmtDay) && !Flight::scheduleDateOk('2026-10-30', $gmtDay) && !Flight::scheduleDateOk('2026-10-22', $gmtDay));
+check('schedule window: malformed dates never pass', !Flight::scheduleDateOk('2026-10-25x', $gmtDay) && !Flight::scheduleDateOk('', $gmtDay) && !Flight::scheduleDateOk('25/10/2026', $gmtDay));
+// filterByDepartureDate uses the departure airport's LOCAL date: 00:30 UTC on 25 Oct is 01:30 BST on 25 Oct at LHR, and 23:30 UTC on
+// 24 Oct is 00:30 BST on 25 Oct, so both belong to 25 Oct; the 20:00 New York departure on 24 Oct (00:00 UTC on 25 Oct) does not.
+$leg = static function (string $utc, string $local): array {
+    return ['departure' => ['scheduledTime' => ['utc' => $utc, 'local' => $local]]];
+};
+[$kept, $exact] = Flight::filterByDepartureDate([$leg('2026-10-25 00:30Z', '2026-10-25 01:30+01:00'), $leg('2026-10-24 23:30Z', '2026-10-25 00:30+01:00'), $leg('2026-10-25 00:00Z', '2026-10-24 20:00-04:00')], '2026-10-25');
+check('filter: departure date is the airport\'s local date, not the UTC date', $exact && count($kept) === 2 && $kept[1]['departure']['scheduledTime']['utc'] === '2026-10-24 23:30Z');
+$bst = Flight::fromAeroDataBox(['departure' => ['scheduledTime' => ['utc' => '2026-10-25 00:30Z', 'local' => '2026-10-25 01:30+01:00']], 'arrival' => ['scheduledTime' => ['utc' => '2026-10-25 01:30Z', 'local' => '2026-10-25 01:30+00:00']]], 'BA1', '2026-10-25');
+check('adb: times across the BST to GMT change are kept as exact UTC instants', $bst['scheduledOut'] === '2026-10-25T00:30:00.000Z' && $bst['scheduledIn'] === '2026-10-25T01:30:00.000Z');
 
 $calls = [];
 $fakeAdb = static function (int $status, string $body = '[]') use (&$calls) {
@@ -408,6 +427,13 @@ check('metrics: distinct users counted once per day (2 people, 3 visits)', $day[
 check('metrics: provider latency kept as sum and count', $day['lat']['aerodatabox'] == [800, 2]);
 $raw = (string) file_get_contents($mdir . '/metrics/2026-10-24.json');
 check('metrics: the file holds no raw user ids, only salted hashes, and is mode 600', strpos($raw, 'user_a') === false && fileperms($mdir . '/metrics/2026-10-24.json') % 01000 === 0600 && preg_match('/"u":\["[0-9a-f]{16}"/', $raw) === 1);
+Metrics::count('search_total');
+Metrics::instance()->flush((int) strtotime('2026-07-01 23:30:00 UTC')); // 00:30 BST on 2 July in the UK
+check('metrics: days are UK days, so 00:30 BST counts on the new UK day, not the UTC one', is_file($mdir . '/metrics/2026-07-02.json') && !is_file($mdir . '/metrics/2026-07-01.json') && Metrics::day((int) strtotime('2026-07-01 23:30:00 UTC')) === '2026-07-02');
+check('metrics: UK day across the clock change: 00:30 UTC and 23:30 UTC on 25 Oct 2026 are both 25 Oct', Metrics::day((int) strtotime('2026-10-25 00:30:00 UTC')) === '2026-10-25' && Metrics::day((int) strtotime('2026-10-25 23:30:00 UTC')) === '2026-10-25' && Metrics::day((int) strtotime('2026-10-24 23:30:00 UTC')) === '2026-10-25' && Metrics::day((int) strtotime('2026-03-29 00:30:00 UTC')) === '2026-03-29');
+$rc = array_column(Metrics::instance()->range(3, (int) strtotime('2026-10-25 23:30:00 UTC')), 'date');
+$rs = array_column(Metrics::instance()->range(3, (int) strtotime('2026-03-30 00:30:00 UTC')), 'date');
+check('metrics: a range across a clock change lists each UK day once, none skipped', $rc === ['2026-10-23', '2026-10-24', '2026-10-25'] && $rs === ['2026-03-28', '2026-03-29', '2026-03-30']);
 $r7 = Metrics::instance()->range(7, $nowSec);
 check('metrics: a range returns every day, oldest first, with empty days as zeros', count($r7) === 7 && $r7[0]['date'] === '2026-10-18' && $r7[6]['date'] === '2026-10-24' && $r7[0]['users'] === 0 && $r7[0]['c'] === []);
 for ($i = 0; $i < 230; $i++) {

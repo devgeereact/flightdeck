@@ -1,9 +1,12 @@
 // A short plain-English account of a flight, built ONLY from fields the providers reported. Nothing is inferred beyond what is stated:
 // if a detail is missing, the sentence for it is simply left out (or says it is not reported). No AI, no guessing.
 import type { Flight, Airport } from './types';
+import { inZone } from './flightFormat';
 
-const tm = (iso: string | null | undefined, tz: string | null) => (iso ? new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: tz || 'UTC' }).format(new Date(iso)) : null);
-const day = (iso: string | null | undefined, tz: string | null) => (iso ? new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: tz || 'UTC' }).format(new Date(iso)) : null);
+const tm = (iso: string | null | undefined, tz: string | null) => inZone(iso, tz, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+const day = (iso: string | null | undefined, tz: string | null) => inZone(iso, tz, { weekday: 'short', day: 'numeric', month: 'short' });
+// Which clock a time is on. Without the airport's time zone the time is shown in UTC and must say so, not claim to be local.
+const clock = (a: Airport | null | undefined, tz: string | null) => (tz ? `${a?.city || 'local'} time` : 'UTC');
 const place = (a: Airport) => (!a || a.code === '—' ? null : `${a.city || a.name} (${a.code})`);
 const AIR = new Set(['Departed', 'EnRoute', 'Approaching']);
 
@@ -19,13 +22,13 @@ export function summarise(f: Flight): string[] {
   else if (f.usualRouteOnly) out.push('No schedule is published for this date yet, so only the usual route is known. Times appear closer to departure.');
   else if (st === 'Arrived') {
     const t = tm(f.actualIn ?? f.landing, dTz);
-    out.push(t ? `It has arrived and reached the gate at ${t}, ${f.destination.city || 'local'} time.` : 'It has arrived.');
+    out.push(t ? `It has arrived and reached the gate at ${t}, ${clock(f.destination, dTz)}.` : 'It has arrived.');
   } else if (st && AIR.has(st)) {
     const eta = tm(f.estimatedIn, dTz);
-    out.push(`It is in the air${f.progress != null ? `, about ${f.progress}% of the way` : ''}${f.progressBasis && f.progressBasis !== 'status' ? ' (estimated)' : ''}.${eta ? ` Expected at the gate around ${eta} ${f.destination.city || 'local'} time.` : ''}`);
+    out.push(`It is in the air${f.progress != null ? `, about ${f.progress}% of the way` : ''}${f.progressBasis && f.progressBasis !== 'status' ? ' (estimated)' : ''}.${eta ? ` Expected at the gate around ${eta} ${clock(f.destination, dTz)}.` : ''}`);
   } else {
     const dep = tm(f.estimatedOut ?? f.scheduledOut, oTz), when = day(f.estimatedOut ?? f.scheduledOut, oTz);
-    if (dep) out.push(`It ${f.estimatedOut && f.estimatedOut !== f.scheduledOut ? 'is now expected to leave' : 'is scheduled to leave'} at ${dep} ${f.origin.city || 'local'} time${when ? ` on ${when}` : ''}.`);
+    if (dep) out.push(`It ${f.estimatedOut && f.estimatedOut !== f.scheduledOut ? 'is now expected to leave' : 'is scheduled to leave'} at ${dep} ${clock(f.origin, oTz)}${when ? ` on ${when}` : ''}.`);
   }
   if (!f.cancelled && !f.diverted && !f.usualRouteOnly && st !== 'Arrived') {
     if (f.delayMinutes != null && f.delayMinutes > 0) out.push(`It is running ${f.delayMinutes} minute${f.delayMinutes === 1 ? '' : 's'} late.`);
