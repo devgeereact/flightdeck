@@ -26,10 +26,11 @@ RewriteRule ^ - [R=404,L]
     Header set Cache-Control "no-cache"
   </FilesMatch>
   <FilesMatch "\.woff2$">
-    Header setifempty Cache-Control "public, max-age=31536000, immutable"
+    Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
-  <FilesMatch "\.(js|css)$">
-    Header setifempty Cache-Control "public, max-age=31536000, immutable"
+  # Fingerprinted build output only: the entry-point scripts above must keep revalidating.
+  <FilesMatch "^(?!(index|sw|registerSW|consent)\.js$|workbox-).*\.(js|css)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
   Header always set X-Content-Type-Options "nosniff"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
