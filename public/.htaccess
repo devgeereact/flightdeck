@@ -29,7 +29,7 @@ RewriteRule ^ - [R=404,L]
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
   # Fingerprinted build output only (index-AbC123.js). Scripts with fixed names (sw, consent, page, contact...) must keep revalidating.
-  <FilesMatch "^(?!(index|sw|registerSW|consent|page|contact)\.js$|workbox-).*\.(js|css)$">
+  <FilesMatch "^(?!(index|sw|registerSW|consent|page|contact|travel-checklist)\.js$|workbox-).*\.(js|css)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
   Header always set X-Content-Type-Options "nosniff"
