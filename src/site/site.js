@@ -28,6 +28,14 @@
     if (e.target.closest && e.target.closest('[data-print]')) window.print();
   });
 
+  // A link to one answer (/help/#faq-account) opens it.
+  var openTarget = function () {
+    var el = location.hash.length > 1 ? document.getElementById(decodeURIComponent(location.hash.slice(1))) : null;
+    if (el && el.tagName === 'DETAILS') el.open = true;
+  };
+  openTarget();
+  window.addEventListener('hashchange', openTarget);
+
   // Home page lookup: hand the flight to the app (#/flight/<number>/<date>). Signed-out visitors sign in first and land on it.
   var form = document.getElementById('lookup');
   if (form) {

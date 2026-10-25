@@ -1,5 +1,6 @@
 /* Public website (server-rendered by php/private/src/Site). Built into /site-<hash>.css together with fonts.css, tokens.css,
    siteFooter.css and packingBoard.css (scripts/build-public.mjs). Uses tokens only; no third-party requests. */
+:root{--sf-w:var(--fd-page-w);--sf-gutter:var(--fd-gutter)} /* footer (siteFooter.css) lines up with the page */
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;display:flex;flex-direction:column;min-height:100vh;background:var(--fd-bg);color:var(--fd-ink);font:var(--fd-text-md)/var(--fd-leading) var(--fd-font-body)}
@@ -93,7 +94,7 @@ th{font-size:var(--fd-text-xs);letter-spacing:.08em;text-transform:uppercase;col
 .cards .cd-meta{font-size:var(--fd-text-xs);color:var(--fd-muted);margin-top:auto;padding-top:8px}
 .ad-slot{margin:28px 0;min-height:90px}
 .crumbs{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;font-size:13px;color:var(--fd-muted);margin:0 0 14px}
-.crumbs a{color:#4d5f55;text-decoration:none;font-weight:600}.crumbs a:hover{color:#244b38;text-decoration:underline}.crumbs span[aria-hidden]{color:#8a998e}
+.crumbs a{color:#4d5f55;text-decoration:none;font-weight:600}.crumbs a:hover{color:#244b38;text-decoration:underline}.crumbs span[aria-hidden]{color:var(--fd-muted)}
 .tags{display:flex;gap:8px 14px;flex-wrap:wrap;align-items:center;margin:14px 0 0;font-size:13px;color:var(--fd-muted)}
 .tag{background:var(--fd-ok-bg);color:#2f5a3a;border-radius:20px;padding:4px 12px;font-weight:700;font-size:var(--fd-text-xs)}
 .layout{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:24px;align-items:start}.layout.no-toc{grid-template-columns:minmax(0,1fr)}

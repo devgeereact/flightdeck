@@ -7,7 +7,7 @@
 .sf-mark{background:#173e34;color:#d6eb9e;display:grid;place-items:center;width:30px;height:30px;border-radius:9px}
 .sf-dot{color:#81a356}
 .sf-blurb{margin:10px 0 0;max-width:300px;font-size:13.5px;line-height:1.7}
-.sf-cols{display:grid;grid-template-columns:repeat(2,180px);gap:0 24px;text-align:right}
+.sf-cols{display:grid;grid-template-columns:repeat(4,minmax(130px,170px));gap:22px 24px;text-align:right}
 .sf-col h2{margin:0 0 6px;font:700 12.5px Manrope,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#566a5d}
 .sf-col ul{list-style:none;margin:0;padding:0;display:grid;gap:2px;justify-items:end}
 .sf-col li{margin:0}
@@ -16,7 +16,8 @@
 .sf-col a[aria-current="page"]{color:#244b38;background:#edf2e8}
 .sf-base{margin-top:18px;padding-top:14px;border-top:1px solid #e9eee4;display:flex;justify-content:space-between;gap:8px 24px;flex-wrap:wrap;font-size:13px;line-height:1.6}
 .sf-base p{margin:0}
-@media(max-width:700px){.sf-top{flex-direction:column}.sf-cols{width:100%;grid-template-columns:1fr 1fr;text-align:left;gap:0 16px}.sf-col ul{justify-items:start}.sf-col a{margin:0 0 0 -10px}.sf-base{flex-direction:column}}
+@media(max-width:700px){.sf-top{flex-direction:column}.sf-cols{width:100%;grid-template-columns:1fr 1fr;text-align:left;gap:22px 16px}.sf-col ul{justify-items:start}.sf-col a{margin:0 0 0 -10px}.sf-base{flex-direction:column}}
 /* Touch screens: every footer link is at least 44px tall so it is easy to tap. */
 @media(pointer:coarse){.sf-col ul{gap:0}.sf-col a{display:inline-flex;align-items:center;min-height:44px}}
 @media print{.sf{display:none}}
+@media(min-width:701px) and (max-width:1000px){.sf-cols{grid-template-columns:repeat(2,minmax(150px,200px))}}
