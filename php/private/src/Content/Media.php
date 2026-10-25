@@ -54,7 +54,7 @@ final class Media
         ob_start();
         $ok = $ext === 'png' ? imagepng($img, null, 6) : ($ext === 'jpg' ? imagejpeg($img, null, 88) : imagewebp($img, null, 86));
         $clean = (string) ob_get_clean();
-        imagedestroy($img);
+        unset($img); // freed with the variable (imagedestroy() has done nothing since PHP 8.0)
         if (!$ok || $clean === '') {
             return ['ok' => false, 'status' => 500, 'error' => 'That image could not be saved.'];
         }

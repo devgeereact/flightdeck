@@ -38,7 +38,8 @@ $siteJs = ['/site.js' => 'src/site/site.js', '/js/contact.js' => 'src/site/conta
 if (isset($siteJs[$path])) {
     return $serve($root . '/' . $siteJs[$path], 'text/javascript');
 }
-$dist = realpath($root . '/dist');
+// FLIGHTDECK_DIST: tests serve their own build folder (the console harness); normally dist.
+$dist = realpath(getenv('FLIGHTDECK_DIST') ?: $root . '/dist');
 $types = ['js' => 'text/javascript', 'css' => 'text/css', 'svg' => 'image/svg+xml', 'html' => 'text/html; charset=utf-8', 'png' => 'image/png', 'woff2' => 'font/woff2',
           'webmanifest' => 'application/manifest+json', 'json' => 'application/json', 'xml' => 'application/xml', 'txt' => 'text/plain; charset=utf-8'];
 // The app and Clerk's return paths get the app shell, like the real host.

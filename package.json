@@ -11,7 +11,8 @@
     "test:php": "php php/tests/run.php",
     "parity": "node php/tests/parity.mjs",
     "test:ui": "node test/ui-smoke.mjs",
-    "dev:node": "concurrently -k \"tsx watch server/index.ts\" \"vite --host 127.0.0.1\""
+    "dev:node": "concurrently -k \"tsx watch server/index.ts\" \"vite --host 127.0.0.1\"",
+    "test:console": "node test/console-smoke.mjs"
   },
   "dependencies": {
     "@clerk/react": "6.17.8",

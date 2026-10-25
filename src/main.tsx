@@ -7,6 +7,7 @@ import {getOwner as checklistOwner,clearLocal as clearChecklist} from './checkli
 import {track,ga,gaPageview} from './track';
 import Feedback from './Feedback';
 import SiteFooter from './SiteFooter';
+import Announcements from './Announcements';
 import FlightView from './FlightView';
 import {time,ukDate} from './flightFormat';
 import {smoothScrollAllowed} from './smoothScroll';
@@ -48,14 +49,15 @@ function SavedSync({saved,setSaved,setSignedIn,setUserId}:{saved:SavedItem[];set
   if(JSON.stringify(cloud)===JSON.stringify(saved))return;const t=setTimeout(()=>{user.update({unsafeMetadata:{...user.unsafeMetadata,savedFlights:saved}}).catch(()=>{})},600);return()=>clearTimeout(t)},[saved,isLoaded,isSignedIn,user?.id]);
  return null}
 const ROUTES=['overview','saved','checklist','admin'];
-const readRoute=()=>{const h=location.hash.replace(/^#\/?/,'');return ROUTES.includes(h)?h:'overview'};
+// The owner console has its own sections under #/admin/<section>/..., so only the first part picks the screen.
+const readRoute=()=>{const h=location.hash.replace(/^#\/?/,'').split('/')[0];return ROUTES.includes(h)?h:'overview'};
 // Smooth scrolling for the signed-in app. Lenis sits on top of normal scrolling, so keyboard, find-in-page and anchors keep working. It is never started for people who prefer reduced motion (see smoothScroll.ts).
 let lenis:Lenis|null=null;
 const toTop=()=>{if(lenis)lenis.scrollTo(0,{immediate:true});else window.scrollTo(0,0)};
 // Tiny hash router: #/checklist etc. Works with the static host (no server rewrites) and with the browser back button.
 function useHashRoute():[string,(r:string)=>void]{const [r,setR]=useState(readRoute);useEffect(()=>{const f=()=>{setR(readRoute());toTop();gaPageview()};window.addEventListener('hashchange',f);return()=>window.removeEventListener('hashchange',f)},[]);return [r,(n:string)=>{const next=n==='overview'?'':'/'+n;if(location.hash.replace(/^#/,'')!==next)location.hash=next;else setR(readRoute())}]}
 const ChecklistView=lazy(()=>import('./Checklist'));
-const AdminView=lazy(()=>import('./Admin'));
+const AdminView=lazy(()=>import('./console/ConsoleShell'));
 const SignInScreen=lazy(()=>import('./SignInScreen'));
 // Signed-out visitors get the landing page; signed-in users get the dashboard. Without a Clerk key the app is open (no accounts).
 // Signing out reloads onto the landing page, where the dashboard (and its own clean-up) is not mounted. Anything an account left on this
@@ -98,7 +100,7 @@ useEffect(()=>{if(!CLERK_KEY||!userId){setMe({isAdmin:false,unread:null});return
  <main id="main" tabIndex={-1}><header className="topbar"><span>{({overview:'Flight tracker',saved:'Saved flights',checklist:'Packing list',admin:'Owner console'} as Record<string,string>)[tab]}</span><div><Feedback/>{CLERK_KEY?<AuthBar/>:<span className="avatar">FD</span>}</div></header><nav className="mobile-nav" aria-label="Main">{navItems.map(n=><button key={n.id} className={tab===n.id?'on':undefined} aria-current={tab===n.id?'page':undefined} onClick={()=>setTab(n.id)}><n.icon size={15} aria-hidden="true"/>{n.short}{n.count!=null&&<> <span className="count">{n.count}</span></>}</button>)}</nav>
  {(tab==='overview'||tab==='saved')&&<>{tab==='overview'&&data&&<h1 className="sr-only">Flight tracker</h1>}{(tab==='saved'||!data)&&<section className="heading"><div><h1>Where are you flying?</h1><p>Enter a flight number and date to see its status, gates and where it is now.</p></div><span className="date-badge"><CalendarDays size={16}/>{new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'Europe/London'}).format(now)}</span></section>}
  <form className="search-card" onSubmit={e=>{e.preventDefault();setTab('overview');void load()}}><label><span>Flight number</span><div><Plane size={18}/><input ref={searchRef} aria-label="Flight number" value={number} onChange={e=>setNumber(e.target.value.toUpperCase())} placeholder="e.g. BA117" required maxLength={12}/></div></label><label><span>Departure date</span><div><CalendarDays size={18}/><input aria-label="Departure date" type="date" value={date} required onChange={e=>setDate(e.target.value)}/></div></label><button className="btn btn-primary search-button" disabled={busy}><Search size={17}/>{busy?'Searching…':'Track flight'}<ArrowRight size={17}/></button></form></>}
- {needRefresh&&<div role="status" className="notice"><RefreshCw size={17}/><span><strong>A new version is ready.</strong> Reload to update.</span><button className="text-button" onClick={()=>void updateRef.current?.(true)}>Reload</button></div>}
+ <Announcements/>{needRefresh&&<div role="status" className="notice"><RefreshCw size={17}/><span><strong>A new version is ready.</strong> Reload to update.</span><button className="text-button" onClick={()=>void updateRef.current?.(true)}>Reload</button></div>}
  {!online&&<div className="notice error"><AlertCircle size={17}/>You're offline. What you've already loaded may be out of date. Updates restart when you're back online.</div>}
  {stale&&<div role="status" className="notice"><AlertCircle size={17}/><span>{stale}</span></div>}
  {error&&<div role="alert" className="notice error"><AlertCircle size={18}/>{error}<button onClick={refresh}>Try again</button></div>}

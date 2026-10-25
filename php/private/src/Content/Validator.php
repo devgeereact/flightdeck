@@ -109,16 +109,17 @@ final class Validator
     }
 
     /** @return list<string> */
-    private function lines(array $in, string $f, int $maxItems, int $maxLen, string $label): array
+    private function lines(array $in, string $f, int $maxItems, int $maxLen, string $label, string $path = ''): array
     {
         $raw = $in[$f] ?? [];
+        $path = $path !== '' ? $path : $f;
         if (!is_array($raw) || count($raw) > $maxItems) {
-            $this->err($f, "$label: at most $maxItems items.");
+            $this->err($path, "$label: at most $maxItems items.");
             return [];
         }
         $out = [];
         foreach (array_values($raw) as $i => $x) {
-            $s = $this->line(['v' => $x], 'v', 1, $maxLen, "$label item " . ($i + 1), "$f.$i");
+            $s = $this->line(['v' => $x], 'v', 1, $maxLen, "$label item " . ($i + 1), "$path.$i");
             if ($s !== '') {
                 $out[] = $s;
             }
@@ -204,7 +205,7 @@ final class Validator
         $out['coverage'] = ['title' => $this->line($cov, 'title', 3, 60, 'Coverage title', 'coverage.title'), 'text' => $this->line($cov, 'text', 0, 300, 'Coverage text', 'coverage.text'), 'columns' => []];
         foreach (array_slice($cols, 0, 4) as $i => $c) {
             $c = is_array($c) ? $c : [];
-            $out['coverage']['columns'][] = ['title' => $this->line($c, 'title', 2, 60, 'Column ' . ($i + 1) . ' title', "coverage.columns.$i.title"), 'items' => $this->lines($c, 'items', 6, 160, 'Column ' . ($i + 1))];
+            $out['coverage']['columns'][] = ['title' => $this->line($c, 'title', 2, 60, 'Column ' . ($i + 1) . ' title', "coverage.columns.$i.title"), 'items' => $this->lines($c, 'items', 6, 160, 'Column ' . ($i + 1), "coverage.columns.$i.items")];
         }
         $final = is_array($in['final'] ?? null) ? $in['final'] : [];
         $out['final'] = ['title' => $this->line($final, 'title', 3, 80, 'Closing title', 'final.title'), 'text' => $this->line($final, 'text', 10, 300, 'Closing text', 'final.text')];

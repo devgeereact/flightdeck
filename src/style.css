@@ -373,3 +373,7 @@ main{--sf-gutter:var(--gutter)}
 .signin-note{font-size:var(--fd-text-xs)!important}.signin-card a{color:var(--fd-brand);text-decoration:underline;text-underline-offset:2px}.signin-card a:hover{color:var(--fd-brand-hover)}
 .signin-page>.sf{--sf-gutter:var(--fd-gutter)}
 @media(max-width:520px){.signin-actions .btn{width:100%}}
+
+/* Owner announcements in the app (Announcements.tsx). */
+.app-announce{background:var(--fd-tint);border-color:var(--fd-line);color:var(--fd-ink)}.app-announce>span{flex:1}.app-announce a{text-decoration:underline;font-weight:700;color:var(--fd-brand)}
+.notice.warn{background:var(--fd-warn-bg);border-color:var(--fd-warn-line);color:#5a4632}
