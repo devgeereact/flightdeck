@@ -28,8 +28,8 @@ RewriteRule ^ - [R=404,L]
   <FilesMatch "\.woff2$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
-  # Fingerprinted build output only: the entry-point scripts above must keep revalidating.
-  <FilesMatch "^(?!(index|sw|registerSW|consent)\.js$|workbox-).*\.(js|css)$">
+  # Fingerprinted build output only (index-AbC123.js). Scripts with fixed names (sw, consent, page, contact...) must keep revalidating.
+  <FilesMatch "^(?!(index|sw|registerSW|consent|page|contact)\.js$|workbox-).*\.(js|css)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
   Header always set X-Content-Type-Options "nosniff"
