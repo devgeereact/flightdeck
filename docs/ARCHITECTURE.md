@@ -43,9 +43,9 @@ src/siteNav.ts                 default links (app footer, CMS seed)    src/types
 
 `bootstrap.php` (API) and `site-bootstrap.php` (site) share `loadConfig.php` (private config.php, environment, and locally only the project's .env). API: `App.php` (routing, limits, auth gate, owner gate), `Cms.php` (console content, preview, media, health, audit routes), `ClerkAuth.php`, `Admin.php`, `Metrics.php`, `Health.php`, `Enquiries.php`, `Mailer.php`, `Checklists.php`, `ClerkApi.php`, `GoogleAnalytics.php`; flight data: `AeroDataBox.php`, `OpenSky.php`, `RouteLookup.php` (adsbdb), `Flight.php`, `Geo.php`; storage: `Store.php`. CMS: `Content/{Markdown,Validator,ContentStore,Media}.php`, `Content/seed.json`. Site: `Site/Site.php`.
 
-## Node reference server
+## Node reference server (archived)
 
-`server/` (Express) is the original prototype. It does not have sign-in, the console, enquiries, the CMS or the site; production does not run it and the release workflow does not test it. Archiving it is a pending owner decision (RESTRUCTURE-PLAN.md section 8).
+The original Express prototype and the parity script were archived to `docs/history/node-reference-2026-10-25/` on 25 Oct 2026 (ADR-018). `pnpm dev` runs Vite with the PHP dev router; there is no Node API any more.
 
 ## Known limits
 

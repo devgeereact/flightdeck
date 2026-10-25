@@ -53,3 +53,6 @@ Decision (owner chose the recommendation): CMS content, drafts, history and medi
 
 ## ADR-017: safe Markdown, no HTML, for every CMS text (25 Oct 2026)
 Decision: the CMS stores a Markdown subset, rendered server-side by a small escaping renderer that can only produce a fixed tag set and safe links. Why: the brief forbids editors publishing executable HTML/JavaScript; an HTML sanitiser is harder to get right than a renderer that never passes HTML through. Existing pages were converted once (scripts/seed-content.mjs) and compared by tests (headings, links, legal wording). One reserved link, `#cookie-settings`, reopens the cookie choice.
+
+## ADR-018: archive the Node/Express reference server (25 Oct 2026)
+Decision (owner, 25 Oct 2026): `server/` and `php/tests/parity.mjs` move to `docs/history/node-reference-2026-10-25/`; the `start`, `dev:node` and `parity` scripts and the `express`, `dotenv` and `@types/express` dependencies (and the body-parser override they needed) are removed. Why: production has run only PHP since ADR-007; the Node server lacked sign-in, the console, enquiries, the CMS and the site, and nothing tested it in releases, so keeping it implied a second implementation that no longer existed. Its 6 unit tests leave `pnpm test` with it (106 -> 100). Restorable from git history and the archive folder.
