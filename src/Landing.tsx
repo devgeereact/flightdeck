@@ -49,7 +49,7 @@ export default function Landing(){
     .set(q('.plane'),{autoAlpha:0},8).set(q('.plane'),{autoAlpha:1},9.6);
    // Calls to action lean a few pixels toward the pointer (only where there is a real pointer), and the tick marks pop in one by one.
    if(window.matchMedia('(hover: hover)').matches){
-    q('.cta').forEach((btn:Element)=>{
+    q('.hero-cta .btn').forEach((btn:Element)=>{
      const el=btn as HTMLElement,qx=gsap.quickTo(el,'x',{duration:.5,ease:'power3.out'}),qy=gsap.quickTo(el,'y',{duration:.5,ease:'power3.out'});
      const mv=(e:PointerEvent)=>{const r=el.getBoundingClientRect();qx((e.clientX-(r.left+r.width/2))*.18);qy((e.clientY-(r.top+r.height/2))*.28)},lv=()=>{qx(0);qy(0)};
      el.addEventListener('pointermove',mv);el.addEventListener('pointerleave',lv);
@@ -68,17 +68,17 @@ export default function Landing(){
   });
  },{scope:root});
  return <div className="landing" ref={root}>
-  <header className="land-nav"><a className="brand" href="/"><span className="brand-mark"><Plane size={23}/></span>flightdeck<span className="brand-dot">.</span></a><nav className="land-menu" aria-label="Main">{HEADER_LINKS.map(l=><a key={l.label} href={l.href}>{l.label}</a>)}<SignInButton mode="modal"><button className="land-signin">Sign in</button></SignInButton></nav></header>
+  <header className="land-nav"><a className="brand" href="/"><span className="brand-mark"><Plane size={23}/></span>flightdeck<span className="brand-dot">.</span></a><nav className="land-menu" aria-label="Main">{HEADER_LINKS.map(l=><a key={l.label} href={l.href}>{l.label}</a>)}<SignInButton mode="modal"><button className="btn btn-primary land-signin">Sign in</button></SignInButton></nav></header>
   <section className="hero" aria-labelledby="hero-title">
    <div className="hero-copy">
-    <span className="eyebrow">YOUR JOURNEY, IN VIEW</span>
+    <span className="eyebrow">Your journey, in view</span>
     <h1 className="hero-title" id="hero-title">Know your flight before the airport does.</h1>
     <p className="hero-sub">Live status, gates, baggage belts and where the aircraft is right now, all on one page. Free to use.</p>
     <div className="hero-cta">
-     <SignUpButton mode="modal"><button className="cta" onClick={()=>{track('cta_click');ga('cta_click',{source:'hero'})}}>Create free account<ArrowRight size={17}/></button></SignUpButton>
-     <SignInButton mode="modal"><button className="cta ghost">Sign in</button></SignInButton>
+     <SignUpButton mode="modal"><button className="btn btn-primary btn-lg" onClick={()=>{track('cta_click');ga('cta_click',{source:'hero'})}}>Create free account<ArrowRight size={17}/></button></SignUpButton>
+     <SignInButton mode="modal"><button className="btn btn-secondary btn-lg hero-signin">Sign in</button></SignInButton>
     </div>
-    <ul className="hero-points"><li><Check size={15}/>Clearly marked as leaving or arriving</li><li><Check size={15}/>Gate, terminal and baggage belt as soon as they are reported</li><li><Check size={15}/>Live position from the aircraft itself</li></ul>
+    <ul className="hero-points"><li><Check size={15}/>Clearly marked as outbound or inbound</li><li><Check size={15}/>Gate, terminal and baggage belt as soon as they are reported</li><li><Check size={15}/>Live position when the aircraft is transmitting</li></ul>
    </div>
    <div className="hero-visual" aria-hidden="true">
     <div className="hero-panel">
@@ -92,10 +92,10 @@ export default function Landing(){
       <text x="74" y="334" className="hero-code">LHR</text><text x="456" y="212" className="hero-code">JFK</text>
       <g className="plane"><path d="m0-16 4.5 11.5 12.5 5.5v3.5L3.5 1.5 2.3 11.5l4.7 3.5v2.3l-7-2.3-7 2.3V15l4.7-3.5-1.2-10L-17 4.5V1l12.5-5.5z" fill="#214e3e"/></g>
      </svg>
-     <div className="chip chip-dir"><span className="pill">OUTBOUND</span>London (LHR)</div>
+     <div className="chip chip-dir"><span className="pill">Outbound</span>London (LHR)</div>
      <div className="chip chip-status-wrap"><span className="dot"/><span className="chip-status">Boarding</span></div>
      <div className="chip chip-togo-wrap"><Plane size={14}/><span className="chip-togo">Ready for departure</span></div>
-     <div className="chip chip-term"><small>TERMINAL</small><strong>5</strong></div>
+     <div className="chip chip-term"><small>Terminal</small><strong>5</strong></div>
      <span className="hero-caption">Illustration, not a real flight</span>
     </div>
    </div>

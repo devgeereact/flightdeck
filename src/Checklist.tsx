@@ -118,7 +118,12 @@ export default function Checklist({saved,signedIn,userId,request,onRequestDone,o
  const visible=sections.filter(s=>edit||s.items.length>0);
  const activeSec=visible.find(s=>s.id===act)||visible.find(s=>s.doneCount<s.items.length)||visible[0];
  const activeIdx=activeSec?visible.indexOf(activeSec):-1;
- const boardRef=useRef<HTMLDivElement>(null);
+ const boardRef=useRef<HTMLDivElement>(null),railRef=useRef<HTMLElement>(null),paged=useRef(false);
+ // Suggestions start open on wider screens and folded (with their count showing) on phones.
+ const [tipsOpen]=useState(()=>typeof window!=='undefined'&&typeof window.matchMedia==='function'&&window.matchMedia('(min-width: 701px)').matches);
+ // Previous/Next changes the open section: bring its chip in the (scrolling) rail into view.
+ const goTo=(id:string)=>{paged.current=true;setAct(id)};
+ useEffect(()=>{if(!paged.current)return;paged.current=false;railRef.current?.querySelector('.ck-rail-item.on')?.scrollIntoView?.({inline:'nearest',block:'nearest'})},[activeSec?.id]);
  // The open section's items settle in when you switch sections; skipped for people who prefer reduced motion.
  useGSAP(()=>{withMotion(()=>{const q=gsap.utils.selector(boardRef);fromAny(gsap,q('.ck-sec:not([hidden]) .ck-sec-head, .ck-sec:not([hidden]) .ck-list li'),{autoAlpha:0,y:8,duration:.35,ease:'power2.out',stagger:{amount:.3}})})},{scope:boardRef,dependencies:[activeSec?.id,trip?.id],revertOnUpdate:true});
 
@@ -127,8 +132,8 @@ export default function Checklist({saved,signedIn,userId,request,onRequestDone,o
   <h2>Pack once. Reuse it every trip.</h2>
   <p>Start from a ready-made list of {M.view(M.emptyData(),null).reduce((n,s)=>n+s.items.length,0)} things, in the order a trip happens: days before, clothes, bathroom bag, documents, the night before and the last minute. Tick things off, add your own and hide what you never need. The list is kept for next time{signedIn?' and follows you to your other devices':' on this device. Sign in to keep it across devices'}.</p>
   <form className="ck-start" onSubmit={e=>{e.preventDefault();commit(d=>M.addTrip(d,newName||'My next trip'));setNewName('')}}>
-   <label><span>NAME THIS TRIP</span><input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="e.g. Cape Town in October" maxLength={M.LIMITS.name} aria-label="Trip name"/></label>
-   <button className="cta" type="submit"><Plus size={16}/>Start my packing list</button>
+   <label><span>Name this trip</span><input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="e.g. Cape Town in October" maxLength={M.LIMITS.name} aria-label="Trip name"/></label>
+   <button className="btn btn-primary btn-lg" type="submit"><Plus size={16}/>Start my packing list</button>
   </form>
   {saved.length>0&&<div className="ck-quick"><span>Or start from a saved flight:</span>{saved.slice(0,4).map(s=><button key={s.number+s.date} className="text-button" onClick={()=>commit(d=>M.addTrip(d,tripNameFor(s),s))}><Plane size={13}/>{tripNameFor(s)}</button>)}</div>}
   {msg&&<p role="alert" className="ck-msg">{msg}</p>}
@@ -137,8 +142,8 @@ export default function Checklist({saved,signedIn,userId,request,onRequestDone,o
  const flightLabel=trip.flight?tripNameFor(trip.flight):'';
  return <section className="cl" aria-label="Packing list"><h1 className="sr-only">Packing list</h1>
   <div className="ck-top panel">
-   <div className="ck-tripbar"><div className="ck-tabs" role="tablist" aria-label="Your trips">
-    {data.trips.map(t=><button key={t.id} role="tab" aria-selected={t.id===trip.id} className={t.id===trip.id?'ck-tab active':'ck-tab'} onClick={()=>{commit(d=>({...d,active:t.id}));setConfirmReset(false)}}>{t.name}</button>)}</div>
+   <div className="ck-tripbar"><div className="ck-tabs" role="group" aria-label="Your trips">
+    {data.trips.map(t=><button key={t.id} aria-pressed={t.id===trip.id} className={t.id===trip.id?'ck-tab active':'ck-tab'} onClick={()=>{commit(d=>({...d,active:t.id}));setConfirmReset(false)}}>{t.name}</button>)}</div>
     {data.trips.length<M.LIMITS.trips&&<button className="ck-tab add" onClick={()=>commit(d=>M.addTrip(d,'My next trip'))} aria-label="Add a trip"><Plus size={14}/>New trip</button>}
    </div>
    <div className="ck-head">
@@ -147,7 +152,7 @@ export default function Checklist({saved,signedIn,userId,request,onRequestDone,o
      <input className="ck-name" aria-label="Trip name" value={trip.name} maxLength={M.LIMITS.name} onChange={e=>commit(d=>M.renameTrip(d,trip.id,e.target.value||' '))} onBlur={e=>{if(!e.target.value.trim())commit(d=>M.renameTrip(d,trip.id,'My next trip'))}}/>
      <p aria-live="polite">{prog.done} of {prog.total} packed{prog.total>0&&prog.done===prog.total?' · all packed':''}</p>
      <div className="ck-flight">
-      {trip.flight?<><span className="pill"><Plane size={10}/> {flightLabel}</span><button className="text-button" onClick={()=>onTrack(trip.flight!.number,trip.flight!.date)}>Check this flight</button><button className="text-button" onClick={()=>commit(d=>M.linkFlight(d,trip.id,undefined))} aria-label="Unlink flight"><X size={12}/></button></>
+      {trip.flight?<><span className="pill"><Plane size={10}/> {flightLabel}</span><button className="text-button" onClick={()=>onTrack(trip.flight!.number,trip.flight!.date)}>Check this flight</button><button className="icon-button ck-unlink" onClick={()=>commit(d=>M.linkFlight(d,trip.id,undefined))} aria-label="Unlink flight" title="Unlink flight"><X size={14}/></button></>
        :saved.length>0?<label className="ck-link"><Link2 size={13}/><select aria-label="Link a saved flight" value="" onChange={e=>{const s=saved.find(x=>x.number+'|'+x.date===e.target.value);if(s){commit(d=>M.linkFlight(d,trip.id,s));void loadContext(trip.id,s)}}}><option value="">Link a saved flight…</option>{saved.map(s=><option key={s.number+s.date} value={s.number+'|'+s.date}>{tripNameFor(s)}</option>)}</select></label>
        :<span className="ck-hint">Save a flight to link it to this trip.</span>}
      </div>
@@ -159,21 +164,21 @@ export default function Checklist({saved,signedIn,userId,request,onRequestDone,o
      {ctxNote&&<p role="alert" className="ck-msg">{ctxNote}</p>}
     </div>
     <div className="ck-actions">
-     <button className={onlyLeft?'text-button primary':'text-button'} onClick={()=>setOnlyLeft(v=>!v)} aria-pressed={onlyLeft}>{onlyLeft?<Eye size={13}/>:<EyeOff size={13}/>}Still to pack</button>
-     <button className={edit?'text-button primary':'text-button'} onClick={()=>setEdit(v=>!v)} aria-pressed={edit}><Pencil size={13}/>{edit?'Done editing':'Edit list'}</button>
-     {confirmReset?<><button className="text-button danger" onClick={()=>{commit(d=>M.resetTicks(d,trip.id));setConfirmReset(false)}}>Yes, untick everything</button><button className="text-button" onClick={()=>setConfirmReset(false)}>Cancel</button></>
-      :<button className="text-button" onClick={()=>setConfirmReset(true)} disabled={prog.done===0}><RotateCcw size={13}/>Reset ticks</button>}
-     <button className="text-button" onClick={()=>window.print()}><Printer size={13}/>Print</button>
-     <button className="text-button danger" onClick={()=>{if(confirm(`Delete the trip “${trip.name}”? Your list items are kept.`))commit(d=>M.removeTrip(d,trip.id))}} aria-label="Delete this trip"><Trash2 size={13}/></button>
+     <button className={onlyLeft?'btn btn-primary':'btn btn-secondary'} onClick={()=>setOnlyLeft(v=>!v)} aria-pressed={onlyLeft}>{onlyLeft?<Eye size={14}/>:<EyeOff size={14}/>}Still to pack</button>
+     <button className={edit?'btn btn-primary':'btn btn-secondary'} onClick={()=>setEdit(v=>!v)} aria-pressed={edit}><Pencil size={14}/>{edit?'Done editing':'Edit list'}</button>
+     {confirmReset?<><button className="btn btn-secondary btn-danger" onClick={()=>{commit(d=>M.resetTicks(d,trip.id));setConfirmReset(false)}}>Yes, untick everything</button><button className="btn btn-secondary" onClick={()=>setConfirmReset(false)}>Cancel</button></>
+      :<button className="btn btn-secondary" onClick={()=>setConfirmReset(true)} disabled={prog.done===0}><RotateCcw size={14}/>Reset ticks</button>}
+     <button className="btn btn-secondary ck-print" onClick={()=>window.print()}><Printer size={14}/>Print</button>
+     <button className="btn btn-secondary btn-danger" onClick={()=>{if(confirm(`Delete the trip “${trip.name}”? Your list items are kept.`))commit(d=>M.removeTrip(d,trip.id))}} aria-label="Delete this trip" title="Delete this trip"><Trash2 size={14}/></button>
     </div>
    </div>
    {msg&&<p role="alert" className="ck-msg">{msg}</p>}
   </div>
 
   {summary.length>0&&<section className="panel ck-short" aria-label="Your flight in short"><h3>Your flight in short</h3><p>{summary.join(' ')}</p></section>}
-  {tips.length>0&&<section className="panel ck-tips" aria-label="Suggestions for this trip"><h3><Lightbulb size={15}/>Suggested for this trip</h3><ul>{tips.map(t=><li key={t.id}><div><strong>{t.text}</strong><small>{t.why}</small></div><button className="text-button primary" onClick={()=>commit(d=>M.dismiss(M.addItem(d,t.section,t.text),trip!.id,t.id))}><Plus size={13}/>Add</button><button className="ck-x" aria-label={`Dismiss ${t.text}`} onClick={()=>commit(d=>M.dismiss(d,trip!.id,t.id))}><X size={14}/></button></li>)}</ul><p className="ck-sec-hint">Based on your flight and the weather. These are ideas, never rules. For entry requirements use the official <a href="https://www.gov.uk/foreign-travel-advice" target="_blank" rel="noreferrer">GOV.UK travel advice</a>.</p></section>}
+  {tips.length>0&&<details className="panel ck-tips" open={tipsOpen}><summary><Lightbulb size={15} aria-hidden="true"/>{tips.length} suggestion{tips.length>1?'s':''} for this trip</summary><ul>{tips.map(t=><li key={t.id}><div><strong>{t.text}</strong><small>{t.why}</small></div><button className="text-button primary" onClick={()=>commit(d=>M.dismiss(M.addItem(d,t.section,t.text),trip!.id,t.id))}><Plus size={13}/>Add</button><button className="ck-x" aria-label={`Dismiss ${t.text}`} onClick={()=>commit(d=>M.dismiss(d,trip!.id,t.id))}><X size={14}/></button></li>)}</ul><p className="ck-sec-hint">Based on your flight and the weather. These are ideas, never rules. For entry requirements use the official <a href="https://www.gov.uk/foreign-travel-advice" target="_blank" rel="noreferrer">GOV.UK travel advice</a>.</p></details>}
   <div className="ck-layout" ref={boardRef}>
-   <nav className="ck-rail" aria-label="Packing list sections">
+   <nav className="ck-rail" aria-label="Packing list sections" ref={railRef}>
     {visible.map((sec,i)=>{const full=sec.items.length>0&&sec.doneCount===sec.items.length;return <button key={sec.id} className={'ck-rail-item'+(sec===activeSec?' on':'')+(full?' full':'')} aria-current={sec===activeSec?'true':undefined} onClick={()=>setAct(sec.id)}><span className="ck-n" aria-hidden="true">{full?<Check size={14} strokeWidth={3}/>:i+1}</span><span className="ck-rail-title">{sec.title}</span><span className="ck-rail-count">{sec.doneCount}/{sec.items.length}</span><i className="ck-rail-bar" aria-hidden="true"><b style={{width:`${sec.items.length?sec.doneCount/sec.items.length*100:0}%`}}/></i></button>})}
    </nav>
    <div className="ck-panels">{visible.map((sec,si)=>{
@@ -197,7 +202,7 @@ export default function Checklist({saved,signedIn,userId,request,onRequestDone,o
       {!edit&&left.length>1&&<button className="text-button" onClick={()=>commit(d=>left.reduce((acc,id)=>M.tick(acc,trip.id,id,true),d))}><CheckCheck size={13}/>Tick all</button>}
       {edit&&(sec.items.length>0?<button className="text-button" onClick={()=>commit(d=>M.hideSection(d,sec.id))}>Hide whole section</button>:TEMPLATE.some(t=>t.id===sec.id)&&<button className="text-button" onClick={()=>commit(d=>M.showSection(d,sec.id))}>Show section again</button>)}
      </div>
-     <footer className="ck-pager">{prev?<button className="text-button" onClick={()=>setAct(prev.id)}><ArrowLeft size={14}/>{prev.title}</button>:<span/>}{next?<button className="text-button primary" onClick={()=>setAct(next.id)}>{next.title}<ArrowRight size={14}/></button>:<span/>}</footer>
+     <footer className="ck-pager">{prev?<button className="text-button" onClick={()=>goTo(prev.id)}><ArrowLeft size={14}/>{prev.title}</button>:<span/>}{next?<button className="text-button primary" onClick={()=>goTo(next.id)}>{next.title}<ArrowRight size={14}/></button>:<span/>}</footer>
     </section>})}</div>
   </div>
 

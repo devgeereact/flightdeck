@@ -175,7 +175,7 @@ export const pages = (s) => [
  </div>
  <input class="pub-trap" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
  <p id="contact-msg" role="status" aria-live="polite"></p>
- <button class="pub-btn" type="submit">Send message</button>
+ <button class="btn btn-primary" type="submit">Send message</button>
  <p class="pub-small">We use your details only to reply. See the <a href="/privacy/">privacy policy</a>.</p>
 </form>
 <script>

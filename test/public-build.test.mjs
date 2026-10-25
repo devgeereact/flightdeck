@@ -243,6 +243,25 @@ test('every JSON-LD block parses; guides carry an Article and a BreadcrumbList t
   assert.ok(!b.files.some((f) => b.read(f).includes('FAQPage')), 'no FAQ schema without visible questions and answers');
 });
 
+test('public pages share the app button system and focus ring, and no text is smaller than 12.5px', () => {
+  const b = build();
+  for (const [p, h] of html(b)) {
+    const css = h.slice(h.indexOf('<style>'), h.indexOf('</style>'));
+    assert.ok(css.includes('.btn{') && css.includes('.btn-primary{') && css.includes('.btn-secondary{'), p + ' button system');
+    assert.ok(css.includes(':focus-visible{outline:2px solid #214e3e;outline-offset:2px}'), p + ' focus ring');
+    assert.ok(!/pub-btn|pub-open/.test(h), p + ' still uses an old button class');
+    for (const m of css.matchAll(/font(?:-size)?:(?:\d{3} )?(\d*\.?\d+)px/g)) assert.ok(Number(m[1]) >= 12.5, `${p}: ${m[0]}`);
+    const head = h.slice(h.indexOf('<header'), h.indexOf('</header>'));
+    assert.ok(head.includes('<a class="btn btn-primary" href="/">Open the app</a>'), p + ' header action');
+  }
+  assert.ok(b.read('travel-checklist/index.html').includes('<button class="btn btn-primary" type="button" data-print>') && b.read('contact/index.html').includes('<button class="btn btn-primary" type="submit">'));
+  for (const f of ['src/style.css', 'src/siteFooter.css', 'src/packingBoard.css']) {
+    const css = fs.readFileSync(path.join(root, f), 'utf8').replace(/@media print\{[^{}]*(\{[^{}]*\}[^{}]*)*\}/g, '');
+    for (const m of css.matchAll(/font(?:-size)?:(?:\d{3} )?(\d*\.?\d+)px/g)) assert.ok(Number(m[1]) === 0 || Number(m[1]) >= 12.5, `${f}: ${m[0]}`);
+    assert.ok(!css.includes('#92b678'), `${f} still has the faint focus outline`);
+  }
+});
+
 test('guide metadata stays within search limits', async () => {
   const { pages } = await import('../content/pages.mjs');
   for (const g of pages(base).filter((x) => x.kind === 'guide')) {
