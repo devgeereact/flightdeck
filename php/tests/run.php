@@ -734,6 +734,9 @@ check('markdown: safeHref allows site paths, https and mailto only', \Flightdeck
 check('markdown: multibyte text survives', $md('Café — naïve “quotes” 日本') === '<p>Café — naïve “quotes” 日本</p>');
 
 // ------------------------------------------------------------------ CMS: media, health, enquiry notes
+if (!function_exists('imagecreatetruecolor')) {
+    echo "SKIP media: GD is not installed here (uploads are switched off without it)\n";
+} else {
 $mdir = sys_get_temp_dir() . '/fd-media-' . bin2hex(random_bytes(3));
 $media = new \Flightdeck\Content\Media($mdir);
 $im = imagecreatetruecolor(1200, 630);
@@ -749,6 +752,7 @@ ob_start();
 imagepng($tiny);
 check('media: images smaller than a link preview are refused with a size hint', $media->store((string) ob_get_clean())['status'] === 422);
 check('media: file() only serves hash names', $media->file(basename($up['url'])) !== null && $media->file('../x.png') === null && $media->file('a.php') === null);
+}
 
 $hdir = sys_get_temp_dir() . '/fd-health-' . bin2hex(random_bytes(3));
 \Flightdeck\Health::init($hdir);

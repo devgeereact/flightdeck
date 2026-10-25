@@ -1,7 +1,9 @@
 """Flightdeck production release, static half: certificate-verified explicit FTPS, ADDITIVE upload of dist/, public HTTPS checks.
 
-Requires FTP_SERVER, FTP_USERNAME, FTP_PASSWORD, PUBLIC_BASE_URL. Never deletes remote files. Entry points (service worker,
-manifest, index.html) go last so a visitor never gets a shell that references assets that are not uploaded yet.
+Requires FTP_SERVER, FTP_USERNAME, FTP_PASSWORD, PUBLIC_BASE_URL. Never deletes remote files. Entry points go last so a visitor
+never gets a page that references files that are not uploaded yet: the service worker and manifest, then site-build.json (names
+the hashed site CSS/JS), then site.php, and .htaccess at the very end because it switches the routing (ADR-015). The private PHP
+source is synced by the workflow BEFORE this step, so site.php always finds its code.
 """
 import ftplib
 import os
@@ -12,7 +14,7 @@ import urllib.request
 from urllib.parse import urlsplit
 
 DIST = pathlib.Path('dist')
-LAST = ['workbox', 'registerSW.js', 'sw.js', 'manifest.webmanifest', 'index.html']
+LAST = ['workbox', 'registerSW.js', 'sw.js', 'manifest.webmanifest', 'site-build.json', 'site.php', '.htaccess']
 UA = 'Flightdeck-release/1.0 (+https://github.com/gsakinz/flightdeck)'
 
 
@@ -62,14 +64,15 @@ def main():
         raise ValueError('PUBLIC_BASE_URL must be an HTTPS site origin')
     base = env['PUBLIC_BASE_URL'].rstrip('/')
     files = sorted((p for p in DIST.rglob('*') if p.is_file()), key=order)
-    if not (DIST / 'index.html').is_file() or not (DIST / 'api' / 'index.php').is_file() or not (DIST / '.htaccess').is_file():
+    required = ['app/index.html', 'site.php', 'site-build.json', 'api/index.php', '.htaccess']
+    if not all((DIST / f).is_file() for f in required):
         raise RuntimeError('dist/ is incomplete: run the build first')
     with ftplib.FTP_TLS(context=ssl.create_default_context(), timeout=30) as ftp:
         ftp.connect(env['FTP_SERVER'], 21)
         ftp.login(env['FTP_USERNAME'], env['FTP_PASSWORD'])
         ftp.prot_p()
         listing = ftp.nlst()
-        if 'index.html' not in listing or 'flightdeck-private' in listing or 'flightdeck.gakinz.com' in listing:
+        if not ({'index.html', 'site.php'} & set(listing)) or 'flightdeck-private' in listing or 'flightdeck.gakinz.com' in listing:
             raise RuntimeError('FTP root is not the Flightdeck public root')
         for path in files:
             upload(ftp, path)
@@ -81,8 +84,14 @@ def main():
     if status != 200 or 'manifest+json' not in ctype:
         raise RuntimeError('manifest check failed: ' + ctype)
     status, _, body = fetch(base, '/')
+    if status != 200 or b'id="lookup"' not in body:
+        raise RuntimeError('home page check failed (server-rendered site)')
+    status, _, body = fetch(base, '/guides/')
+    if status != 200 or b'class="cards"' not in body:
+        raise RuntimeError('guides page check failed (server-rendered site)')
+    status, _, body = fetch(base, '/app/')
     if status != 200 or b'id="root"' not in body:
-        raise RuntimeError('home page check failed')
+        raise RuntimeError('app shell check failed (/app/)')
     print('PASS: release uploaded and public checks succeeded')
 
 
