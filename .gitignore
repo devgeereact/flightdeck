@@ -8,3 +8,4 @@ php/private/var/
 .ui-test-build/
 .env.local
 test/.mail/
+.claude/worktrees/

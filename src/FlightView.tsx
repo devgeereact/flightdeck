@@ -1,16 +1,17 @@
 import {useRef,useState,useEffect} from 'react';
 import gsap from 'gsap';
 import {useGSAP} from '@gsap/react';
-import {Plane,ArrowUpRight,Clock,MapPin,RefreshCw,CloudSun,Luggage,Navigation,Check,Radio,Info,Globe,Wind,Bookmark,Compass} from 'lucide-react';
+import {Plane,ArrowUpRight,Clock,MapPin,RefreshCw,CloudSun,Luggage,Navigation,Check,Radio,Info,Globe,Wind,Bookmark,Compass,Share2,Timer} from 'lucide-react';
 import type {Airport,Flight,FlightResponse} from './types';
 import {destinations} from './destinations';
 import {apiFetch} from './api';
 import {summarise} from './summary';
+import {countdown} from './countdown';
 import {withMotion,fromAny} from './motion';
 import {time,day,airlines,regionName,withHint,weatherLabel,directionText,journeySteps} from './flightFormat';
 gsap.registerPlugin(useGSAP);
 
-type Props={flight:Flight;data:FlightResponse;now:Date;busy:boolean;auto:boolean;setAuto:(v:boolean)=>void;changes:string[];onRefresh:()=>void;onSave:()=>void};
+type Props={flight:Flight;data:FlightResponse;now:Date;busy:boolean;auto:boolean;setAuto:(v:boolean)=>void;changes:string[];onRefresh:()=>void;onSave:()=>void;onShare?:()=>void;shareNote?:string};
 type Panel='journey'|'airport'|'weather'|'updates'|'destination';
 const PANELS:{id:Panel;label:string;icon:any}[]=[{id:'journey',label:'Journey',icon:Clock},{id:'airport',label:'Airport and bags',icon:Luggage},{id:'weather',label:'Weather',icon:CloudSun},{id:'updates',label:'Updates',icon:Radio},{id:'destination',label:'Destination',icon:Compass}];
 const here=()=>Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -49,7 +50,7 @@ function Destination({airport}:{airport:Airport}){
   </div>;
 }
 
-export default function FlightView({flight,data,now,busy,auto,setAuto,changes,onRefresh,onSave}:Props){
+export default function FlightView({flight,data,now,busy,auto,setAuto,changes,onRefresh,onSave,onShare,shareNote}:Props){
   const [panel,setPanel]=useState<Panel>('journey');
   const root=useRef<HTMLDivElement>(null);
   const steps=journeySteps(flight);
@@ -71,7 +72,7 @@ export default function FlightView({flight,data,now,busy,auto,setAuto,changes,on
     withMotion(()=>{fromAny(gsap,q('.fv-body > *'),{autoAlpha:0,y:12,duration:.4,ease:'power2.out',stagger:.05})});
   },{scope:root,dependencies:[panel,flight.id]});
   return <div className="fv" ref={root}>
-    <div className="fv-bar"><h2>Your flight</h2><div><span className="updated">Updated {time(data.fetchedAt,here())}</span><button className="icon-button" aria-label="Refresh flight" onClick={onRefresh} disabled={busy}><RefreshCw size={16} className={busy?'spin':''}/></button><button className="text-button" onClick={onSave}><Bookmark size={15}/>Save flight</button></div></div>
+    <div className="fv-bar"><div className="fv-title"><h2>Your flight</h2>{countdown(flight,now.getTime())&&<span className="fv-countdown"><Timer size={14}/>{countdown(flight,now.getTime())}</span>}</div><div>{shareNote&&<span className="fv-share-note" role="status">{shareNote}</span>}{onShare&&<button className="text-button" onClick={onShare}><Share2 size={15}/>Share</button>}<span className="updated">Updated {time(data.fetchedAt,here())}</span><button className="icon-button" aria-label="Refresh flight" onClick={onRefresh} disabled={busy}><RefreshCw size={16} className={busy?'spin':''}/></button><button className="text-button" onClick={onSave}><Bookmark size={15}/>Save flight</button></div></div>
     <div className="fv-top">
       <section className="panel flight-card">
         <div className="flight-header"><div className="airline-icon"><Plane size={21}/></div><div><h3>{flight.airline}</h3><span>{flight.number} · {flight.aircraft||'Aircraft not reported'}</span></div><span className={'status '+(delayed?'delayed':'')}><span className="dot"/>{flight.status}</span></div>

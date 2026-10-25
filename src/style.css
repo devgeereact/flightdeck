@@ -229,3 +229,9 @@ main>.sf{width:calc(100% + 2 * var(--gutter));max-width:none;margin:0 calc(-1 * 
 .fb-btn:hover{background:#edf2e8;color:#244b38}
 .topbar>div{gap:12px}
 @media print{.fb-btn{display:none!important}}
+
+/* Countdown, share and saved-flight day labels; install help panel. */
+.fv-title{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.fv-countdown{display:inline-flex;align-items:center;gap:6px;background:#e7efdf;color:#2f5a3a;border-radius:20px;padding:4px 12px;font:600 13px 'DM Sans',system-ui,sans-serif}
+.fv-share-note{font-size:13px;color:#2f5a3a;max-width:420px;overflow-wrap:anywhere}
+.saved-day{color:#4d5f55;font-weight:600}.saved-row .pill{margin-left:4px}
+.install-help .ih-body{padding:6px 24px 24px}.install-help p{font-size:14px;line-height:1.65;color:#2d4b3d;margin:0 0 12px}.install-help ul{margin:0 0 18px;padding-left:20px;display:grid;gap:8px;font-size:14px;line-height:1.55;color:#2d4b3d}

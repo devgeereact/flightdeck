@@ -101,6 +101,15 @@ try {
     await tabClick('Weather');
     check('B11 Weather tab shows the destination weather in plain words', /Cape Town/.test(a.text()) && /15°C/.test(a.text()) && /Partly cloudy/.test(a.text()));
     check('B12 the in-app footer has two equal menus, the right links, and no cookie settings', (() => { const cols = [...d.querySelectorAll('footer.sf .sf-col')]; const n = cols.map(c => c.querySelectorAll('a').length); return cols.length === 2 && n[0] === n[1] && !d.querySelector('[data-fd-cookie-settings]') && [...d.querySelectorAll('footer.sf a')].some(x => x.getAttribute('href') === '#/checklist'); })());
+    check('B13 a countdown is shown from the reported times', /Leaves in|Was due to leave/.test(a.text()), a.text().slice(0, 200));
+    check('B14 the address becomes a shareable flight link', /^#\/flight\/BA59\/\d{4}-\d{2}-\d{2}$/.test(a.w.location.hash), a.w.location.hash);
+    check('B15 a Share button is offered', [...d.querySelectorAll('.fv-bar button')].some(b => b.textContent.trim() === 'Share'));
+    // offline: the network fails, so the last copy is shown and clearly marked as such
+    Object.defineProperty(a.w.navigator, 'onLine', {get: () => false, configurable: true});
+    const realFetch = a.w.fetch; a.w.fetch = async (input, init) => { if (String(input).includes('/api/flights')) throw new TypeError('Failed to fetch'); return realFetch(input, init); };
+    await search(a, 'BA59'); await sleep(800);
+    check('B16 offline: the last result stays readable and says when it was fetched', !!d.querySelector('.flight-card') && /You're offline\. This is what Flightdeck last fetched at/.test(a.text()), a.text().slice(0, 300));
+    a.w.fetch = realFetch; Object.defineProperty(a.w.navigator, 'onLine', {get: () => true, configurable: true});
     check('B7 no runtime errors', a.errors.length === 0, a.errors.join(' | '));
     a.w.close();
     // Usual-route fallback: a date far beyond the schedule window still says what the flight normally flies
@@ -113,6 +122,16 @@ try {
     const tf = f.text();
     check('B8 far-future date: usual route + outbound shown, no invented times', tf.includes('LHR') && tf.includes('CPT') && /Leaving London/.test(tf) && tf.includes('not published yet'), tf.slice(300, 700));
     f.w.close();
+    const link = await boot({fixtures: true, hash: '#/flight/BA59/' + new Date().toISOString().slice(0, 10)}); await sleep(1800);
+    check('B17 opening a flight link shows that flight without searching', !!link.w.document.querySelector('.flight-card') && link.text().includes('BA59'), link.text().slice(0, 200));
+    link.w.close();
+    const ukToday = new Intl.DateTimeFormat('en-CA', {timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit'}).format(new Date());
+    const sv = await boot({fixtures: true, hash: '#/saved', storage: {'flightdeck-saved': JSON.stringify([{number: 'BA59', date: ukToday}, {number: 'LH400', date: '2026-01-02'}])}}); await sleep(1500);
+    check('B18 saved flights say Today for the UK date and mark old ones as past', sv.text().includes('Today') && /PAST/.test(sv.text()), sv.text().slice(0, 300));
+    const ib = [...sv.w.document.querySelectorAll('button')].find(b => b.textContent.includes('Install app'));
+    ib.dispatchEvent(new sv.w.MouseEvent('click', {bubbles: true})); await sleep(300);
+    check('B19 Install app without a browser prompt opens written help instead of a pop-up', sv.text().includes('Install Flightdeck') && sv.text().includes('Add to Home Screen'));
+    sv.w.close();
   }
   if (LIVE && cfg.liveAvailable) { // optional: the same journey against the real providers. Run with UI_TEST_LIVE=1; it spends a few provider units.
     const l = await boot(); await sleep(2500);
