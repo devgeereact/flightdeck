@@ -21,7 +21,7 @@ export default function Feedback({defaultEmail=''}:{defaultEmail?:string}){
   }catch(err){setState('idle');setError((err as Error).message)}
  }
  return <>
-  <button className="fb-fab" onClick={open} aria-haspopup="dialog"><MessageSquare size={15}/>Feedback</button>
+  <button className="fb-btn" onClick={open} aria-haspopup="dialog"><MessageSquare size={15}/>Feedback</button>
   <dialog ref={dlg} className="fb-dialog" aria-labelledby="fb-title" onClick={e=>{if(e.target===dlg.current)close()}}>
    <div className="fb-head"><h2 id="fb-title">{LABEL[kind]}</h2><button className="fb-close" onClick={close} aria-label="Close"><X size={18}/></button></div>
    {state==='sent'?<div className="fb-done" role="status"><Check size={26}/><h3>Thank you</h3><p>Your message has been sent. We read everything.</p><button className="cta" onClick={close}>Close</button></div>

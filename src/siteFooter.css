@@ -1,17 +1,20 @@
-/* Footer shared by the app and the static public pages (build-public.mjs inlines this file). Menus sit on the right in equal-width columns. */
-.sf{display:block;border-top:1px solid #e1e6da;margin-top:48px;padding:40px 0 28px;color:#5d6e64;font-family:'DM Sans',system-ui,sans-serif}
+/* ONE footer for the whole site: the app, and every static public page (build-public.mjs inlines this file).
+   A white band at the bottom of the page. Brand on the left, two equal menus on the right, a base line underneath. */
+.sf{display:block;background:#fff;border-top:1px solid #e1e6da;color:#5d6e64;font-family:'DM Sans',system-ui,sans-serif;font-size:14px}
+.sf-in{max-width:var(--sf-w,1440px);margin:0 auto;padding:28px var(--sf-gutter,clamp(24px,3.2vw,64px)) 18px}
 .sf-top{display:flex;justify-content:space-between;align-items:flex-start;gap:32px 56px}
 .sf-brand{display:inline-flex;align-items:center;gap:9px;font:800 20px Manrope,system-ui,sans-serif;letter-spacing:-.05em;color:#133c35;text-decoration:none}
 .sf-mark{background:#173e34;color:#d6eb9e;display:grid;place-items:center;width:30px;height:30px;border-radius:9px}
 .sf-dot{color:#81a356}
-.sf-blurb{margin:14px 0 0;max-width:300px;font-size:13px;line-height:1.7}
+.sf-blurb{margin:10px 0 0;max-width:300px;font-size:13.5px;line-height:1.7}
 .sf-cols{display:grid;grid-template-columns:repeat(2,180px);gap:0 24px;text-align:right}
-.sf-col h2{margin:0 0 12px;font:700 11px Manrope,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#566a5d}
+.sf-col h2{margin:0 0 6px;font:700 11px Manrope,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#566a5d}
 .sf-col ul{list-style:none;margin:0;padding:0;display:grid;gap:2px;justify-items:end}
-.sf-col a{display:inline-block;margin:0 -10px 0 0;padding:6px 10px;border-radius:8px;font:600 13.5px 'DM Sans',system-ui,sans-serif;color:#4d5f55;text-decoration:none}
+.sf-col li{margin:0}
+.sf-col a{display:inline-block;margin:0 -10px 0 0;padding:4px 10px;border-radius:8px;font:600 14px 'DM Sans',system-ui,sans-serif;color:#4d5f55;text-decoration:none}
 .sf-col a:hover{background:#edf2e8;color:#244b38}
 .sf-col a[aria-current="page"]{color:#244b38;background:#edf2e8}
-.sf-base{margin-top:32px;padding-top:20px;border-top:1px solid #e9eee4;display:flex;justify-content:space-between;gap:8px 24px;flex-wrap:wrap;font-size:12px;line-height:1.6;color:#5d6e64}
+.sf-base{margin-top:18px;padding-top:14px;border-top:1px solid #e9eee4;display:flex;justify-content:space-between;gap:8px 24px;flex-wrap:wrap;font-size:13px;line-height:1.6}
 .sf-base p{margin:0}
 @media(max-width:700px){.sf-top{flex-direction:column}.sf-cols{width:100%;grid-template-columns:1fr 1fr;text-align:left;gap:0 16px}.sf-col ul{justify-items:start}.sf-col a{margin:0 0 0 -10px}.sf-base{flex-direction:column}}
 @media print{.sf{display:none}}

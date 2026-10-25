@@ -1,0 +1,43 @@
+/* Packing list board, shared by the app (Checklist.tsx) and the public packing list page (build-public.mjs inlines this file).
+   A section rail on the left and ONE section open at a time on the right, so no card grows past the others. */
+.ck-layout{display:grid;grid-template-columns:290px minmax(0,1fr);gap:20px;align-items:start}
+.ck-rail{position:sticky;top:20px;display:grid;gap:4px;background:#fff;border:1px solid #e1e6dc;border-radius:12px;padding:10px}
+.ck-rail-item{display:grid;grid-template-columns:28px 1fr auto;grid-template-areas:'n t c' '. b b';align-items:center;gap:2px 10px;text-align:left;border:0;background:none;border-radius:8px;padding:10px;color:#4d5f55;font:600 13.5px 'DM Sans',system-ui,sans-serif}
+.ck-rail-item:hover{background:#f4f7f1}.ck-rail-item.on{background:#edf2e8;color:#133c35}
+.ck-rail-item .ck-n{grid-area:n}.ck-rail-title{grid-area:t;line-height:1.3}.ck-rail-count{grid-area:c;font-size:13px;font-weight:600;color:#5d6e64}
+.ck-rail-bar{grid-area:b;height:4px;border-radius:4px;background:#e8eee4;overflow:hidden;margin-top:6px}.ck-rail-bar b{display:block;height:100%;background:#759966;border-radius:4px;transition:width .3s}
+.ck-rail-item.full .ck-n{background:#4f8a5b}.ck-rail-item.full .ck-rail-bar b{background:#4f8a5b}
+.ck-n{display:grid;place-items:center;min-width:28px;height:28px;border-radius:9px;background:#173e34;color:#d6eb9e;font:800 13px Manrope,system-ui,sans-serif;flex-shrink:0}
+.ck-panels>.ck-sec{padding:0;display:block}.ck-panels>.ck-sec[hidden]{display:none}
+.ck-sec-head{display:flex;align-items:flex-start;gap:14px;padding:22px 26px 6px}.ck-sec-head>div{flex:1;min-width:0}
+.ck-sec-title{font:700 20px/1.3 Manrope,system-ui,sans-serif;letter-spacing:-.02em;color:#133c35;margin:0}
+.ck-sec-hint{padding:0;margin:4px 0 0;font-size:14px;color:#5d6e64}
+.ck-sec-count{background:#f1f4ee;border-radius:20px;padding:4px 12px;font:600 12px 'DM Sans',system-ui,sans-serif;color:#5d6e64;white-space:nowrap}
+.ck-panels .ck-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:0 28px;padding:6px 26px 10px;margin:0}
+.ck-panels .ck-list li{border-bottom:1px solid #f0f3ec;border-radius:0}
+.ck-panels .ck-check{padding:10px 0;font-size:14.5px;gap:12px}
+.ck-panels .ck-box{width:19px;height:19px;border:1.6px solid #7f9a89;border-radius:5px}
+.ck-panels .ck-sec-foot{padding:8px 26px 16px}
+.ck-pager{display:flex;justify-content:space-between;gap:12px;padding:14px 26px;border-top:1px solid #edf1e9;background:#fafbf8;border-radius:0 0 12px 12px}
+@media(max-width:900px){.ck-layout{grid-template-columns:1fr}.ck-rail{position:static;display:flex;overflow-x:auto;gap:6px;padding:8px;scrollbar-width:thin}.ck-rail-item{flex:0 0 auto;grid-template-columns:auto auto;grid-template-areas:'n t' '. c';padding:8px 12px;min-width:120px}.ck-rail-bar{display:none}.ck-rail-count{justify-self:start;font-size:12.5px}.ck-sec-head{padding:18px 18px 4px}.ck-panels .ck-list,.ck-panels .ck-sec-foot,.ck-pager{padding-left:18px;padding-right:18px}}
+@media print{.ck-layout{display:block}.ck-rail,.ck-pager{display:none!important}.ck-panels>.ck-sec[hidden]{display:block!important}.ck-panels>.ck-sec{break-inside:avoid;border:0;border-bottom:1px solid #bbb;border-radius:0;margin:0 0 6px}.ck-sec-head{padding:6px 0 2px}.ck-sec-title{font-size:12pt}.ck-n{display:none}.ck-panels .ck-list{grid-template-columns:repeat(3,1fr);gap:0 12px;padding:0}.ck-panels .ck-check{padding:2px 0;font-size:10pt}.ck-panels .ck-sec-foot{display:none}}
+
+/* The tickable list itself, so the app and the public packing list page look identical. */
+.ck-layout .ck-sec-count{white-space:nowrap}
+.ck-layout .ck-list{list-style:none}
+.ck-layout .ck-list li{display:flex;align-items:center}
+.ck-layout .ck-check{display:flex;align-items:center;gap:12px;padding:10px 0;width:100%;cursor:pointer;font:14.5px/1.35 'DM Sans',system-ui,sans-serif;color:#2d4b3d}
+.ck-layout .ck-check input{position:absolute;opacity:0;width:1px;height:1px}
+.ck-layout .ck-box{width:19px;height:19px;flex-shrink:0;border:1.6px solid #7f9a89;border-radius:5px;display:grid;place-items:center;background:#fff;color:#fff;transition:background .15s,border-color .15s}
+.ck-layout .ck-check input:checked+.ck-box{background:#214e3e;border-color:#214e3e}
+.ck-layout .ck-check input:not(:checked)+.ck-box svg{opacity:0}
+.ck-layout .ck-check input:focus-visible+.ck-box{outline:3px solid #92b678;outline-offset:2px}
+.ck-layout .ck-list li.done .ck-text,.ck-layout .ck-check input:checked~.ck-text{color:#5d6e64;text-decoration:line-through;text-decoration-color:#c5d2c8}
+.ck-layout .ck-sec-foot{display:flex;gap:8px;flex-wrap:wrap}
+.ck-layout .text-button{display:inline-flex;align-items:center;gap:7px;border:1px solid #dde4d8;background:#fff;color:#2d4b3d;padding:8px 12px;border-radius:6px;font:600 13px 'DM Sans',system-ui,sans-serif;cursor:pointer;text-decoration:none}
+.ck-layout .text-button:hover{background:#f4f7f1}
+.ck-layout .text-button.primary{background:#214e3e;color:#fff;border-color:#214e3e}.ck-layout .text-button.primary:hover{background:#1a4033}
+a.ck-rail-item{text-decoration:none}
+.ck-panels>.ck-sec{background:#fff;border:1px solid #e1e6dc;border-radius:12px}
+.ck-panels>.ck-sec:target{scroll-margin-top:16px}
+@media print{.ck-layout .ck-box{border:1.4px solid #222;background:#fff!important;color:#000}.ck-layout .ck-check input:checked+.ck-box svg{opacity:1;color:#000}}

@@ -12,6 +12,7 @@ import {summarise} from './summary';
 import {withMotion,fromAny} from './motion';
 import {apiFetch} from './api';
 import {track,ga} from './track';
+import './packingBoard.css';
 
 gsap.registerPlugin(useGSAP);
 type Saved={number:string;date:string};

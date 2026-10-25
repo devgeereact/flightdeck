@@ -79,7 +79,6 @@
  .ck-sec>summary{padding:8px 0}.ck-list{grid-template-columns:repeat(2,1fr);padding:0}.ck-box{border:1.4px solid #222;background:#fff!important;color:#000}.ck-check input:checked+.ck-box svg{opacity:1;color:#000}.ck-check input:not(:checked)+.ck-box svg{opacity:0}
  .ck-list li.done .ck-text{text-decoration:line-through;color:#444}details.ck-sec>*{display:revert}.ck-bar{display:none}.ck-name{font-size:20px}}
 .nav>svg:first-child{margin-left:0}
-.fb-fab{position:fixed;right:18px;bottom:18px;z-index:20;display:flex;align-items:center;gap:8px;background:#214e3e;color:#fff;border:0;border-radius:999px;padding:11px 16px;font-size:13px;font-weight:600;box-shadow:0 8px 24px #1d3c2230}.fb-fab:hover{background:#1a4033}
 .fb-dialog{border:0;border-radius:16px;padding:0;width:min(520px,calc(100vw - 28px));box-shadow:0 30px 80px #0f2a2360;color:#2d4b3d}.fb-dialog::backdrop{background:#0f2a2380}
 .fb-dialog>form,.fb-done{padding:6px 24px 24px}.fb-head{display:flex;justify-content:space-between;align-items:center;padding:22px 24px 10px}.fb-head h2{font-size:20px;letter-spacing:-.5px;color:#173e34}
 .fb-close{border:0;background:none;padding:6px;border-radius:6px;color:#5d6e64}.fb-close:hover{background:#eef2ea}
@@ -108,8 +107,7 @@
 .pill.st-new{background:#214e3e;color:#fff;border-color:#214e3e}.pill.st-replied{background:#e7efdf;color:#3f6a3c}.pill.st-archived{background:#f1efe6;color:#6f6a3b}
 .ad-enq-msg{margin:12px 0;font-size:14px;line-height:1.7;white-space:pre-wrap;color:#2d4b3d}.ad-enq-act{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.ad-enq-act small{font-size:12px;color:#766757}
 .ad-flags{list-style:none;margin:12px 0;padding:0;display:grid;gap:2px}.ad-flags li{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid #f0f3ec;font-size:14px}.ad-flags li span{flex:1}.ad-flags .ok{color:#42734c}.ad-flags .off{color:#5f6d60}.ad-flags strong{font-size:12.5px;color:#5d6e64}
-@media print{.fb-fab,.fb-dialog{display:none!important}}
-@media(max-width:700px){main{padding-bottom:72px}}
+@media print{.fb-dialog{display:none!important}}
 footer>span:nth-child(2){flex:1 1 260px;text-align:center;font-size:13px;color:#5d6e64}
 .foot-links{display:flex;gap:2px 4px;flex-wrap:wrap;justify-content:flex-end;font-size:13.5px;font-weight:600}.foot-links a,.land-foot a{color:#5d6e64;text-decoration:none;padding:7px 11px;border-radius:8px}.foot-links a:hover,.land-foot a:hover{background:#edf2e8;color:#244b38}
 .land-foot{display:flex;gap:2px 4px;flex-wrap:wrap;justify-content:center;padding:18px clamp(20px,5vw,64px) 30px;font-size:13.5px;font-weight:600}
@@ -127,7 +125,6 @@ footer>span:nth-child(2){flex:1 1 260px;text-align:center;font-size:13px;color:#
 .land-foot{padding:0 clamp(20px,5vw,64px);max-width:1200px;margin:0 auto}.land-foot .sf{margin-top:24px}
 
 .ck-n{display:grid;place-items:center;min-width:28px;height:28px;border-radius:9px;background:#173e34;color:#d6eb9e;font:800 13px Manrope,system-ui,sans-serif;flex-shrink:0}
-.app .sf{padding-bottom:84px}@media(max-width:700px){.app .sf{padding-bottom:96px}}
 
 /* Landing: one full-screen hero, menu on the top line, legal menu on the bottom line, no page scroll. */
 .landing{height:100vh;height:100dvh;min-height:0;overflow:hidden}
@@ -162,28 +159,6 @@ footer>span:nth-child(2){flex:1 1 260px;text-align:center;font-size:13px;color:#
 .ad-enq{gap:20px}
 @media(max-width:1100px){.ad-body{grid-template-columns:1fr}.ad-body>.ad-chart{grid-column:1/-1}}
 
-/* Packing list: a section rail on the left and ONE section open at a time on the right, so no card grows past the others. */
-.ck-layout{display:grid;grid-template-columns:290px minmax(0,1fr);gap:20px;align-items:start}
-.ck-rail{position:sticky;top:20px;display:grid;gap:4px;background:#fff;border:1px solid #e1e6dc;border-radius:12px;padding:10px}
-.ck-rail-item{display:grid;grid-template-columns:28px 1fr auto;grid-template-areas:'n t c' '. b b';align-items:center;gap:2px 10px;text-align:left;border:0;background:none;border-radius:8px;padding:10px;color:#4d5f55;font:600 13.5px 'DM Sans',system-ui,sans-serif}
-.ck-rail-item:hover{background:#f4f7f1}.ck-rail-item.on{background:#edf2e8;color:#133c35}
-.ck-rail-item .ck-n{grid-area:n}.ck-rail-title{grid-area:t;line-height:1.3}.ck-rail-count{grid-area:c;font-size:13px;font-weight:600;color:#5d6e64}
-.ck-rail-bar{grid-area:b;height:4px;border-radius:4px;background:#e8eee4;overflow:hidden;margin-top:6px}.ck-rail-bar b{display:block;height:100%;background:#759966;border-radius:4px;transition:width .3s}
-.ck-rail-item.full .ck-n{background:#4f8a5b}.ck-rail-item.full .ck-rail-bar b{background:#4f8a5b}
-.ck-n{display:grid;place-items:center;min-width:28px;height:28px;border-radius:9px;background:#173e34;color:#d6eb9e;font:800 13px Manrope,system-ui,sans-serif;flex-shrink:0}
-.ck-panels>.ck-sec{padding:0;display:block}.ck-panels>.ck-sec[hidden]{display:none}
-.ck-sec-head{display:flex;align-items:flex-start;gap:14px;padding:22px 26px 6px}.ck-sec-head>div{flex:1;min-width:0}
-.ck-sec-title{font:700 20px/1.3 Manrope,system-ui,sans-serif;letter-spacing:-.02em;color:#133c35;margin:0}
-.ck-sec-hint{padding:0;margin:4px 0 0;font-size:14px;color:#5d6e64}
-.ck-sec-count{background:#f1f4ee;border-radius:20px;padding:4px 12px;font:600 12px 'DM Sans',system-ui,sans-serif;color:#5d6e64;white-space:nowrap}
-.ck-panels .ck-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:0 28px;padding:6px 26px 10px;margin:0}
-.ck-panels .ck-list li{border-bottom:1px solid #f0f3ec;border-radius:0}
-.ck-panels .ck-check{padding:10px 0;font-size:14.5px;gap:12px}
-.ck-panels .ck-box{width:19px;height:19px;border:1.6px solid #7f9a89;border-radius:5px}
-.ck-panels .ck-sec-foot{padding:8px 26px 16px}
-.ck-pager{display:flex;justify-content:space-between;gap:12px;padding:14px 26px;border-top:1px solid #edf1e9;background:#fafbf8;border-radius:0 0 12px 12px}
-@media(max-width:900px){.ck-layout{grid-template-columns:1fr}.ck-rail{position:static;display:flex;overflow-x:auto;gap:6px;padding:8px;scrollbar-width:thin}.ck-rail-item{flex:0 0 auto;grid-template-columns:auto auto;grid-template-areas:'n t' '. c';padding:8px 12px;min-width:120px}.ck-rail-bar{display:none}.ck-rail-count{justify-self:start;font-size:12.5px}.ck-sec-head{padding:18px 18px 4px}.ck-panels .ck-list,.ck-panels .ck-sec-foot,.ck-pager{padding-left:18px;padding-right:18px}}
-@media print{.ck-layout{display:block}.ck-rail,.ck-pager{display:none!important}.ck-panels>.ck-sec[hidden]{display:block!important}.ck-panels>.ck-sec{break-inside:avoid;border:0;border-bottom:1px solid #bbb;border-radius:0;margin:0 0 6px}.ck-sec-head{padding:6px 0 2px}.ck-sec-title{font-size:12pt}.ck-n{display:none}.ck-panels .ck-list{grid-template-columns:repeat(3,1fr);gap:0 12px;padding:0}.ck-panels .ck-check{padding:2px 0;font-size:10pt}.ck-panels .ck-sec-foot{display:none}}
 
 /* Flight view: summary card and map side by side, then ONE tabbed panel instead of a long stack of cards. */
 .fv{display:grid;gap:20px}
@@ -222,7 +197,7 @@ footer>span:nth-child(2){flex:1 1 260px;text-align:center;font-size:13px;color:#
 
 /* Wide screens: content is centred in the space beside the sidebar instead of hugging the left edge. */
 main{max-width:none;padding-left:clamp(24px,3.2vw,64px);padding-right:clamp(24px,3.2vw,64px)}
-main>*:not(.fb-fab):not(.fb-dialog){width:100%;max-width:1440px;margin-left:auto;margin-right:auto}
+main>*:not(.sf):not(.sf-gap){width:100%;max-width:1440px;margin-left:auto;margin-right:auto}
 main>.mobile-nav{max-width:none}
 @media(max-width:700px){main{padding-left:18px;padding-right:18px}}
 /* Console cards: whole rows (3 across, or 4 when there are exactly four) so no card is left on a row by itself. */
@@ -243,5 +218,14 @@ main>.mobile-nav{max-width:none}
 .map-card{padding:16px}.map-card .route-map{height:170px}.map-card .position-note{margin:4px 0 10px}
 .fv-body{padding:18px 22px 22px;min-height:0}
 .fv-tablist{padding-top:6px}
-.app .sf{margin-top:28px;padding:26px 0 72px}.app .sf-base{margin-top:20px;padding-top:14px}
 @media(max-width:700px){.topbar{height:56px}}
+
+/* Footer: a full-width white band that always sits at the bottom of the window, and the feedback button lives in the top bar so nothing covers it. */
+main{--gutter:clamp(24px,3.2vw,64px);display:flex;flex-direction:column;min-height:calc(100vh / var(--z,1))}
+.sf-gap{flex:1 0 28px}
+main>.sf{width:calc(100% + 2 * var(--gutter));max-width:none;margin:0 calc(-1 * var(--gutter))}
+@media(max-width:700px){main{--gutter:18px}}
+.fb-btn{display:inline-flex;align-items:center;gap:7px;border:1px solid #dde4d8;background:#fff;color:#2d4b3d;border-radius:8px;padding:8px 13px;font:600 13px 'DM Sans',system-ui,sans-serif;cursor:pointer}
+.fb-btn:hover{background:#edf2e8;color:#244b38}
+.topbar>div{gap:12px}
+@media print{.fb-btn{display:none!important}}

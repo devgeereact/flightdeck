@@ -32,8 +32,9 @@ const slotFor = (kind) => {
 };
 
 const fontFaces = fs.readFileSync(path.join(root, 'src/fonts.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-const css = fontFaces + footerCss + `
-:root{--g:#214e3e;--gd:#133c35;--ink:#2d4b3d;--mut:#5f7367;--bg:#f6f7f4;--line:#dce5d6}
+const boardCss = fs.readFileSync(path.join(root, 'src/packingBoard.css'), 'utf8');
+const css = fontFaces + footerCss + boardCss + `
+:root{--sf-w:1160px;--sf-gutter:clamp(18px,4vw,42px);--g:#214e3e;--gd:#133c35;--ink:#2d4b3d;--mut:#5f7367;--bg:#f6f7f4;--line:#dce5d6}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.7 "DM Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 a{color:var(--g)}a:hover{color:var(--gd)}.skip{position:absolute;left:-999px}.skip:focus{left:12px;top:12px;background:#fff;padding:8px 12px;z-index:9}
 .pub-top{background:#fff;border-bottom:1px solid #e5e9e2}.pub-in{max-width:1160px;margin:0 auto;padding:0 clamp(18px,4vw,42px);display:flex;align-items:center;justify-content:space-between;gap:16px}
@@ -41,7 +42,7 @@ a{color:var(--g)}a:hover{color:var(--gd)}.skip{position:absolute;left:-999px}.sk
 .pub-brand{display:flex;align-items:center;gap:9px;font:800 23px Manrope,system-ui,sans-serif;letter-spacing:-.05em;text-decoration:none;color:var(--gd)}.pub-brand i{color:#81a356;font-style:normal}.pub-mark{background:#173e34;color:#d6eb9e;display:grid;place-items:center;width:36px;height:36px;border-radius:11px}
 .pub-nav{display:flex;gap:4px;flex-wrap:wrap;align-items:center;font-size:13px;font-weight:600}.pub-nav a{text-decoration:none;color:#5d6e64;padding:9px 13px;border-radius:8px}.pub-nav a:hover,.pub-nav a[aria-current]{color:#244b38;background:#edf2e8}
 .pub-open{background:var(--g)!important;color:#fff!important;margin-left:8px}.pub-open:hover{background:#1a4033!important}
-main{max-width:1160px;margin:0 auto;padding:0 clamp(18px,4vw,42px) 64px}
+main{flex:1 0 auto;width:100%;max-width:1160px;margin:0 auto;padding:0 clamp(18px,4vw,42px) 64px}body{display:flex;flex-direction:column;min-height:100vh}
 .pub-head{padding:40px 0 26px}.pub-eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#566a5d;font-weight:700;margin:0 0 12px}
 h1{font:750 clamp(30px,4vw,40px)/1.1 Manrope,system-ui,sans-serif;letter-spacing:-.035em;color:var(--gd);margin:0 0 12px}
 .lede{color:var(--mut);margin:0;font-size:16px;max-width:720px}h2{font:700 21px/1.3 Manrope,system-ui,sans-serif;color:var(--gd);margin:34px 0 10px;letter-spacing:-.02em}h3{font-size:16px;margin:20px 0 6px}
@@ -53,25 +54,25 @@ table{width:100%;border-collapse:collapse;font-size:14px;margin:14px 0 22px;back
 .pub-f input,.pub-f textarea{width:100%;font:16px system-ui,sans-serif;border:1px solid #cfdcd2;border-radius:8px;padding:11px 12px;color:var(--ink)}.pub-row{display:flex;gap:12px;flex-wrap:wrap}.pub-kinds{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;font-size:15px}.pub-trap{position:absolute;left:-9999px;opacity:0}
 .pub-small{font-size:12px;color:#5d6e64}#contact-msg{min-height:1.4em;color:#a34b3a;font-size:14px}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;list-style:none;padding:0}.cards li{margin:0}.cards a{display:block;background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;text-decoration:none;height:100%}.cards a:hover{border-color:#b9cdbd}.cards strong{display:block;color:var(--gd);font-size:17px;margin-bottom:6px}.cards span{color:var(--mut);font-size:14px}
-.ck-sec{break-inside:avoid;background:#fff;border:1px solid #e1e6dc;border-radius:12px;padding:20px 24px 12px;margin:0}.ck-sec h2{margin:0 0 8px;font-size:18px}.ck-sec ul{list-style:none;padding:0;margin:0}.ck-sec li{margin:0;break-inside:avoid;padding:9px 0;display:flex;gap:12px;align-items:center;font-size:14.5px}.ck-sec li:before{content:"";flex:0 0 19px;height:19px;border:1.6px solid #7f9a89;border-radius:5px;background:#fff}.ck-hint{font-size:13px;color:#5d6e64;margin:0 0 8px}
+
 .ad-slot{margin:28px 0;min-height:90px}
 .pub-crumbs{display:flex;gap:8px;align-items:center;font-size:13px;color:#5d6e64;margin:0 0 14px}.pub-crumbs a{color:#4d5f55;text-decoration:none;font-weight:600}.pub-crumbs a:hover{color:#244b38;text-decoration:underline}.pub-crumbs span[aria-hidden]{color:#9aa99d}
 .pub-tags{display:flex;gap:8px 14px;flex-wrap:wrap;align-items:center;margin:14px 0 0;font-size:13px;color:#5d6e64}.pub-tag{background:#e7efdf;color:#2f5a3a;border-radius:20px;padding:4px 12px;font-weight:700;font-size:12px}
 .pub-layout{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:24px;align-items:start}.pub-layout.no-toc{grid-template-columns:minmax(0,1fr)}.pub-layout .pub-body{order:1}.pub-toc{order:2;position:sticky;top:20px;background:#fff;border:1px solid #e1e6dc;border-radius:12px;padding:18px 18px 14px}
 .pub-toc p{margin:0 0 10px;font:700 11px Manrope,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#566a5d}.pub-toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px;counter-reset:t}.pub-toc li{margin:0;counter-increment:t}.pub-toc a{display:flex;gap:10px;padding:7px 8px;border-radius:8px;font-size:13.5px;line-height:1.4;color:#4d5f55;text-decoration:none}.pub-toc a:before{content:counter(t);color:#769070;font-weight:700;min-width:14px}.pub-toc a:hover{background:#edf2e8;color:#244b38}
-.sf-in{max-width:1160px;margin:0 auto;padding:0 clamp(18px,4vw,42px)}.sf{margin-top:56px}.pub-body h2{scroll-margin-top:20px}.pub-take{background:#f4f8f1;border:1px solid #dfe9d8;border-radius:12px;padding:18px 22px;margin:0 0 26px}.pub-take-h{margin:0 0 8px;font:700 11px Manrope,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#566a5d}.pub-take ul{margin:0;padding-left:20px}.pub-take li{margin:4px 0}
+.pub-body h2{scroll-margin-top:20px}.pub-take{background:#f4f8f1;border:1px solid #dfe9d8;border-radius:12px;padding:18px 22px;margin:0 0 26px}.pub-take-h{margin:0 0 8px;font:700 11px Manrope,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#566a5d}.pub-take ul{margin:0;padding-left:20px}.pub-take li{margin:4px 0}
 .pub-related{margin-top:36px}.pub-related>h2{margin:0 0 6px}.pub-sub{color:#5d6e64;margin:0 0 16px;font-size:15px}
 .cards a{display:flex;flex-direction:column;gap:6px}.cards em{font-style:normal;font-size:12px;font-weight:700;color:#2f5a3a;background:#e7efdf;border-radius:20px;padding:3px 10px;align-self:flex-start}.cards .cd-meta{font-size:12.5px;color:#5d6e64;margin-top:auto;padding-top:8px}.cards a:hover strong{text-decoration:underline}
 .pub-cat{margin:0 0 34px}.pub-cat>h2{margin:0 0 4px}.pub-promo{display:flex;gap:18px 28px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:#fff;border:1px solid #e1e6dc;border-radius:12px;padding:clamp(20px,3vw,28px)}.pub-promo h2{margin:0 0 6px}.pub-promo p{margin:0;color:#5d6e64;max-width:620px}
 .pub-tools{display:flex;gap:12px 16px;flex-wrap:wrap;align-items:center;margin:0 0 18px}.pub-btn.alt{background:#fff;color:#214e3e;border:1px solid #cfdcd2}.pub-stat{font-size:13.5px;color:#5d6e64;margin-left:auto}
 .pub-jump{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 22px;padding:0;list-style:none}.pub-jump li{margin:0}.pub-jump a{display:inline-block;padding:7px 14px;border-radius:20px;background:#fff;border:1px solid #dce5d6;color:#3d5a4b;text-decoration:none;font-size:13px;font-weight:600}.pub-jump a:hover{background:#edf2e8;color:#244b38}
-.ck-grid{columns:2 380px;column-gap:20px;margin:0 0 30px}.ck-sec{scroll-margin-top:16px;display:block;margin:0 0 20px!important;break-inside:avoid}.ck-sec h2{display:flex;align-items:center;gap:12px;margin:0 0 4px!important;font-size:18px}.ck-n{display:grid;place-items:center;min-width:28px;height:28px;border-radius:9px;background:#173e34;color:#d6eb9e;font:800 13px Manrope,system-ui,sans-serif}.ck-ct{margin-left:auto;font:600 12px "DM Sans",system-ui,sans-serif;color:#5d6e64;background:#f1f4ee;border-radius:20px;padding:3px 10px}
-.ck-sec li{border-bottom:1px solid #f0f3ec}.ck-sec li:last-child{border-bottom:0}.ck-hint{font-size:13px;color:#5d6e64;margin:0 0 10px 40px}
+
+
 .ck-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:0 0 28px;padding:0;list-style:none}.ck-steps li{background:#fff;border:1px solid #e1e6dc;border-radius:12px;padding:18px;margin:0}.ck-steps b{display:block;color:#133c35;margin-bottom:4px}.ck-steps span{font-size:14px;color:#5d6e64}
 @media(max-width:700px){.pub-open{margin-left:0}}
 @media(max-width:900px){.pub-layout{grid-template-columns:minmax(0,1fr)}.pub-toc{position:static;order:0}.pub-stat{margin-left:0;width:100%}}
 
-@media print{.ck-grid{columns:2;column-gap:10px}.ck-sec{padding:8px 12px;font-size:10pt}.ck-sec li{padding:2px 0;font-size:10pt}.ck-hint{margin-left:0;font-size:9pt}.ck-ct{display:none}.pub-top,.sf,.pub-crumbs,.pub-toc,.pub-related,.pub-jump,.pub-tools,.cta-box,.noprint,.ad-slot,.fd-cc{display:none!important}body{background:#fff;font-size:12pt}main{max-width:none;padding:0}.pub-body{border:0;padding:0}.ck-grid{display:block}.pub-head{padding:0}.ck-sec{border:1px solid #999}.ck-sec li:before{border-color:#000}h1{font-size:24pt}.lede{font-size:11pt}}
+@media print{.pub-top,.sf,.pub-crumbs,.pub-toc,.pub-related,.pub-jump,.pub-tools,.cta-box,.noprint,.ad-slot,.fd-cc{display:none!important}body{background:#fff;font-size:12pt}main{max-width:none;padding:0}.pub-body{border:0;padding:0}.pub-head{padding:0}h1{font-size:24pt}.lede{font-size:11pt}}
 `;
 
 const slugify = (t) => t.toLowerCase().replace(/&[a-z]+;/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -142,10 +143,15 @@ ${kind === 'guide' || kind === 'checklist' ? `<section class="cta-box"><h2>${kin
 // The packing list page is generated from the same template the app uses, so the two can never drift apart.
 const totalItems = TEMPLATE.reduce((n, sec) => n + sec.items.length, 0);
 const secId = (sec) => 'list-' + slugify(sec.title);
+const CHECK_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+// The same board as the app: a rail of sections and ONE open at a time. Without JavaScript every section simply shows, one under the other.
 const checklistBody = `
 <div class="pub-tools noprint"><button class="pub-btn" type="button" data-print>Print this list</button><a class="pub-btn alt" href="/#/checklist">Keep it in Flightdeck</a><span class="pub-stat">${TEMPLATE.length} sections · ${totalItems} items</span></div>
-<nav class="noprint" aria-label="Jump to a section"><ul class="pub-jump">${TEMPLATE.map((sec) => `<li><a href="#${secId(sec)}">${esc(sec.title)}</a></li>`).join('')}</ul></nav>
-<div class="ck-grid">${TEMPLATE.map((sec, i) => `<section class="ck-sec" id="${secId(sec)}" aria-labelledby="${secId(sec)}-h"><h2 id="${secId(sec)}-h"><span class="ck-n" aria-hidden="true">${i + 1}</span>${esc(sec.title)}<span class="ck-ct">${sec.items.length} items</span></h2>${sec.hint ? `<p class="ck-hint">${esc(sec.hint)}</p>` : ''}<ul>${sec.items.map((it) => `<li>${esc(it.text)}</li>`).join('')}</ul></section>`).join('\n')}</div>
+<div class="ck-layout" id="packing-board">
+<nav class="ck-rail" aria-label="Packing list sections">${TEMPLATE.map((sec, i) => `<a class="ck-rail-item${i === 0 ? ' on' : ''}" href="#${secId(sec)}" data-sec="${secId(sec)}"><span class="ck-n" aria-hidden="true">${i + 1}</span><span class="ck-rail-title">${esc(sec.title)}</span><span class="ck-rail-count">0/${sec.items.length}</span><i class="ck-rail-bar" aria-hidden="true"><b style="width:0"></b></i></a>`).join('')}</nav>
+<div class="ck-panels">${TEMPLATE.map((sec, i) => `<section class="ck-sec" id="${secId(sec)}" aria-labelledby="${secId(sec)}-h"><header class="ck-sec-head"><span class="ck-n" aria-hidden="true">${i + 1}</span><div><h2 class="ck-sec-title" id="${secId(sec)}-h">${esc(sec.title)}</h2>${sec.hint ? `<p class="ck-sec-hint">${esc(sec.hint)}</p>` : ''}</div><span class="ck-sec-count">0/${sec.items.length}</span></header><ul class="ck-list">${sec.items.map((it, j) => `<li><label class="ck-check"><input type="checkbox" data-k="${secId(sec)}-${j}"><span class="ck-box" aria-hidden="true">${CHECK_SVG}</span><span class="ck-text">${esc(it.text)}</span></label></li>`).join('')}</ul><footer class="ck-pager noprint">${i > 0 ? `<a class="text-button" href="#${secId(TEMPLATE[i - 1])}">${esc(TEMPLATE[i - 1].title)}</a>` : '<span></span>'}${i < TEMPLATE.length - 1 ? `<a class="text-button primary" href="#${secId(TEMPLATE[i + 1])}">${esc(TEMPLATE[i + 1].title)}</a>` : '<span></span>'}</footer></section>`).join('')}</div>
+</div>
+<script src="/js/travel-checklist.js" defer></script>
 <h2 class="noprint">How to use it</h2>
 <ol class="ck-steps noprint"><li><b>1. Start days ahead</b><span>The first section holds the things that take time: visas, insurance and vaccinations.</span></li><li><b>2. Pack by section</b><span>Clothes, then the bathroom bag, then accessories, so nothing is forgotten halfway through.</span></li><li><b>3. Make it yours</b><span>Cross out what you never need and add what you always forget. In Flightdeck your edits are saved for every trip.</span></li><li><b>4. Finish with the last lists</b><span>The night-before and last-minute sections catch the keys, the charger and the back door.</span></li></ol>
 <div class="pub-body noprint"><p>For entry requirements, visas and health advice for your destination, use the official <a href="https://www.gov.uk/foreign-travel-advice" rel="noopener">GOV.UK foreign travel advice</a>. Planning the day itself? Read the <a href="/guides/departure-day-airport-timeline/">departure day timeline</a> and the guide to <a href="/guides/pack-your-cabin-bag-for-a-long-flight/">packing your cabin bag</a>.</p></div>`;
@@ -168,6 +174,20 @@ write('guides/index.html', shell({ ...guideIndex, kind: 'index', body: indexBody
 const urls = ['/', '/travel-checklist/', '/guides/', ...guides.map((g) => `/${g.slug}/`), '/about/', '/contact/', '/privacy/', '/cookies/', '/terms/'];
 write('sitemap.xml', `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((u) => `<url><loc>${config.url}${u}</loc><lastmod>${config.lastReviewed}</lastmod></url>`).join('\n')}\n</urlset>\n`);
 write('robots.txt', `User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ${config.url}/sitemap.xml\n`);
+write('js/travel-checklist.js', `(function(){var root=document.getElementById('packing-board');if(!root)return;
+var secs=[].slice.call(root.querySelectorAll('.ck-sec')),items=[].slice.call(root.querySelectorAll('.ck-rail-item'));
+var KEY='flightdeck-public-packing',saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){}
+function show(id,push){var found=false;secs.forEach(function(s){var on=s.id===id;if(on)found=true;s.hidden=!on});if(!found){id=secs[0].id;secs[0].hidden=false}
+items.forEach(function(a){var on=a.getAttribute('data-sec')===id;a.classList.toggle('on',on);if(on)a.setAttribute('aria-current','true');else a.removeAttribute('aria-current')});
+if(push&&window.history&&history.replaceState)history.replaceState(null,'','#'+id)}
+function count(){secs.forEach(function(s,i){var boxes=s.querySelectorAll('input[type=checkbox]'),n=0;[].forEach.call(boxes,function(b){if(b.checked)n++});var t=n+'/'+boxes.length;
+s.querySelector('.ck-sec-count').textContent=t;var a=items[i];a.querySelector('.ck-rail-count').textContent=t;a.querySelector('.ck-rail-bar b').style.width=(boxes.length?n/boxes.length*100:0)+'%';a.classList.toggle('full',boxes.length>0&&n===boxes.length)})}
+[].forEach.call(root.querySelectorAll('input[type=checkbox]'),function(b){var k=b.getAttribute('data-k');if(saved[k])b.checked=true;
+b.addEventListener('change',function(){if(b.checked)saved[k]=1;else delete saved[k];try{localStorage.setItem(KEY,JSON.stringify(saved))}catch(e){}count()})});
+root.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href^="#"]');if(!a)return;var id=a.getAttribute('href').slice(1);if(!document.getElementById(id))return;
+e.preventDefault();show(id,true);var top=root.getBoundingClientRect().top+window.scrollY-16;if(window.scrollY>top)window.scrollTo(0,top)});
+count();show((location.hash||'').slice(1)||secs[0].id,false)})();
+`);
 write('page.js', "document.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('[data-print]'))window.print()});\n");
 for (const [f, code] of externalScripts) write(f.slice(1), code);
 write('404.html', shell({ slug: 'not-found', kind: 'notfound', title: 'Page not found', description: 'That page does not exist or has moved.', body: '<div class="pub-body"><p>Try the <a href="/">Flightdeck app</a>, the <a href="/travel-checklist/">packing list</a> or the <a href="/guides/">travel guides</a>.</p></div>' }).replace('<link rel="canonical"', '<meta name="robots" content="noindex"><link rel="canonical"'));

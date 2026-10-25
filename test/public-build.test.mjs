@@ -59,7 +59,7 @@ test('each page is a proper document: title, description, canonical, one h1, ski
 test('public pages request nothing from third parties: the only scripts are our own files', () => {
   const b = build();
   for (const [p, h] of html(b)) {
-    for (const m of h.matchAll(/<(?:script|img|iframe|source|video|audio)\b[^>]*\bsrc="([^"]+)"/g)) assert.ok(['/consent.js', '/page.js', '/js/contact.js'].includes(m[1]), `${p}: ${m[1]}`);
+    for (const m of h.matchAll(/<(?:script|img|iframe|source|video|audio)\b[^>]*\bsrc="([^"]+)"/g)) assert.ok(['/consent.js', '/page.js', '/js/contact.js', '/js/travel-checklist.js'].includes(m[1]), `${p}: ${m[1]}`);
     for (const m of h.matchAll(/<link\b[^>]*\bhref="([^"]+)"/g)) assert.ok(m[1].startsWith('/') || m[1].startsWith(base.url), `${p}: ${m[1]}`);
     assert.ok(!/@import|fonts\.googleapis|googletagmanager|google-analytics|adsbygoogle|googlesyndication/.test(h), p);
   }
@@ -122,12 +122,14 @@ test('no page has an inline script or inline event handler, and a noindex 404 pa
 test('the printable packing list is the app template: same sections, same items, same order', () => {
   const b = build();
   const h = b.read('travel-checklist/index.html');
-  assert.equal((h.match(/class="ck-sec"/g) || []).length, TEMPLATE.length);
-  assert.deepEqual([...h.matchAll(/<section class="ck-sec" id="[^"]+" aria-labelledby="[^"]+"><h2 id="[^"]+"><span class="ck-n" aria-hidden="true">\d+<\/span>([^<]+)<span/g)].map((m) => m[1]), TEMPLATE.map((s) => s.title));
-  const items = [...h.matchAll(/<li>([^<]+)<\/li>/g)].map((m) => m[1].replace(/&amp;/g, '&').replace(/&quot;/g, '"'));
+  assert.equal((h.match(/<section class="ck-sec"/g) || []).length, TEMPLATE.length);
+  assert.deepEqual([...h.matchAll(/<h2 class="ck-sec-title" id="[^"]+">([^<]+)<\/h2>/g)].map((m) => m[1]), TEMPLATE.map((s) => s.title));
+  assert.deepEqual([...h.matchAll(/<span class="ck-rail-title">([^<]+)<\/span>/g)].map((m) => m[1]), TEMPLATE.map((s) => s.title), 'the rail lists the same sections in the same order');
+  const items = [...h.matchAll(/<span class="ck-text">([^<]*)<\/span>/g)].map((m) => m[1].replace(/&amp;/g, '&').replace(/&quot;/g, '"'));
   const expected = TEMPLATE.flatMap((s) => s.items.map((i) => i.text));
   assert.deepEqual(items.slice(0, expected.length), expected);
   assert.ok(h.includes('data-print') && b.read('page.js').includes('window.print()') && h.includes('@media print'));
+  assert.ok(b.read('js/travel-checklist.js').includes('packing-board') && h.includes('class="ck-layout" id="packing-board"') && h.includes('.ck-rail-item') && h.includes('input[type=checkbox]') === false, 'same board classes as the app');
 });
 
 test('the guides are real articles, not thin pages', () => {
@@ -187,7 +189,7 @@ test('one shared link list: the same footer on every page, header links match, a
   const b = build();
   const want = FOOTER_GROUPS.flatMap((g) => g.links.map((l) => l.href));
   for (const [p, h] of html(b)) {
-    const foot = h.slice(h.indexOf('<footer'), h.indexOf('</footer>'));
+    const foot = h.slice(h.indexOf('<footer class="sf"'), h.lastIndexOf('</footer>'));
     assert.deepEqual([...foot.matchAll(/<li><a href="([^"]+)"/g)].map((m) => m[1]).filter((x) => x !== '#'), want, p + ' footer');
     assert.ok(!foot.includes('data-fd-cookie-settings'), p + ' footer has no cookie settings link');
     const sizes = [...foot.matchAll(/<ul>([\s\S]*?)<\/ul>/g)].map((m) => (m[1].match(/<li>/g) || []).length);
