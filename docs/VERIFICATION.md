@@ -78,7 +78,7 @@ Environment: macOS, Node 24.22.1, pnpm 12.15.0, PHP 8.5.12 (CLI, built-in server
 | Check | Result |
 |---|---|
 | `pnpm build` (tsc, Vite, public assets) | PASS |
-| `pnpm test` | PASS 106/106 (includes 25 site-render tests and 11 end-to-end CMS HTTP tests) |
+| `pnpm test` | PASS 106/106 before the clean-up; PASS 100/100 after archiving the Node server (its 6 tests left with it, ADR-018). Includes 25 site-render tests and 11 end-to-end CMS HTTP tests |
 | `pnpm test:php` | PASS (all; adds Markdown XSS, media, health, enquiry-note checks) |
 | `pnpm test:ui` (app in jsdom) | PASS 47/47 |
 | `pnpm test:console` (console in jsdom, real API) | PASS 16/16 |
