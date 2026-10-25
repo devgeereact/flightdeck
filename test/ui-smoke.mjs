@@ -79,6 +79,21 @@ try {
     const a = await boot({fixtures: true}); await sleep(1500);
     const t0 = a.text();
     check('A1 no data-source choice is shown and nothing says sample/demo', !a.w.document.querySelector('select') && !/Sample|DATA SOURCE|demo/i.test(t0));
+    { // app shell: skip link, one marked current page in each menu, every sidebar button named for its icon-only state
+      const d0 = a.w.document, skip = d0.querySelector('a.skip-link'), main = d0.querySelector('main#main');
+      check('S1 a "Skip to content" link leads to the main content', !!skip && skip.textContent === 'Skip to content' && skip.getAttribute('href') === '#main' && !!main && main.getAttribute('tabindex') === '-1');
+      if (skip && main) { skip.dispatchEvent(new a.w.MouseEvent('click', {bubbles: true, cancelable: true})); await sleep(50); }
+      check('S2 using the skip link moves focus to the main content and keeps the current page', d0.activeElement === main && a.w.location.hash === '', a.w.location.hash);
+      const side = [...d0.querySelectorAll('.sidebar nav[aria-label="Main"] button')], phone = [...d0.querySelectorAll('nav.mobile-nav[aria-label="Main"] button')];
+      const current = (list) => list.filter(b => b.getAttribute('aria-current') === 'page');
+      check('N1 the sidebar menu is a nav with the tracker marked as the current page', side.length === 3 && current(side).length === 1 && current(side)[0].getAttribute('aria-label') === 'Flight tracker', side.map(b => b.outerHTML.slice(0, 120)).join(' | '));
+      check('N2 every sidebar button keeps its name (aria-label and title) for the icon-only width', side.every(b => b.getAttribute('aria-label') && b.getAttribute('title') === b.getAttribute('aria-label')) && side[1].getAttribute('aria-label') === 'Saved flights (0)');
+      check('N3 the phone menu uses short labels and marks the current page', phone.map(b => b.textContent).join('|') === 'Tracker|Saved 0|Packing list' && current(phone).length === 1 && current(phone)[0].textContent === 'Tracker', phone.map(b => b.textContent).join('|'));
+      const radios = [...d0.querySelectorAll('.fb-dialog fieldset.fb-kinds input[type="radio"][name="fb-kind"]')];
+      check('F1 the feedback "kind" choice is three real radio buttons, each with a label, one checked', radios.length === 3 && radios.every(r => r.closest('label') && r.closest('label').textContent.trim().length > 0) && radios.filter(r => r.checked).length === 1 && d0.querySelector('.fb-dialog fieldset legend')?.textContent === 'What is this about?' && !d0.querySelector('.fb-dialog [role="radio"]'));
+      const bug = radios.find(r => r.value === 'bug'); if (bug) { bug.click(); await sleep(100); }
+      check('F2 choosing a radio changes the form (title becomes "Report a problem"), and the privacy text links to the privacy page', d0.querySelector('#fb-title')?.textContent === 'Report a problem' && !!d0.querySelector('.fb-foot a[href="/privacy/"]'));
+    }
     check('A2 flight number box starts empty', val(a, 'input[aria-label="Flight number"]') === '');
     check('A3 shows the "Track a flight" prompt, no flight preloaded', t0.includes('Track a flight') && !a.w.document.querySelector('.flight-card'));
     await search(a, 'BA59'); await sleep(1500);
@@ -96,10 +111,26 @@ try {
     }
     const tabClick = async (name) => { [...d.querySelectorAll('.fv-tablist button')].find(b => b.textContent === name).dispatchEvent(new a.w.MouseEvent('click', {bubbles: true})); await sleep(300); };
     check('B9 once a flight shows there is still exactly one h1 (hidden), and the search stays visible', d.querySelectorAll('h1').length === 1 && !!d.querySelector('input[aria-label="Flight number"]'));
-    await tabClick('Airport and bags');
-    check('B10 Airport and bags tab shows the terminal and the baggage belt', /Departure terminal5/.test(a.text()) && /BAGGAGE BELT2/.test(a.text()), a.text().slice(0, 300));
+    await tabClick('Airport');
+    check('B10 Airport tab shows the terminal and the baggage belt', /Departure terminal5/.test(a.text()) && /Baggage belt2/.test(a.text()), a.text().slice(0, 300));
     await tabClick('Weather');
     check('B11 Weather tab shows the destination weather in plain words', /Cape Town/.test(a.text()) && /15°C/.test(a.text()) && /Partly cloudy/.test(a.text()));
+    { // flight detail tabs: five tabs, roving tabindex, arrow/Home/End keys, focusable panel
+      const tabs = () => [...d.querySelectorAll('.fv-tablist [role="tab"]')];
+      const sel = () => tabs().find(b => b.getAttribute('aria-selected') === 'true');
+      const key = async (k) => { sel().dispatchEvent(new a.w.KeyboardEvent('keydown', {key: k, bubbles: true, cancelable: true})); await sleep(150); };
+      const roving = () => tabs().filter(b => b.getAttribute('tabindex') === '0').length === 1 && tabs().filter(b => b.getAttribute('tabindex') === '-1').length === 4 && sel().getAttribute('tabindex') === '0';
+      check('T1 the flight details have five tabs with short labels and a roving tabindex', tabs().map(b => b.textContent).join('|') === 'Journey|Airport|Weather|Updates|Destination' && roving() && sel().textContent === 'Weather', tabs().map(b => `${b.textContent}:${b.getAttribute('tabindex')}`).join(' '));
+      await key('ArrowRight');
+      const afterRight = sel()?.textContent, focusRight = d.activeElement === sel();
+      await key('End');
+      const afterEnd = sel()?.textContent;
+      await key('Home');
+      const afterHome = sel()?.textContent;
+      await key('ArrowLeft');
+      check('T2 Right, End, Home and Left (wrapping) move the selection and the focus, keeping one tab in the Tab order', afterRight === 'Updates' && focusRight && afterEnd === 'Destination' && afterHome === 'Journey' && sel()?.textContent === 'Destination' && d.activeElement === sel() && roving(), [afterRight, focusRight, afterEnd, afterHome, sel()?.textContent].join(','));
+      check('T3 the tab panel can take focus and is labelled by the selected tab', d.querySelector('#fv-panel')?.getAttribute('tabindex') === '0' && d.querySelector('#fv-panel')?.getAttribute('aria-labelledby') === sel()?.id);
+    }
     check('B12 the in-app footer has two equal menus, the right links, and no cookie settings', (() => { const cols = [...d.querySelectorAll('footer.sf .sf-col')]; const n = cols.map(c => c.querySelectorAll('a').length); return cols.length === 2 && n[0] === n[1] && !d.querySelector('[data-fd-cookie-settings]') && [...d.querySelectorAll('footer.sf a')].some(x => x.getAttribute('href') === '#/checklist'); })());
     check('B13 a countdown is shown from the reported times', /Leaves in|Was due to leave/.test(a.text()), a.text().slice(0, 200));
     check('B14 the address becomes a shareable flight link', /^#\/flight\/BA59\/\d{4}-\d{2}-\d{2}$/.test(a.w.location.hash), a.w.location.hash);
@@ -127,7 +158,8 @@ try {
     link.w.close();
     const ukToday = new Intl.DateTimeFormat('en-CA', {timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit'}).format(new Date());
     const sv = await boot({fixtures: true, hash: '#/saved', storage: {'flightdeck-saved': JSON.stringify([{number: 'BA59', date: ukToday}, {number: 'LH400', date: '2026-01-02'}])}}); await sleep(1500);
-    check('B18 saved flights say Today for the UK date and mark old ones as past', sv.text().includes('Today') && /PAST/.test(sv.text()), sv.text().slice(0, 300));
+    check('B18 saved flights say Today for the UK date and mark old ones as past', sv.text().includes('Today') && [...sv.w.document.querySelectorAll('.saved-row .pill')].some(p => p.textContent === 'Past'), sv.text().slice(0, 300));
+    check('N4 on the saved flights page that menu item is the current page', sv.w.document.querySelector('.sidebar nav [aria-current="page"]')?.getAttribute('aria-label') === 'Saved flights (2)' && sv.w.document.querySelector('nav.mobile-nav [aria-current="page"]')?.textContent === 'Saved 2');
     const ib = [...sv.w.document.querySelectorAll('button')].find(b => b.textContent.includes('Install app'));
     ib.dispatchEvent(new sv.w.MouseEvent('click', {bubbles: true})); await sleep(300);
     check('B19 Install app without a browser prompt opens written help instead of a pop-up', sv.text().includes('Install Flightdeck') && sv.text().includes('Add to Home Screen'));
@@ -151,6 +183,7 @@ try {
     setVal(k.w, d.querySelector('.ck-start input'), 'Cape Town in October');
     d.querySelector('.ck-start').dispatchEvent(new k.w.Event('submit', {bubbles: true, cancelable: true})); await sleep(600);
     check('K2 starting makes a trip with all 8 sections and 101 items unticked, one section open at a time', d.querySelectorAll('.ck-panels .ck-sec').length === 8 && d.querySelectorAll('.ck-check').length === 101 && k.text().includes('0 of 101 packed') && d.querySelectorAll('.ck-panels .ck-sec:not([hidden])').length === 1, k.text().slice(300, 600));
+    check('K2b trips are plain buttons with aria-pressed (no tabs without a tab panel)', !d.querySelector('.ck-tabs[role="tablist"], .ck-tab[role="tab"]') && d.querySelector('.ck-tabs .ck-tab')?.getAttribute('aria-pressed') === 'true' && d.querySelector('.sidebar nav [aria-current="page"]')?.getAttribute('aria-label') === 'Packing list');
     check('K3 sections run in trip order, ending with the night before and last minute', [...d.querySelectorAll('.ck-rail-title')].map(e => e.textContent).join('|') === 'Days in advance|Clothes and accessories|Bathroom bag|Accessories|Papers and documents|Mostly work related|The night before|Last minute');
     const passport = byText(d, '.ck-check', 'Passport');
     click(k.w, passport.querySelector('input')); await sleep(400);
