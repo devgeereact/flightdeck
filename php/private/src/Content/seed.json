@@ -1,0 +1,963 @@
+{
+ "version": 1,
+ "settings": {
+  "siteName": "Flightdeck",
+  "siteUrl": "https://flightdeck.gakinz.com",
+  "ownerName": "Gideon Akinlotan",
+  "contactEmail": "info@flightdeck.gakinz.com",
+  "lastReviewed": "2026-10-24",
+  "tagline": "Your journey, in view",
+  "socialImage": "",
+  "footerBlurb": "Flight status, airport details and a packing list you can reuse.",
+  "footerNote": "Flight details can change. Always follow airline and airport instructions."
+ },
+ "navigation": {
+  "header": [
+   {
+    "label": "How it works",
+    "href": "/how-it-works/"
+   },
+   {
+    "label": "Coverage",
+    "href": "/coverage/"
+   },
+   {
+    "label": "Guides",
+    "href": "/guides/"
+   },
+   {
+    "label": "Packing list",
+    "href": "/travel-checklist/"
+   },
+   {
+    "label": "Help",
+    "href": "/help/"
+   }
+  ],
+  "footer": [
+   {
+    "title": "Flightdeck",
+    "links": [
+     {
+      "label": "Open the app",
+      "href": "/app/"
+     },
+     {
+      "label": "How it works",
+      "href": "/how-it-works/"
+     },
+     {
+      "label": "Data and coverage",
+      "href": "/coverage/"
+     },
+     {
+      "label": "Help and FAQ",
+      "href": "/help/"
+     }
+    ]
+   },
+   {
+    "title": "Guides and tools",
+    "links": [
+     {
+      "label": "Travel guides",
+      "href": "/guides/"
+     },
+     {
+      "label": "Printable packing list",
+      "href": "/travel-checklist/"
+     }
+    ]
+   },
+   {
+    "title": "About",
+    "links": [
+     {
+      "label": "About Flightdeck",
+      "href": "/about/"
+     },
+     {
+      "label": "Contact us",
+      "href": "/contact/"
+     },
+     {
+      "label": "Accessibility",
+      "href": "/accessibility/"
+     }
+    ]
+   },
+   {
+    "title": "Legal",
+    "links": [
+     {
+      "label": "Privacy",
+      "href": "/privacy/"
+     },
+     {
+      "label": "Cookies",
+      "href": "/cookies/"
+     },
+     {
+      "label": "Terms",
+      "href": "/terms/"
+     }
+    ]
+   }
+  ]
+ },
+ "guideCategories": [
+  {
+   "id": "reading",
+   "title": "Understand your flight",
+   "blurb": "Read times, numbers and directions the way the airline means them."
+  },
+  {
+   "id": "prepare",
+   "title": "Prepare and pack",
+   "blurb": "Get ready before you leave, and know the order of the day."
+  },
+  {
+   "id": "trouble",
+   "title": "When things go wrong",
+   "blurb": "Clear steps for delays, cancellations and bags that do not arrive."
+  }
+ ],
+ "pages": {
+  "about": {
+   "slug": "about",
+   "kind": "about",
+   "title": "About Flightdeck",
+   "description": "What Flightdeck is, where its data comes from, and how it avoids guessing.",
+   "body": "Flightdeck helps you follow a flight and get ready for a trip. It answers the questions people ask at the airport and the night before: is it on time, which terminal, which gate, where is the plane, what should I pack.\n\n## It does not guess\n\nMany flight details are simply not available for every flight, especially gates and baggage belts, which airlines and airports often assign late. When a detail is not reported, Flightdeck says so. Times are labelled *scheduled*, *estimated* or *actual*, and anything we work out ourselves, such as how far along the journey is, is labelled as an estimate.\n\n## Where the data comes from\n\n- [AeroDataBox](https://aerodatabox.com/): flight schedules, estimated and actual times, terminals, gates and baggage belts, aircraft type.\n- [The OpenSky Network](https://opensky-network.org/): the live position of aircraft that are transmitting and within range of its receivers. Over oceans and remote areas there is often no position.\n- [adsbdb](https://www.adsbdb.com/): the usual route for a flight number, used to tell you where a flight normally goes when no schedule is published yet.\n- [Open-Meteo](https://open-meteo.com/): current weather at the destination airport area.\n\n## Outbound and inbound\n\nFlightdeck tells you whether a flight leaves from or arrives in the United Kingdom, worked out from the airports on its route. [Read how it works](/guides/outbound-and-inbound-flights/).\n\n## Who runs it\n\nFlightdeck is run by {{ownerName}}. Feedback is welcome by email at [{{contactEmail}}](mailto:{{contactEmail}}) or through our [contact form](/contact/)."
+  },
+  "accessibility": {
+   "slug": "accessibility",
+   "kind": "page",
+   "title": "Accessibility",
+   "description": "How Flightdeck aims to be usable by everyone, what we have checked, known issues, and how to tell us about a problem.",
+   "body": "Flightdeck aims to be usable by as many people as possible. We aim to meet the Web Content Accessibility Guidelines (WCAG) 2.2 at level AA. This is a target we test against, not a certified result.\n\n## What we have done\n\n- Text can be resized and the pages reflow at phone width without sideways scrolling.\n- Every page has a skip link, landmarks and one main heading. The site and app can be used with a keyboard, with a visible focus ring.\n- Status is always written as text, never shown by colour alone.\n- Animation is reduced or switched off when your device asks for reduced motion.\n- No text is smaller than 12.5px, and form fields are large enough to avoid zooming on phones.\n\n## Known issues\n\n- We have not yet completed a full test with screen readers on every device.\n- The sign-in window is provided by Clerk, our sign-in service, and its accessibility is outside our direct control.\n- Some data, such as aircraft position, is only available as text and numbers, not as a map.\n\n## Tell us about a problem\n\nIf something on Flightdeck is hard to use, please [contact us](/contact/). Tell us the page and what happened, and we will try to fix it or give you the information another way.\n\nThis statement was last reviewed on {{lastReviewed}}."
+  },
+  "contact": {
+   "slug": "contact",
+   "kind": "contact",
+   "title": "Contact us",
+   "description": "Send a question, a problem report or feedback about Flightdeck.",
+   "body": "You can email [{{contactEmail}}](mailto:{{contactEmail}}) or use the form below. We read every message. Please do not include passwords or payment details."
+  },
+  "cookies": {
+   "slug": "cookies",
+   "kind": "legal",
+   "title": "Cookies and similar technologies",
+   "description": "The cookies and browser storage Flightdeck uses, which are essential, and how to change your analytics choice.",
+   "body": "This page lists what Flightdeck stores in your browser. Last reviewed {{lastReviewed}}. Cookies and similar technologies are small pieces of information a site keeps on your device.\n\n## Always on: essential\n\nThese are needed to sign you in and to make the app work. They do not track you across other sites, so they do not need consent.\n\n| Name | What it is for | How long |\n| --- | --- | --- |\n| Clerk sign-in cookies (for example `__session`, `__client_uat`) | Keep you signed in and prove who you are to our server. | While you are signed in, up to about a week |\n| `flightdeck-saved`, `flightdeck-checklist` (browser storage) | Keep your saved flights and packing list on this device so they work offline. | Until you sign out (if tied to an account) or clear your browser data |\n| `flightdeck-last-results` (browser storage) | Keeps the last few flight results you looked at, so a flight can still be read without a connection. It is always shown as \"last fetched at\", never as live. | Up to six results; cleared when you sign out |\n| `flightdeck-public-packing` (browser storage) | Remembers which boxes you ticked on the printable packing list page. | Until you clear your browser data |\n| `fd-consent` (browser storage) | Remembers your cookie choice. | Until you change it or clear your browser data |\n| App files (service worker cache) | Lets the app load quickly and work without a connection. | Until the app updates |\n\n## Only if you accept: analytics\n\nGoogle Analytics 4 helps us count visits and see which parts of the app are used. It is switched off until you press **Accept analytics**. Before that, nothing is requested from Google.\n\n| Name | What it is for | How long |\n| --- | --- | --- |\n| `_ga`, `_ga_<id>` | Tell visits apart and count them. | Up to 2 years |\n\nWe have turned off Google's advertising features for this site: no advertising personalisation and no Google signals. We do not send your name, email, account id or flight numbers to Google.\n\n## Advertising\n\nFlightdeck does not currently use advertising cookies. If that changes, this page and the privacy policy will be updated first and you will be asked before any advertising cookie is set.\n\n## Change your choice\n\nYou can change your analytics choice at any time with [Cookie settings](#cookie-settings). You can also clear cookies and site data in your browser settings. Clearing essential data will sign you out."
+  },
+  "coverage": {
+   "slug": "coverage",
+   "kind": "page",
+   "title": "Data, coverage and limits",
+   "description": "Where Flightdeck's flight data comes from, how fresh it is, what it does not cover, and the credit each source is owed.",
+   "body": "## Sources\n\n| Source | What it provides | How fresh |\n| --- | --- | --- |\n| [AeroDataBox](https://aerodatabox.com/) | Schedule, estimated and actual times, terminal, gate, baggage belt, aircraft type, status | Fetched again at most every 10 minutes per flight |\n| [The OpenSky Network](https://opensky-network.org/) | Live position, height, speed and heading of aircraft in the air | One shared snapshot, refreshed every 2 minutes |\n| [adsbdb](https://www.adsbdb.com/) | The usual origin and destination for a flight number | Kept for up to 1 hour |\n| [Open-Meteo](https://open-meteo.com/) | Current weather around the destination airport | Kept for up to 10 minutes |\n\nEvery result shows the time it was fetched.\n\n## Which flights and dates\n\n- Full details are available for flights leaving from **yesterday to three days ahead**. Further ahead, Flightdeck can usually show only the flight's usual route.\n- Live position appears only while the aircraft is airborne, transmitting and within range of OpenSky receivers. Over oceans and remote areas there is often no position.\n- An aircraft on the ground is never shown as the position of your flight.\n\n## Known limits\n\n- **Gates and baggage belts** are often assigned late by airports and airlines, and some are never published. Until they are reported, Flightdeck says so.\n- **Monthly allowance.** Flightdeck uses free plans from its providers for personal, non-commercial use. Schedule lookups share a monthly allowance. If it runs out, schedules pause until the next month and the page tells you; live position and usual routes keep working.\n- **Codeshares.** Look up the flight number of the operating airline if a codeshare number is not found.\n- **Delays** are worked out only from reported times. Flightdeck does not predict delays.\n\n## Attribution\n\nFlight schedules and status: AeroDataBox. Aircraft positions: The OpenSky Network. Usual routes: adsbdb. Weather: Open-Meteo. Each belongs to its provider and is used under that provider's terms.\n\nIf something looks wrong, please [tell us](/contact/)."
+  },
+  "guides": {
+   "slug": "guides",
+   "kind": "index",
+   "title": "Travel guides",
+   "description": "Plain, practical guides for the days around a flight: reading flight status, delays, packing and baggage.",
+   "body": "Short guides, written in plain English and checked against what airlines and airports actually publish. None of them is legal advice, and where rules matter we link to the official source."
+  },
+  "guides/baggage-reclaim-and-missing-bags": {
+   "slug": "guides/baggage-reclaim-and-missing-bags",
+   "kind": "guide",
+   "title": "Baggage reclaim and what to do about a missing bag",
+   "description": "How baggage reclaim works, why the belt is often not known until you land, and the steps to take if your bag does not arrive.",
+   "body": "After a long flight, the last obstacle is the baggage hall. Knowing how it works helps, and knowing what to do if your bag does not appear helps even more.\n\n## Which belt?\n\nBaggage belts are assigned by the airport, often shortly before or after the aircraft lands, and the belt can change. That is why a flight tracker may show no belt until late, and why a belt shown early can be wrong. Check the screens in the arrivals hall, which are the authority on the day.\n\n## Making your bag easy to spot\n\n- Use a bright strap, ribbon or tag. Many suitcases look alike.\n- Put your name, email and phone number inside the bag as well as on the outside tag.\n- Take a photo of your bag and keep the baggage receipt the airline gives you at check-in.\n\n## If your bag does not arrive\n\n1. **Do not leave the baggage hall.** Go to the airline's baggage desk (or the handling agent's) **before you leave the airport** and report it.\n2. Ask for a written report and a reference number. You will need it for every later conversation.\n3. Give an address where the bag can be delivered, and a phone number that works at your destination.\n4. Keep receipts for essentials you have to buy while you wait, such as toiletries and basic clothing. Ask the airline what it will cover.\n5. Follow up using the airline's online baggage tracking, with your reference number.\n\nAirlines are responsible for the bags they carry, and international carriers have to follow common rules on compensation for lost or damaged baggage. The details differ, so use the airline's own policy and the [CAA passenger advice](https://www.caa.co.uk/passengers/), and check what your travel insurance covers.\n\n## Damaged bags\n\nIf your bag is damaged, report it at the airport before you leave, and make a photo record. Airlines often have a short deadline for damage reports, so do not wait until you get home.",
+   "category": "trouble",
+   "takeaways": [
+    "The belt is often only known near landing, and it can change.",
+    "If a bag does not arrive, report it before leaving the baggage hall and get a reference number.",
+    "Report damage at the airport and photograph it, because deadlines can be short."
+   ]
+  },
+  "guides/cabin-bag-or-hold-bag": {
+   "slug": "guides/cabin-bag-or-hold-bag",
+   "kind": "guide",
+   "title": "Cabin bag or hold bag: what goes where",
+   "description": "How to decide what goes in your cabin bag and what goes in the hold, what to check in your allowance, and the items that should always stay with you.",
+   "body": "Most trips involve two bags: one you carry on board and one that goes in the hold. Deciding what goes where is mostly common sense, but a few items have firm rules, and allowances differ more than many people expect.\n\n## Start with your own allowance\n\nThere is no single standard. What you can take depends on the airline and on the fare you bought, and the same airline can offer different allowances on different fares. Some fares include only a small bag that must fit under the seat, with a larger cabin bag or any hold bag costing extra. Before you pack, find these in your booking or on the airline's baggage page:\n\n- How many cabin items you can take, and their maximum size and weight.\n- Whether a hold bag is included, and its weight limit.\n- What happens if a bag is over the limit, and whether it is cheaper to add a bag before you travel than at the airport.\n\nWeighing your bags at home avoids surprises at the desk.\n\n## What should stay in the cabin\n\nKeep anything you cannot do without, or could not replace quickly, with you:\n\n- Passport, boarding pass, money and cards.\n- Medicines you need during the journey or in the first days, in their original packaging. See the [GOV.UK hand luggage guidance](https://www.gov.uk/hand-luggage-restrictions) for medicines and liquids.\n- Keys, jewellery, laptops, cameras and other valuables.\n- Power banks and spare lithium batteries. Airlines generally do not allow these in the hold, and limits apply in the cabin, so check your airline's rules.\n- A change of clothes and a wash kit, in case your hold bag arrives late.\n\n## What is better in the hold\n\n- Bulky clothes and shoes you will not need on the way.\n- Larger toiletries and other liquids that would not pass cabin security limits.\n- Items that are not allowed through security in the cabin, such as many sharp tools and scissors, where they are permitted in the hold at all.\n\nSome items are banned from both. Your airline's dangerous goods page lists them.\n\n## Liquids and security checks\n\nRules for liquids in the cabin depend on the airport and the scanners it uses, and they have changed several times. Do not assume the rules at one airport apply at another, including on your way home. Check the security page of each airport you leave from shortly before you travel, and follow what security staff tell you on the day.\n\n## When your cabin bag goes in the hold anyway\n\nOn full flights, airlines sometimes ask passengers to put cabin bags in the hold at the gate. It helps to pack so that you could take out your medicines, documents, batteries and valuables in a minute, for example in a small pouch at the top of the bag.\n\n## Plan it once\n\nFor a long trip, the guide to [packing your cabin bag for a long flight](/guides/pack-your-cabin-bag-for-a-long-flight/) goes further. The [printable packing list](/travel-checklist/) covers the whole trip, and in [Flightdeck](/) you can keep your own version for every journey. If a bag does not turn up at the other end, see [baggage reclaim and missing bags](/guides/baggage-reclaim-and-missing-bags/).",
+   "category": "prepare",
+   "takeaways": [
+    "Allowances depend on your airline and fare, so check your own booking.",
+    "Medicines, valuables, documents and spare batteries belong in the cabin.",
+    "Liquid and security rules differ by airport, so check before you pack."
+   ]
+  },
+  "guides/connecting-flights-and-missed-connections": {
+   "slug": "guides/connecting-flights-and-missed-connections",
+   "kind": "guide",
+   "title": "Connecting flights and what to do if you miss one",
+   "description": "How a flight connection works, why one booking and separate tickets are treated differently, and the steps to take if a delay makes you miss your onward flight.",
+   "body": "A connection means changing aircraft at an airport on the way to where you are going. Most connections go smoothly, but a delay on the first flight can leave you short of time. Knowing how your journey was booked tells you who is responsible for getting you there.\n\n## One booking or separate tickets\n\nThis is the most important thing to check, and your booking confirmation will tell you.\n\n- **One booking** (one booking reference covering every flight): the airline sold you the whole journey. If a delay on an earlier flight makes you miss a later one, the airline will normally rebook you to your destination. The details, including any meals or hotel, depend on the airline's conditions and the rules that apply to your route.\n- **Separate tickets** (different booking references, sometimes sold as \"self-transfer\"): each flight is its own contract. The second airline usually has no duty to help if you miss its flight because the first one was late. Some booking sites sell their own protection for this, so check exactly what you bought.\n\n## How much time you need\n\nAirports set a minimum connection time for changing between flights, and airlines normally only sell connections on one booking that meet it. That minimum assumes things go to plan. With separate tickets nobody checks the gap for you, and you may need to collect your bags, check in again and go back through security, so allow much more time.\n\n## At the connecting airport\n\n1. **Follow the signs for transfers** or flight connections, not the exit, unless your airline has told you to collect your bags.\n2. **Check your bags.** On one booking, hold bags are often checked through to your final destination. Your bag tag or the check-in desk can confirm this. With separate tickets you will usually need to collect them and check them in again.\n3. **Expect security again.** Many airports screen transfer passengers, so liquids bought before your first flight may be checked again.\n4. **Find your next gate** on the departure screens. See [how to read a departure board](/guides/how-to-read-an-airport-departure-board/).\n\nSome countries require a transit visa or other paperwork even if you do not leave the airport, and rules differ by nationality. Check the [GOV.UK foreign travel advice](https://www.gov.uk/foreign-travel-advice) for each country you pass through.\n\n## If you miss your connection\n\n1. **Go to the airline's transfer desk** or use its app. If you are on one booking and the delay was the airline's, many airlines will already have rebooked you automatically, so check the app first.\n2. **Get the new arrangements in writing,** including the new flight and anything offered for meals or a hotel.\n3. **Keep receipts and notes,** as you would for any delay. The guide on [delays and cancellations](/guides/what-to-do-if-your-flight-is-delayed-or-cancelled/) has a fuller list.\n4. **Tell anyone meeting you** about the new arrival time.\n\n## Your rights\n\nWhat you are entitled to after a missed connection depends on where the journey started, which airline operated each flight, whether it was all on one booking, how late you arrived and why. Do not rely on general summaries. Use the [CAA passenger advice](https://www.caa.co.uk/passengers/), your airline's conditions of carriage, and your travel insurance.\n\nOn the way, [Flightdeck](/) can show each flight's status and estimated times, so you see early if the first leg is running late.",
+   "category": "trouble",
+   "takeaways": [
+    "Whether flights are on one booking or separate tickets changes who has to help you.",
+    "Allow for transfer security, terminal changes and any transit visa rules.",
+    "If you miss a connection, go to the airline's transfer desk and check the CAA for your rights."
+   ]
+  },
+  "guides/departure-day-airport-timeline": {
+   "slug": "guides/departure-day-airport-timeline",
+   "kind": "guide",
+   "title": "Departure day at the airport: a simple timeline",
+   "description": "A calm step-by-step order for the day you fly, from checking your flight at home to the gate, with the checks worth doing at each stage.",
+   "body": "Most travel stress comes from not knowing what comes next. This is a general order for a departure day. Airlines and airports differ, so treat it as a frame and use your own airline's instructions for anything specific.\n\n## Before you leave\n\n- **Check the flight.** Look at the current status, departure time and, if shown, the terminal. Times can change after you booked.\n- **Check the airline's advice on arriving.** Airlines publish how early they recommend you get to the airport. Follow their guidance and allow extra for travel to the airport.\n- **Documents.** Passport or ID, boarding pass if you have it on your phone, and any visa or entry paperwork the destination needs. For entry requirements, use the official [GOV.UK foreign travel advice](https://www.gov.uk/foreign-travel-advice).\n- **Phone and power.** Charge your phone and carry a charger or power bank in your cabin bag, not in the hold.\n- **Bags.** Re-check your allowance for cabin and hold bags on your airline's website, as limits vary by airline and fare.\n\n## At the airport\n\n1. **Find your check-in or bag drop.** Departure boards show the desk or zone for your flight. If you checked in online and have no hold bag, you can usually go straight to security.\n2. **Drop your hold bag** if you have one, and keep your boarding pass and ID to hand.\n3. **Security.** Rules for liquids, electronics and what must be taken out of bags differ by airport and can change, so read the airport's current guidance before you pack your cabin bag.\n4. **After security.** Check the departure screens. The gate is often shown only a short time before boarding, so do not go far from the screens until it appears.\n\n## At the gate\n\n- Listen for announcements and watch for a gate change. Gates do change.\n- Boarding usually starts before the departure time. Be at the gate by the time your airline asks.\n- If the flight is delayed, look at the airline's information first, and read [what to do if your flight is delayed or cancelled](/guides/what-to-do-if-your-flight-is-delayed-or-cancelled/).\n\n## When you land\n\n- Check the baggage belt on the arrivals screens or the airline's app. Belt numbers are often shown only after landing.\n- If a bag does not arrive, report it at the airline's desk before leaving the baggage hall. See [baggage reclaim and missing bags](/guides/baggage-reclaim-and-missing-bags/).\n\n## A short packing list for the night before\n\nPassports, chargers, medication, house keys and a final check of the flight. The full list is on the [printable packing list](/travel-checklist/).",
+   "category": "prepare",
+   "takeaways": [
+    "Follow your airline's advice on how early to arrive.",
+    "Rules on liquids and electronics differ by airport, so check them shortly before you go.",
+    "Watch the screens: gates are shown late and can change."
+   ]
+  },
+  "guides/flight-numbers-airline-codes-and-codeshares": {
+   "slug": "guides/flight-numbers-airline-codes-and-codeshares",
+   "kind": "guide",
+   "title": "Flight numbers, airline codes and codeshares explained",
+   "description": "How to read a flight number like BA117, what airport and airline codes stand for, and why one flight can carry several numbers.",
+   "body": "A flight number looks simple, but it carries a few separate pieces of information, and one aircraft can be sold under more than one number. Knowing how it is built helps you search correctly and avoid turning up for the wrong flight.\n\n## How a flight number is built\n\nA flight number is the airline's code followed by a number, for example **BA117**. The two characters at the start identify the airline (the IATA airline designator). Most are two letters, but some include a digit, such as U2. The number after it is the airline's own reference for that service, and it may have up to four digits.\n\n- The same flight number is normally used on the same route at the same time on many days, so the **date** matters. Searching a number without the right date can show a different day's flight.\n- Airlines can reuse a number for a different route later, so an old booking confirmation is not proof of today's flight.\n- A flight number is not a guide to direction. Some airlines use odd and even numbers for outbound and return legs, but there is no rule that all airlines follow.\n\n## Airport and airline codes\n\n- **IATA airport codes** have three letters and are the ones on tickets and bag tags, such as LHR or JFK.\n- **ICAO airport codes** have four letters and are used in aviation operations and by air traffic control. EGLL and KJFK are the ICAO codes for the same two airports.\n- **Callsigns** are what pilots and controllers say on the radio. They often use the airline's three-letter ICAO code, so a flight sold as BA117 may be tracked on an air traffic display under a callsign beginning BAW. Callsigns can differ from the number on your ticket, which is one reason live tracking maps do not always match a booking at first glance.\n\n## What a codeshare is\n\nIn a codeshare, one flight is sold by more than one airline, each under its own flight number. Only one airline actually operates the aircraft with its own crew. You may see two terms:\n\n- The **marketing carrier** is the airline whose number you booked under.\n- The **operating carrier** is the airline that flies the aircraft. It controls check-in times for the aircraft, the gate and many of the day-to-day decisions.\n\nThe practical effect: if your ticket says \"operated by\" another airline, check that airline's website or the airport's departure board. The partner's number may not appear on the airport screens, and you may need to look for the operating airline's number instead.\n\n## Searching well\n\n1. Use the flight number exactly as it appears on your booking, including any letters.\n2. Enter the departure date for the airport where the flight starts, in that airport's local date.\n3. If nothing is found, try the operating airline's number if your ticket shows one.\n4. If it is still not found, it may be too far ahead for the airline to have published, so check again closer to the date.\n\n## How Flightdeck handles this\n\nFlightdeck asks for the flight number and the date, and shows only what a source actually reports. It does not guess a flight from a partial match. [Track a flight](/) to see it, or read [how to read the times](/guides/flight-status-explained/) once you have it.",
+   "category": "reading",
+   "takeaways": [
+    "A flight number is the airline code plus a number, and the date matters.",
+    "IATA airport codes have three letters and ICAO codes have four.",
+    "In a codeshare, check which airline actually operates the flight."
+   ]
+  },
+  "guides/flight-status-explained": {
+   "slug": "guides/flight-status-explained",
+   "kind": "guide",
+   "title": "Flight status explained: scheduled, estimated, actual",
+   "description": "What check-in, boarding, leaving the gate, take-off, landing and reaching the gate mean, why times change, and how to read a flight status without being misled.",
+   "body": "A flight status page can look like a jumble of times. They each mean something specific, and knowing which is which tells you what is really happening.\n\n## The three kinds of time\n\n- **Scheduled** is the time in the airline's timetable. It is the plan, and it rarely changes after it is published.\n- **Estimated** is the best current prediction. It moves as the flight is delayed or runs early. An estimate is not a promise.\n- **Actual** is what happened. It only exists once the event is over.\n\n## The moments of a flight, in order\n\n1. **Check-in**: bag drop and security. Airlines publish when it opens and closes, and the airport screens show which desk to use.\n2. **Boarding**: passengers are called to the aircraft. Many airlines and airports do not publish this time.\n3. **Leaving the gate** (airlines call it gate out or off-blocks): the aircraft pushes back from its parking stand. Airlines use this time to measure departure punctuality.\n4. **Take-off**: the wheels leave the runway. This is usually some minutes after the aircraft leaves the gate, because it has to taxi and queue.\n5. **Landing**: the wheels touch the runway at the destination.\n6. **Reaching the gate** (gate in or on-blocks): the aircraft parks at the arrival stand. The doors open a little later.\n7. **Bags on the belt**: baggage takes longer again, and the belt number is often only shown shortly before or after landing.\n\n## Why the numbers differ\n\nThe gap between take-off and landing is the time in the air. The gap between leaving the gate and reaching the gate is longer, because it includes taxiing at both ends. So an \"11 hour flight\" in the timetable is usually a little more than the time actually airborne.\n\n## Reading a delay properly\n\n- A delay is the difference between scheduled and estimated (or actual) time. It can differ between departure and arrival: a flight can leave late and make up time in the air, or the reverse.\n- \"On schedule\" should only be shown when there is live information behind it. If an airport or airline provides only the timetable, a good status page says that the times are the schedule, not a live check.\n- Local times: departure and arrival times are in each airport's own time zone, so a flight can appear to land before it left.\n\n## How Flightdeck handles this\n\nFlightdeck marks every time as scheduled, estimated or actual. A step with no time shows as not reported rather than a guess, and anything Flightdeck works out itself, such as how far along the flight is, is marked as an estimate. [Track a flight](/).",
+   "category": "reading",
+   "takeaways": [
+    "Scheduled is the plan, estimated is the current prediction, and actual is what happened.",
+    "Leaving the gate and reaching the gate include taxiing, so they are longer than the time in the air.",
+    "A delay can differ between departure and arrival, and times are in each airport's own time zone."
+   ]
+  },
+  "guides/how-to-read-an-airport-departure-board": {
+   "slug": "guides/how-to-read-an-airport-departure-board",
+   "kind": "guide",
+   "title": "How to read an airport departure board",
+   "description": "What each column on an airport departure screen means, what the common status messages ask you to do, and why your gate may not appear until late.",
+   "body": "The departure board is the airport's own record of what is happening, and on the day it is the most up to date source you have. It can look crowded, but every board carries much the same information, and once you know where to look it takes a few seconds to read.\n\n## The columns, left to right\n\nLayouts differ between airports, but most boards show these, usually sorted by departure time:\n\n- **Time**: the scheduled departure time, in the airport's local time. If the flight is running late, a second time or a status such as \"Expected 14:35\" shows the new estimate.\n- **Destination**: the city the flight is going to. If the flight stops on the way, some boards show both places.\n- **Flight**: the airline code and number, such as BA117. This is the safest way to pick out your flight, because several flights can go to the same city within an hour.\n- **Check-in or zone**: on boards before security, the desks or zone where your airline checks in and takes hold bags.\n- **Gate**: where you board. It is often blank for a while, and that is normal.\n- **Status or remarks**: what is happening now, and what you should do.\n\n## Common status messages\n\nThe exact words vary from airport to airport, but these are the usual ones and what they mean for you:\n\n- **Wait in lounge** or **Gate shown at** a set time: the gate is not known yet. Stay in the departure area, near a screen.\n- **Go to gate** or **Gate open**: head to the gate now. At a large airport the walk can take a while.\n- **Boarding**: passengers are getting on the aircraft.\n- **Final call** or **Gate closing**: the last moment to reach the gate. Go straight there.\n- **Gate closed**: boarding has finished, and passengers who are not on board may not be allowed to fly.\n- **Delayed**: the flight will leave later than scheduled. Look for a new time on the board or in your airline's app.\n- **Cancelled**: the flight will not operate. Contact the airline and read [what to do if your flight is delayed or cancelled](/guides/what-to-do-if-your-flight-is-delayed-or-cancelled/).\n- **Departed** or **Airborne**: the flight has left.\n\n## Why your gate is not shown yet\n\nAirports assign gates around the aircraft that are actually on the ground, and those plans change through the day. Many airports therefore keep the gate back until shortly before boarding, so that passengers are not sent to a gate that then changes. A blank gate does not mean anything is wrong. It does mean you should stay where you can see a screen or hear announcements, and check again before you settle down for a long meal.\n\n## Codeshares and several numbers\n\nIf your flight is sold by more than one airline, the board may list several flight numbers on one line, or cycle through them. If you cannot find the number on your booking, look for the airline that operates the flight, which your booking should name. The guide to [flight numbers and codeshares](/guides/flight-numbers-airline-codes-and-codeshares/) explains why.\n\n## When the board and an app disagree\n\nAirline apps, websites and flight trackers all draw on data that can lag behind the airport's own systems. If what you see on your phone differs from the board, follow the board and the announcements, and ask staff if the difference matters. You can read more about [what flight tracking can and cannot tell you](/guides/what-flight-tracking-can-and-cannot-tell-you/).\n\nBefore you leave home, [Flightdeck](/) shows your flight's status, scheduled and estimated times and, when they are reported, the terminal and gate. At the airport, the board has the final word.",
+   "category": "reading",
+   "takeaways": [
+    "Find your flight by flight number and time, not by destination alone.",
+    "The status column tells you what to do next, and its wording varies by airport.",
+    "Gates often appear late and can change, so stay where you can see a screen."
+   ]
+  },
+  "guides/outbound-and-inbound-flights": {
+   "slug": "guides/outbound-and-inbound-flights",
+   "kind": "guide",
+   "title": "Outbound and inbound flights: how to tell the difference",
+   "description": "How to tell whether a flight is leaving the UK or coming home, why flight numbers are only a hint, and what to check at each end.",
+   "body": "\"Outbound\" and \"inbound\" describe your journey relative to home. For a UK traveller, an outbound flight leaves the UK and an inbound flight arrives in it. The difference decides what you need to do and where you need to be.\n\n## How to tell for certain\n\nThe reliable way is the route. If the departure airport is in the UK and the arrival airport is abroad, it is outbound. If it is the other way round it is inbound. If both airports are in the UK it is a domestic flight, and if neither is, it is an international flight that does not touch the UK.\n\n## Flight numbers are only a hint\n\nSome airlines number their flights so that one direction is odd and the opposite is even. British Airways does this on many routes, and an odd number often means a flight out of the UK. But it is a habit, not a rule: pairs are not always consecutive, routes change, and codeshare flights carry other airlines' numbers. Treat it as a clue, and confirm with the route. Flightdeck only uses the number when it does not yet know the route, and says so when it does.\n\n## What to check for an outbound flight\n\n- Your passport and any entry requirements for the country you are going to. The official source is the [GOV.UK foreign travel advice](https://www.gov.uk/foreign-travel-advice).\n- Your terminal. Airlines can use more than one terminal at a large airport, and sometimes move between them, so check on the day.\n- Check-in and bag drop times, which are set by the airline.\n\n## What to check for an inbound flight\n\n- Whether your arrival terminal is the one you expected, and which baggage belt your bags will use. Belts are often assigned only shortly before landing.\n- How you will get home from the airport, especially for late arrivals.\n- Any customs or border steps for the country you are returning from. See the [GOV.UK guidance on bringing goods into the UK](https://www.gov.uk/duty-free-goods).\n\nFlightdeck shows a clear outbound / inbound label on each flight and, when the provider reports it, the terminal, gate and baggage belt. [Track a flight](/).",
+   "category": "reading",
+   "takeaways": [
+    "Use the route, not the flight number, to tell outbound from inbound.",
+    "Odd and even numbering is a habit some airlines follow, not a rule.",
+    "Outbound: check documents, terminal and bag drop. Inbound: check the belt, onward travel and customs."
+   ]
+  },
+  "guides/pack-your-cabin-bag-for-a-long-flight": {
+   "slug": "guides/pack-your-cabin-bag-for-a-long-flight",
+   "kind": "guide",
+   "title": "Pack your cabin bag for a long flight",
+   "description": "What to keep in the cabin bag on a long flight, what to put in the hold, and what to carry in your pocket.",
+   "body": "On a long flight your cabin bag is the one thing you can reach. Pack it well and a long flight is much easier. Treat this as a starting point and change it to suit you. The [printable packing list](/travel-checklist/) covers the rest of the trip.\n\n## Keep with you at all times\n\n- Passport, ticket or boarding pass, and any visas or entry paperwork.\n- Phone, charger, and a small power bank (check your airline's rules for power banks).\n- Money and cards, and a note of the hotel address and phone number.\n- Essential medicines in their original packaging, with a copy of any prescription. Keep these in the cabin bag, never in the hold.\n- Glasses or contact lenses, and a spare pair if you rely on them.\n\n## For comfort\n\n- A warm layer. Cabins can be cool even when the destination is hot.\n- Comfortable socks, an eye mask and ear-plugs or headphones.\n- A refillable water bottle to fill after security.\n- Lip balm and moisturiser: cabin air is dry.\n\n## Plan for a delayed bag\n\nBags occasionally arrive later than you do. Pack one change of underwear and a basic wash kit in the cabin bag, so that a late suitcase is an inconvenience and not a crisis.\n\n## Check the rules before you go\n\nRules for liquids, batteries and sharp objects differ between airports and countries, and they change. Check your airline's baggage page and the security guidance of your departure airport shortly before you travel, and follow the instructions of security staff on the day.\n\n## Put it on the list\n\nAdd what you always forget to your own packing list in Flightdeck and it will be there on every trip.",
+   "category": "prepare",
+   "takeaways": [
+    "Keep documents, phone, money and medicines on you, never in the hold.",
+    "Pack a change of underwear and a wash kit in case your bag arrives late.",
+    "Rules on liquids and batteries change, so check your airline and airport before you go."
+   ]
+  },
+  "guides/what-flight-tracking-can-and-cannot-tell-you": {
+   "slug": "guides/what-flight-tracking-can-and-cannot-tell-you",
+   "kind": "guide",
+   "title": "What flight tracking can and cannot tell you",
+   "description": "Where flight tracking data comes from, why a plane can vanish from the map or a gate appear late, and which source to trust when they disagree.",
+   "body": "Flight tracking apps, Flightdeck included, can tell you a lot about a flight. They are also built from several separate sources, each with its own gaps. Knowing where the information comes from helps you judge how far to rely on it.\n\n## Two kinds of information\n\nA flight tracker usually combines two different things:\n\n- **Flight data**: the schedule, estimated and actual times, terminal, gate, baggage belt and status. This comes from airlines, airports and data companies that collect their feeds.\n- **Position data**: where the aircraft is, how high and how fast. Many aircraft broadcast this themselves, and networks of receivers on the ground pick it up.\n\nThe two arrive by different routes and at different speeds, which is why a map can show a plane moving while the times have not yet caught up, or the other way round.\n\n## Why a plane can disappear from the map\n\nLive position depends on the aircraft transmitting and on a receiver being within range. Over oceans, deserts and remote areas there are often no ground receivers, so the position stops updating until the aircraft comes back into range. A gap on the map is almost always a gap in coverage, not a sign that something has happened to the flight. Some aircraft also do not appear in public data at all, and position reports can arrive with a short delay.\n\n## Why the gate shows up late\n\nAirports often decide gates close to departure, and they can change. Even after the airport has set one, it can take time to reach the airline's systems and then the data providers that trackers use. That is why a gate or baggage belt may be missing in an app while it is already on the airport screens, and why a gate shown early can turn out to be wrong. The guide to [reading a departure board](/guides/how-to-read-an-airport-departure-board/) explains what the screens show.\n\n## Estimates are predictions\n\nAn estimated time is the best current guess, and it moves as the flight progresses. An estimated arrival made before take-off is less reliable than one made when the aircraft is close to landing. The guide to [flight status](/guides/flight-status-explained/) explains how scheduled, estimated and actual times differ.\n\n## What tracking cannot tell you\n\n- Whether you personally will be let on board, rebooked or compensated. Only the airline can answer that.\n- Decisions that have not reached the data yet, such as a gate change announced over the speakers a minute ago.\n- Your rights after a delay or cancellation. For those, use the [CAA passenger advice](https://www.caa.co.uk/passengers/).\n\nWhen a tracker and the airline or airport disagree, follow the airline and the airport.\n\n## What Flightdeck shows\n\nFlightdeck shows a flight's status, its scheduled, estimated and actual times, and the terminal, gate and baggage belt when they are reported. When the aircraft is transmitting and within range of receivers, it shows its live position, using data from [The OpenSky Network](https://opensky-network.org/). It also shows the weather at your destination and keeps a reusable packing list. When a detail is not reported, Flightdeck says so instead of guessing. [Track a flight](/), or see [where the data comes from](/about/).",
+   "category": "reading",
+   "takeaways": [
+    "Live position depends on the aircraft transmitting and a receiver being in range.",
+    "Times and gates come from schedules and airline data, which can lag.",
+    "For decisions on the day, the airline and the airport screens come first."
+   ]
+  },
+  "guides/what-to-do-if-your-flight-is-delayed-or-cancelled": {
+   "slug": "guides/what-to-do-if-your-flight-is-delayed-or-cancelled",
+   "kind": "guide",
+   "title": "What to do if your flight is delayed or cancelled",
+   "description": "A calm packing list for the first hour of a delay or cancellation, and where to find your rights from official sources.",
+   "body": "A delay or cancellation is stressful, and the first hour matters most. This is a practical order of things to do. For your legal rights, always use the official sources linked below, because the rules depend on where you are flying from and to, which airline operates the flight, the length of the delay and the reason for it.\n\n## In the first few minutes\n\n1. **Confirm what is really happening.** Check the airport screens and the airline's app or website. Flight tracking tools, including Flightdeck, can lag behind what the airline knows.\n2. **Do not leave the airport area** unless the airline tells you to. If you are re-booked or called to a gate, you need to be there.\n3. **Keep your documents and bags with you,** and keep your boarding pass and booking reference to hand.\n\n## Get in touch with the airline early\n\n- Use the airline's app or messaging first. Everyone else in the queue is about to try the desk.\n- Ask what they will do for you: another flight, a refund, or somewhere to stay. Ask them to confirm important things in writing or by email.\n\n## Keep a record\n\n- Note the time the delay was announced, the new departure time, and what you were told.\n- Keep receipts for meals, transport and anything you had to buy. You may be able to claim reasonable costs.\n- Take photos of the departure board if it shows the delay or cancellation.\n\n## Your rights, from official sources\n\nIn the UK, rules on delays, cancellations and denied boarding are explained by the Civil Aviation Authority: [CAA passenger advice](https://www.caa.co.uk/passengers/). If you booked a package holiday, your tour operator has its own responsibilities. If you paid by credit card, or have travel insurance, check those as well, because they can offer extra protection.\n\n## Tell the people waiting for you\n\nLet whoever is meeting you know the new time. Flightdeck can show a flight's estimated arrival when the provider has one, and your trip packing list stays available offline while you wait.",
+   "category": "trouble",
+   "takeaways": [
+    "Confirm the facts on the airport screens and the airline's app first.",
+    "Contact the airline early, keep every receipt and note, and stay near the gate.",
+    "For your rights, use official sources such as the CAA passenger advice."
+   ]
+  },
+  "help": {
+   "slug": "help",
+   "kind": "help",
+   "title": "Help and FAQ",
+   "description": "Answers to common questions about looking up flights, accounts, saved flights, the packing list and your data.",
+   "body": "Can't find your answer? [Contact us](/contact/) and we will reply by email."
+  },
+  "home": {
+   "slug": "home",
+   "kind": "home",
+   "title": "Flightdeck: flight status, gates and baggage on one page",
+   "description": "Look up a flight by number and date to see its status, times, terminal, gate and baggage belt when reported, and where the aircraft is when it is transmitting. Free, with honest labels.",
+   "body": "",
+   "hero": {
+    "eyebrow": "Your journey, in view",
+    "title": "Your flight, clearly, on one page.",
+    "text": "Type a flight number and date. Flightdeck brings together the schedule, gate and baggage belt when they are reported, and the aircraft's position when it is transmitting, and tells you plainly when something is not known yet."
+   },
+   "points": [
+    "Scheduled, estimated and actual times, each clearly labelled",
+    "Gate, terminal and baggage belt as soon as they are reported",
+    "Never a guessed gate or a made-up position"
+   ],
+   "steps": [
+    {
+     "title": "Enter a flight",
+     "text": "A flight number like BA117 and the departure date. Dates from yesterday to three days ahead get the full schedule."
+    },
+    {
+     "title": "We ask the sources",
+     "text": "Schedules and gates from AeroDataBox, live position from the OpenSky Network, and the usual route from adsbdb when no schedule is published yet."
+    },
+    {
+     "title": "You see what is known",
+     "text": "Every time says whether it is scheduled, estimated or actual, in the airport's own time zone. Anything we work out ourselves is labelled as an estimate."
+    }
+   ],
+   "features": [
+    {
+     "title": "Status and times",
+     "text": "Departure and arrival times as the airline reports them, with delays worked out from the reported times only."
+    },
+    {
+     "title": "Terminal, gate and baggage belt",
+     "text": "Shown the moment they are reported. Until then the page says \"not reported yet\" rather than guessing."
+    },
+    {
+     "title": "Where the aircraft is",
+     "text": "Position, height and speed when the aircraft is transmitting and within range of OpenSky receivers."
+    },
+    {
+     "title": "Weather where you land",
+     "text": "Current conditions around the destination airport from Open-Meteo. It is today's weather, not a forecast for your arrival."
+    },
+    {
+     "title": "Save, share, add to calendar",
+     "text": "Keep up to 12 flights on your account, share a link to a flight, and add it to your calendar when both times are known."
+    },
+    {
+     "title": "A packing list you can reuse",
+     "text": "Tick items off on your phone, add your own, and keep a list for each trip. There is also a free printable version."
+    }
+   ],
+   "coverage": {
+    "title": "Honest about the data",
+    "text": "Flight data is never complete. This is what Flightdeck can and cannot tell you.",
+    "columns": [
+     {
+      "title": "What is covered",
+      "items": [
+       "Scheduled flights worldwide that AeroDataBox lists",
+       "Full details for departures from yesterday to three days ahead",
+       "Live position for aircraft in range of OpenSky receivers"
+      ]
+     },
+     {
+      "title": "How fresh it is",
+      "items": [
+       "Schedules and gates: refreshed at most every 10 minutes",
+       "Aircraft position: refreshed every 2 minutes",
+       "Every result shows when it was fetched"
+      ]
+     },
+     {
+      "title": "What is often missing",
+      "items": [
+       "Gates and belts, which airports often assign late",
+       "Position over oceans and remote areas",
+       "Schedules when the shared monthly allowance runs out"
+      ]
+     }
+    ]
+   },
+   "final": {
+    "title": "Ready when you are",
+    "text": "Create a free account to look up flights, save them and keep your packing list. The guides and the printable packing list need no account."
+   }
+  },
+  "how-it-works": {
+   "slug": "how-it-works",
+   "kind": "page",
+   "title": "How Flightdeck works",
+   "description": "From typing a flight number to the answer on your screen: where each detail comes from, how fresh it is, and what we never guess.",
+   "body": "## 1. You enter a flight and a date\n\nType the flight number as it appears on your booking, such as **BA117** or **EK2**, and the date the flight leaves, in the departure airport's own time. You need a free account to look flights up: each lookup uses a limited allowance from our data providers, and accounts keep that allowance for real travellers.\n\n## 2. We ask up to three sources\n\n- **AeroDataBox** gives the schedule: times, terminal, gate, baggage belt, aircraft type and status. It is asked only for flights leaving from yesterday to three days ahead.\n- **The OpenSky Network** gives the live position, height and speed of aircraft that are in the air and transmitting.\n- **adsbdb** gives the usual route for a flight number. We use it only when there is no published schedule for your date, and we say so.\n\nEach source can fail on its own. When one does, the page tells you which details are missing and why, and shows the rest.\n\n## 3. We label everything\n\n- Times are **scheduled** (the plan), **estimated** (the current prediction) or **actual** (what happened), shown in each airport's own time zone, so clock changes are handled for you.\n- **Progress** and **estimated arrival** are worked out by Flightdeck from the reported times or the aircraft's position. They are always labelled as estimates.\n- A usual terminal (for example British Airways at Heathrow Terminal 5) is shown only when nothing is reported, and it says \"usual, not confirmed\".\n\n## 4. You keep what matters\n\nSave a flight to your account, share a link to it, or add it to your calendar. If you lose signal at the airport, the last result stays on screen with the time it was fetched. It is never shown as live.\n\n## What Flightdeck never does\n\n- It never guesses a gate, belt or boarding time.\n- It never shows a stored result as live.\n- It never uses an AI model to produce flight facts.\n\nRead more in [Data and coverage](/coverage/) or the guide [What flight tracking can and cannot tell you](/guides/what-flight-tracking-can-and-cannot-tell-you/)."
+  },
+  "privacy": {
+   "slug": "privacy",
+   "kind": "legal",
+   "title": "Privacy policy",
+   "description": "What Flightdeck collects, why, who it is shared with, how long it is kept, and your rights.",
+   "body": "This policy explains what personal data Flightdeck handles and why. It was last reviewed on {{lastReviewed}}. Flightdeck is run by {{ownerName}}, who decides how your data is used (the \"controller\" under UK data protection law). You can reach us by email at [{{contactEmail}}](mailto:{{contactEmail}}) or through our [contact form](/contact/).\n\n## The short version\n\n- You can use the public pages (this site's guides and the packing list) without an account and without giving us anything.\n- To search flights and keep a packing list you create an account. We use a sign-in service (Clerk) for that, so we never see or store your password.\n- We count how the app is used with simple anonymous totals on our own server. We cannot tell from them who did what.\n- Google Analytics is used **only if you accept it** in the cookie choice. If you reject it, nothing is sent to Google.\n- We do not sell your data and we do not show advertising.\n\n## What we collect, why, and our legal basis\n\n| What | Why | Basis |\n| --- | --- | --- |\n| **Account details**: your email address, and a name or picture if your sign-in method provides one. Held by our sign-in provider Clerk. | So you can sign in and so your saved flights and packing list stay yours. | Contract (providing the service you asked for) |\n| **Saved flights**: flight numbers and dates you choose to save. Stored in your Clerk profile. | So they follow you across devices. | Contract |\n| **Packing list**: your trip names, ticks and the items you add or hide. Stored on our server under a scrambled (hashed) version of your account id. | So your list is there next time and on your other devices. | Contract |\n| **Flight searches**: the flight number and date you type are sent to our server, which asks flight-data providers about that flight. | To show you the flight. | Contract |\n| **Anonymous usage totals**: counts such as searches per day, which airline codes and routes are searched, and how many different signed-in people used the app on a day. The \"different people\" figure uses a one-way scrambled code that changes every day, so one person cannot be followed from day to day, and the code is replaced by a plain number after two days. | To run and improve the service, and to keep within the limits of the paid data we use. | Legitimate interests (running a service safely and sustainably) |\n| **Messages you send us** through the contact form or the Feedback button: your message, and your name and email if you give them. | To read and answer you. | Legitimate interests / your request |\n| **Technical information** such as your IP address, held briefly by our host, Cloudflare and our server to deliver the site and to stop abuse (for example, limiting how many requests one visitor can make). | Security and reliability. | Legitimate interests |\n| **Google Analytics** (only if you accept): pages viewed and a few anonymous actions such as \"searched for a flight\" (never the flight number), with device, browser and approximate location that Google derives. | To understand how the app is used so we can improve it. | Consent. You can withdraw it at any time with \"Cookie settings\". |\n\n## Who else handles data\n\n- **Clerk** (sign-in and account storage). It may process data outside the UK; it is responsible for the security of the account details it holds.\n- **Cloudflare** (delivers the site and protects it from abuse) and our **web host**.\n- **Flight-data providers**: AeroDataBox (schedules, gates), The OpenSky Network (live aircraft position), adsbdb (usual routes) and Open-Meteo (weather). Our server contacts them for you. They receive the flight number or an airport location, **not** your name, email or IP address.\n- **Google**: Google Analytics only if you accept it, as above. Our typefaces are hosted by us, so your browser does not contact Google just to display text.\n- If sending you a reply needs an email provider, that provider handles the message in transit.\n\nWe only share data where it is needed to run the service, where you ask us to, or where the law requires it.\n\n## How long we keep it\n\n- Account details and saved flights: until you delete your account.\n- Packing list: until you delete it (the packing list page has a button for this) or ask us to.\n- Anonymous usage totals: up to 400 days, then deleted.\n- Messages: for as long as needed to answer you and keep a record of the conversation. We delete them on request.\n\n## Your rights\n\nYou can ask us to show you the data we hold about you, correct it, delete it, restrict or stop using it, or give it to you in a portable form. Where we rely on consent you can withdraw it at any time. To use any of these, contact us by email at [{{contactEmail}}](mailto:{{contactEmail}}) or through our [contact form](/contact/). To delete your account, use the account menu (your picture, top right) and choose to manage your account. If you are unhappy with how we handle your data you can complain to the UK Information Commissioner's Office at [ico.org.uk](https://ico.org.uk/make-a-complaint/).\n\n## Children\n\nFlightdeck is not aimed at children under 13 and we do not knowingly collect their data.\n\n## Changes\n\nIf we change what we do with your data we will update this page and its date. If we ever start showing advertising we will update this policy first and ask for your consent where the law requires it."
+  },
+  "terms": {
+   "slug": "terms",
+   "kind": "legal",
+   "title": "Terms of use",
+   "description": "The terms for using Flightdeck: what it is for, what it cannot promise, and how accounts work.",
+   "body": "These terms apply when you use Flightdeck at {{siteUrl}}. Last reviewed {{lastReviewed}}. By using it you agree to them. If you do not agree, please do not use it.\n\n## What Flightdeck is\n\nFlightdeck helps you follow a flight and get ready for a trip: status and times, gates and baggage belts when they are reported, the aircraft's position when it can be seen, the weather at the destination, and a packing list. It is provided free of charge, as it is, for your own personal use.\n\n## Flight information can be wrong or late\n\nThe information comes from third-party providers and can be delayed, incomplete or wrong, and airlines and airports change gates, times and terminals at short notice. Where a detail is not reported we show that it is not reported rather than guess. **Always follow the instructions of your airline and the airport, and check airport screens.** Do not rely on Flightdeck for decisions where being wrong would cause you harm or loss, such as when to leave for the airport.\n\n## Your account\n\n- Keep your sign-in details to yourself. You are responsible for what happens under your account.\n- Give accurate information and use the service lawfully.\n- You can delete your account at any time from the account menu.\n\n## Please do not\n\n- use automated tools to search in bulk or to copy the data (the data belongs to its providers and our allowance with them is limited);\n- try to get around the sign-in, limits or security, or interfere with the service;\n- use it to harass anyone or for anything unlawful.\n\nWe may limit or suspend access if the service is being abused.\n\n## Our content and your content\n\nThe design, text and code of Flightdeck belong to the site owner or its licensors. Flight, aircraft and weather data belong to their providers (see [About](/about/)). What you add, such as packing list items and messages, stays yours; you let us store and show it back to you so the service can work.\n\n## What we cannot promise\n\nWe aim to keep Flightdeck running and accurate but we do not guarantee it will always be available or error-free, and features may change or end. Nothing in these terms limits any right you have that cannot be limited by law, including liability for death or personal injury caused by negligence, or for fraud. Subject to that, we are not responsible for losses that come from relying on information shown in the app, for missed flights, or for losses we could not reasonably have foreseen.\n\n## Links to other sites\n\nWe link to official sources such as airlines and government pages. We do not control them and are not responsible for them.\n\n## Changes and law\n\nWe may update these terms; the date above shows the latest review. These terms are governed by the law of England and Wales, and the courts of England and Wales can deal with disputes, although if you live elsewhere in the UK you may also be able to use your local courts. Questions about these terms: contact us by email at [{{contactEmail}}](mailto:{{contactEmail}}) or through our [contact form](/contact/)."
+  },
+  "travel-checklist": {
+   "slug": "travel-checklist",
+   "kind": "checklist",
+   "title": "Printable packing list",
+   "description": "A free printable packing list: clothes, bathroom bag, accessories, documents, the night before and last minute. Tick it on paper or keep it in Flightdeck.",
+   "body": "A free printable packing list built from a real paper list. Print it, or keep a reusable copy in Flightdeck where your ticks and your own items are saved for every trip."
+  }
+ },
+ "faqs": [
+  {
+   "id": "free",
+   "category": "Using Flightdeck",
+   "question": "Is Flightdeck free?",
+   "answer": "Yes. Flightdeck is a free, personal, non-commercial project. There are no adverts and nothing to buy."
+  },
+  {
+   "id": "account",
+   "category": "Using Flightdeck",
+   "question": "Why do I need an account to look up a flight?",
+   "answer": "Each lookup uses a limited allowance from our data providers. Accounts keep that allowance for real travellers. The guides and the printable packing list need no account."
+  },
+  {
+   "id": "number",
+   "category": "Using Flightdeck",
+   "question": "Which flight number should I enter?",
+   "answer": "The one on your booking, such as **BA117**. If it is a codeshare and nothing is found, try the operating airline's number, which is usually shown on the booking as \"operated by\"."
+  },
+  {
+   "id": "dates",
+   "category": "Using Flightdeck",
+   "question": "Why can I only see the usual route for my flight?",
+   "answer": "Full schedules are available for flights leaving from yesterday to three days ahead. For other dates Flightdeck shows the usual origin and destination, and the times appear closer to departure."
+  },
+  {
+   "id": "gate",
+   "category": "Flight data",
+   "question": "Why is there no gate or baggage belt?",
+   "answer": "Airports often assign gates and belts late, and some never publish them. Flightdeck shows them as soon as they are reported and never guesses. Always follow the screens at the airport."
+  },
+  {
+   "id": "position",
+   "category": "Flight data",
+   "question": "Why is there no live position?",
+   "answer": "Position comes from the OpenSky Network and is only available while the aircraft is airborne, transmitting and within range of its receivers. Over oceans there is often no position."
+  },
+  {
+   "id": "fresh",
+   "category": "Flight data",
+   "question": "How up to date is the information?",
+   "answer": "Schedules and gates are fetched again at most every 10 minutes, and aircraft positions every 2 minutes. Every result shows when it was fetched. See [Data and coverage](/coverage/)."
+  },
+  {
+   "id": "offline",
+   "category": "Flight data",
+   "question": "What happens if I lose signal?",
+   "answer": "The last result for that flight stays on screen with \"last fetched at\" and the time. It is never shown as live."
+  },
+  {
+   "id": "saved",
+   "category": "Your account and data",
+   "question": "Where are my saved flights kept?",
+   "answer": "On your Flightdeck account, so they follow you to other devices (up to 12). Signed-out lists stay on the device you are using."
+  },
+  {
+   "id": "delete",
+   "category": "Your account and data",
+   "question": "How do I delete my account?",
+   "answer": "Use the account menu in the app to delete your account, or [contact us](/contact/) and we will do it for you. See the [privacy policy](/privacy/) for what is kept and for how long."
+  },
+  {
+   "id": "install",
+   "category": "Your account and data",
+   "question": "Can I install Flightdeck on my phone?",
+   "answer": "Yes. Flightdeck works as an installable web app. Open it in your browser and use \"Add to Home Screen\" (iPhone) or \"Install app\" (Android and desktop Chrome or Edge). The app shows the steps for your browser."
+  }
+ ],
+ "announcements": [],
+ "checklistTemplate": [
+  {
+   "id": "advance",
+   "title": "Days in advance",
+   "hint": "Things to sort out days before you go.",
+   "items": [
+    {
+     "id": "cl.advance.1",
+     "text": "Visas"
+    },
+    {
+     "id": "cl.advance.2",
+     "text": "Travel insurance"
+    },
+    {
+     "id": "cl.advance.3",
+     "text": "Vaccination"
+    },
+    {
+     "id": "cl.advance.4",
+     "text": "Buy mosquito repellent and Imodium"
+    },
+    {
+     "id": "cl.advance.5",
+     "text": "Wash clothes"
+    }
+   ]
+  },
+  {
+   "id": "clothes",
+   "title": "Clothes and accessories",
+   "items": [
+    {
+     "id": "cl.clothes.1",
+     "text": "Under-clothes"
+    },
+    {
+     "id": "cl.clothes.2",
+     "text": "Socks"
+    },
+    {
+     "id": "cl.clothes.3",
+     "text": "Shirts"
+    },
+    {
+     "id": "cl.clothes.4",
+     "text": "Jumpers"
+    },
+    {
+     "id": "cl.clothes.5",
+     "text": "Trousers"
+    },
+    {
+     "id": "cl.clothes.6",
+     "text": "Pyjamas"
+    },
+    {
+     "id": "cl.clothes.7",
+     "text": "Shoes"
+    },
+    {
+     "id": "cl.clothes.8",
+     "text": "Slippers"
+    },
+    {
+     "id": "cl.clothes.9",
+     "text": "Dressing gown"
+    },
+    {
+     "id": "cl.clothes.10",
+     "text": "Scarf"
+    },
+    {
+     "id": "cl.clothes.11",
+     "text": "Gloves"
+    },
+    {
+     "id": "cl.clothes.12",
+     "text": "Suit"
+    },
+    {
+     "id": "cl.clothes.13",
+     "text": "Ties"
+    },
+    {
+     "id": "cl.clothes.14",
+     "text": "Jacket"
+    },
+    {
+     "id": "cl.clothes.15",
+     "text": "Shorts"
+    },
+    {
+     "id": "cl.clothes.16",
+     "text": "Winter cap / summer hat"
+    },
+    {
+     "id": "cl.clothes.17",
+     "text": "Swimming suit"
+    },
+    {
+     "id": "cl.clothes.18",
+     "text": "Anorak"
+    },
+    {
+     "id": "cl.clothes.19",
+     "text": "Sandals"
+    },
+    {
+     "id": "cl.clothes.20",
+     "text": "Belts"
+    }
+   ]
+  },
+  {
+   "id": "bathroom",
+   "title": "Bathroom bag",
+   "items": [
+    {
+     "id": "cl.bathroom.1",
+     "text": "Shampoo"
+    },
+    {
+     "id": "cl.bathroom.2",
+     "text": "Soap"
+    },
+    {
+     "id": "cl.bathroom.3",
+     "text": "Wash glove"
+    },
+    {
+     "id": "cl.bathroom.4",
+     "text": "Water pik"
+    },
+    {
+     "id": "cl.bathroom.5",
+     "text": "Razor"
+    },
+    {
+     "id": "cl.bathroom.6",
+     "text": "Shaving foam"
+    },
+    {
+     "id": "cl.bathroom.7",
+     "text": "After-shave"
+    },
+    {
+     "id": "cl.bathroom.8",
+     "text": "Toothpaste and toothbrush"
+    }
+   ]
+  },
+  {
+   "id": "accessories",
+   "title": "Accessories",
+   "items": [
+    {
+     "id": "cl.accessories.1",
+     "text": "Ear-plugs"
+    },
+    {
+     "id": "cl.accessories.2",
+     "text": "Eye mask"
+    },
+    {
+     "id": "cl.accessories.3",
+     "text": "2nd pair of glasses"
+    },
+    {
+     "id": "cl.accessories.4",
+     "text": "Camera"
+    },
+    {
+     "id": "cl.accessories.5",
+     "text": "Camera batteries"
+    },
+    {
+     "id": "cl.accessories.6",
+     "text": "Towel"
+    },
+    {
+     "id": "cl.accessories.7",
+     "text": "Malaria drug / medicines (check)"
+    },
+    {
+     "id": "cl.accessories.8",
+     "text": "Nail cutter"
+    },
+    {
+     "id": "cl.accessories.9",
+     "text": "Knife"
+    },
+    {
+     "id": "cl.accessories.10",
+     "text": "Bottle opener"
+    },
+    {
+     "id": "cl.accessories.11",
+     "text": "Gifts"
+    },
+    {
+     "id": "cl.accessories.12",
+     "text": "Mobile phone charger"
+    },
+    {
+     "id": "cl.accessories.13",
+     "text": "Binoculars"
+    },
+    {
+     "id": "cl.accessories.14",
+     "text": "Nuts / snacks for the trip"
+    },
+    {
+     "id": "cl.accessories.15",
+     "text": "Coffee, kettle, milk powder and envelopes"
+    },
+    {
+     "id": "cl.accessories.16",
+     "text": "Digital bag for tourism"
+    },
+    {
+     "id": "cl.accessories.17",
+     "text": "Scale for suitcase"
+    },
+    {
+     "id": "cl.accessories.18",
+     "text": "Keys for destination or holiday home"
+    },
+    {
+     "id": "cl.accessories.19",
+     "text": "Tickets for events"
+    },
+    {
+     "id": "cl.accessories.20",
+     "text": "Medicines kept outside the medicine bag (e.g. Lipitor)"
+    },
+    {
+     "id": "cl.accessories.21",
+     "text": "Cream for feet and cream for itching"
+    },
+    {
+     "id": "cl.accessories.22",
+     "text": "Blood pressure measurement"
+    },
+    {
+     "id": "cl.accessories.23",
+     "text": "Shoes for repair"
+    },
+    {
+     "id": "cl.accessories.24",
+     "text": "Satellite navigator"
+    }
+   ]
+  },
+  {
+   "id": "papers",
+   "title": "Papers and documents",
+   "items": [
+    {
+     "id": "cl.papers.1",
+     "text": "Ticket"
+    },
+    {
+     "id": "cl.papers.2",
+     "text": "Passport"
+    },
+    {
+     "id": "cl.papers.3",
+     "text": "Check passport expiry date"
+    },
+    {
+     "id": "cl.papers.4",
+     "text": "Certificate of vaccination"
+    },
+    {
+     "id": "cl.papers.5",
+     "text": "Driving licence"
+    },
+    {
+     "id": "cl.papers.6",
+     "text": "Bank card reader / verifier"
+    },
+    {
+     "id": "cl.papers.7",
+     "text": "Guides and maps"
+    },
+    {
+     "id": "cl.papers.8",
+     "text": "Books and magazines"
+    },
+    {
+     "id": "cl.papers.9",
+     "text": "UK money, foreign money, chequebook, phone card"
+    },
+    {
+     "id": "cl.papers.10",
+     "text": "Old mobile phone for alarm"
+    },
+    {
+     "id": "cl.papers.11",
+     "text": "GHIC and travel insurance"
+    },
+    {
+     "id": "cl.papers.12",
+     "text": "Smartphone charging battery"
+    },
+    {
+     "id": "cl.papers.13",
+     "text": "Address book (paper)"
+    },
+    {
+     "id": "cl.papers.14",
+     "text": "Town street finder"
+    },
+    {
+     "id": "cl.papers.15",
+     "text": "Directions for hotel and hotel phone number"
+    },
+    {
+     "id": "cl.papers.16",
+     "text": "Key people's addresses"
+    },
+    {
+     "id": "cl.papers.17",
+     "text": "Foreign plug adaptor"
+    },
+    {
+     "id": "cl.papers.18",
+     "text": "Switch on out-of-office assistant"
+    },
+    {
+     "id": "cl.papers.19",
+     "text": "Extension lead"
+    },
+    {
+     "id": "cl.papers.20",
+     "text": "Pins for mobile phone and tooth floss stick"
+    },
+    {
+     "id": "cl.papers.21",
+     "text": "Watch"
+    }
+   ]
+  },
+  {
+   "id": "work",
+   "title": "Mostly work related",
+   "hint": "Hide this whole section if the trip is not for work.",
+   "items": [
+    {
+     "id": "cl.work.1",
+     "text": "Computer"
+    },
+    {
+     "id": "cl.work.2",
+     "text": "Visiting company ID"
+    },
+    {
+     "id": "cl.work.3",
+     "text": "Work documents"
+    },
+    {
+     "id": "cl.work.4",
+     "text": "E-mails / letters with directions etc."
+    },
+    {
+     "id": "cl.work.5",
+     "text": "Business cards"
+    },
+    {
+     "id": "cl.work.6",
+     "text": "Presentation pointer"
+    },
+    {
+     "id": "cl.work.7",
+     "text": "VGA to HDMI converter"
+    },
+    {
+     "id": "cl.work.8",
+     "text": "Print handouts for training"
+    },
+    {
+     "id": "cl.work.9",
+     "text": "Charger"
+    },
+    {
+     "id": "cl.work.10",
+     "text": "Car mobile phone holder"
+    }
+   ]
+  },
+  {
+   "id": "night",
+   "title": "The night before",
+   "items": [
+    {
+     "id": "cl.night.1",
+     "text": "Order taxi"
+    },
+    {
+     "id": "cl.night.2",
+     "text": "Iron clothes"
+    },
+    {
+     "id": "cl.night.3",
+     "text": "Backup computer"
+    },
+    {
+     "id": "cl.night.4",
+     "text": "Flight check-in"
+    }
+   ]
+  },
+  {
+   "id": "last",
+   "title": "Last minute",
+   "items": [
+    {
+     "id": "cl.last.1",
+     "text": "Coat in bag"
+    },
+    {
+     "id": "cl.last.2",
+     "text": "Mobile phone"
+    },
+    {
+     "id": "cl.last.3",
+     "text": "Waterpik"
+    },
+    {
+     "id": "cl.last.4",
+     "text": "Electric toothbrush"
+    },
+    {
+     "id": "cl.last.5",
+     "text": "Check plant watering"
+    },
+    {
+     "id": "cl.last.6",
+     "text": "Switch off central heating"
+    },
+    {
+     "id": "cl.last.7",
+     "text": "Food (cheese etc.)"
+    },
+    {
+     "id": "cl.last.8",
+     "text": "Empty bin"
+    },
+    {
+     "id": "cl.last.9",
+     "text": "Check doors and windows"
+    }
+   ]
+  }
+ ]
+}

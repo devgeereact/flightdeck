@@ -1,5 +1,6 @@
 // Local UI smoke test: builds the real app, serves it with the PHP dev router and drives it in jsdom.
 // Run: pnpm test:ui   (local only: it uses your .env provider keys and may spend 2 AeroDataBox units)
+import {FOOTER_GROUPS} from '../src/siteNav.ts';
 import {JSDOM} from 'jsdom';
 import {spawn, execFileSync} from 'node:child_process';
 import fs from 'node:fs';
@@ -131,7 +132,7 @@ try {
       check('T2 Right, End, Home and Left (wrapping) move the selection and the focus, keeping one tab in the Tab order', afterRight === 'Updates' && focusRight && afterEnd === 'Destination' && afterHome === 'Journey' && sel()?.textContent === 'Destination' && d.activeElement === sel() && roving(), [afterRight, focusRight, afterEnd, afterHome, sel()?.textContent].join(','));
       check('T3 the tab panel can take focus and is labelled by the selected tab', d.querySelector('#fv-panel')?.getAttribute('tabindex') === '0' && d.querySelector('#fv-panel')?.getAttribute('aria-labelledby') === sel()?.id);
     }
-    check('B12 the in-app footer has two equal menus, the right links, and no cookie settings', (() => { const cols = [...d.querySelectorAll('footer.sf .sf-col')]; const n = cols.map(c => c.querySelectorAll('a').length); return cols.length === 2 && n[0] === n[1] && !d.querySelector('[data-fd-cookie-settings]') && [...d.querySelectorAll('footer.sf a')].some(x => x.getAttribute('href') === '#/checklist'); })());
+    check('B12 the in-app footer has the shared link groups (siteNav.ts), app screens as in-app links, and no cookie settings', (() => { const cols = [...d.querySelectorAll('footer.sf .sf-col')]; const want = FOOTER_GROUPS.map(g => g.links.map(l => l.appHref || l.href)); return cols.length === FOOTER_GROUPS.length && cols.every((c, i) => JSON.stringify([...c.querySelectorAll('a')].map(a => a.getAttribute('href'))) === JSON.stringify(want[i])) && !d.querySelector('[data-fd-cookie-settings]') && [...d.querySelectorAll('footer.sf a')].some(x => x.getAttribute('href') === '#/checklist'); })());
     check('B13 a countdown is shown from the reported times', /Leaves in|Was due to leave/.test(a.text()), a.text().slice(0, 200));
     check('B14 the address becomes a shareable flight link', /^#\/flight\/BA59\/\d{4}-\d{2}-\d{2}$/.test(a.w.location.hash), a.w.location.hash);
     check('B15 Share and Add to calendar are offered when the times are known', [...d.querySelectorAll('.fv-bar button')].some(b => b.textContent.trim() === 'Share') && [...d.querySelectorAll('.fv-bar button')].some(b => b.textContent.trim() === 'Add to calendar'));

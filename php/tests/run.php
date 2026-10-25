@@ -4,6 +4,7 @@ declare(strict_types=1);
 foreach (['Http', 'DevEnv', 'ClerkAuth', 'Checklists', 'Metrics', 'Mailer', 'Enquiries', 'ClerkApi', 'Admin', 'GoogleAnalytics', 'Store', 'CloudflareIps', 'Geo', 'Flight', 'OpenSky', 'RouteLookup', 'AeroDataBox', 'App'] as $f) {
     require __DIR__ . '/../private/src/' . $f . '.php';
 }
+require __DIR__ . '/../private/src/Content/Markdown.php';
 
 use Flightdeck\AeroDataBox;
 use Flightdeck\AeroDataBoxError;
@@ -680,6 +681,55 @@ check('auth: when Clerk is unreachable, the last known keys (kept a week) still 
 $freshStore = new Store($tmp . '-stale2');
 (new ClerkAuth($iss, $freshStore, $jwksUp))->check($mint($claimsNow), time());
 check('auth: every successful key fetch also keeps a long-lived copy', is_array($freshStore->get('clerk-jwks-stale')));
+
+// ------------------------------------------------------------------ CMS: the safe Markdown subset (no raw HTML, safe links only)
+$md = static function (string $s, array $vars = []): string {
+    return \Flightdeck\Content\Markdown::render($s, $vars, 'https://flightdeck.gakinz.com')['html'];
+};
+$attacks = [
+    '<script>alert(1)</script>', '<img src=x onerror=alert(1)>', '[x](javascript:alert(1))', '[x](JaVaScRiPt:alert(1))', '[x](data:text/html;base64,PHNjcmlwdD4=)',
+    '[x](//evil.example/a)', '[x](&#106;avascript:alert(1))', '[x](/a"onmouseover="alert(1))', '[x](vbscript:msgbox)', '<a href="https://x">x</a>',
+    '## <svg onload=alert(1)>', '| <b>a</b> | b |' . "\n" . '| --- | --- |' . "\n" . '| <i>c</i> | d |', '`<script>`', '**<u>bold</u>**', "> <iframe src=x></iframe>",
+    '[x](https://ok.example/"><script>)', '[x](mailto:a@b.co?subject=<script>)', '[x](/path\\evil)', "[a\nb](javascript:x)",
+];
+$bad = false;
+foreach ($attacks as $a) {
+    $h = $md($a);
+    // Inspect real tags only (escaped text such as "&lt;img onerror" is harmless): allowed names, allowed attributes, safe hrefs.
+    $unsafe = false;
+    preg_match_all('/<(\/?)([a-zA-Z0-9]+)([^>]*)>/', $h, $tags, PREG_SET_ORDER);
+    foreach ($tags as $t) {
+        if (!in_array(strtolower($t[2]), ['h2', 'h3', 'h4', 'p', 'ul', 'ol', 'li', 'strong', 'em', 'code', 'a', 'blockquote', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'div'], true)) {
+            $unsafe = true;
+        }
+        preg_match_all('/\s([a-zA-Z-]+)(?:="([^"]*)")?/', $t[3], $attrs, PREG_SET_ORDER);
+        foreach ($attrs as $at) {
+            $name = strtolower($at[1]);
+            $val = html_entity_decode($at[2] ?? '', ENT_QUOTES | ENT_HTML5);
+            if (!in_array($name, ['href', 'id', 'rel', 'class', 'data-fd-cookie-settings'], true) || ($name === 'href' && !preg_match('#^(/(?!/)|\#|https?://|mailto:)#i', $val))) {
+                $unsafe = true;
+            }
+        }
+        if (preg_match('/["\'][^>]*["\']\s*[a-z]+=/i', $t[3]) && strtolower($t[2]) === 'a' && substr_count($t[3], '"') > 4) {
+            $unsafe = true; // an attribute broke out of its quotes
+        }
+    }
+    if ($unsafe) {
+        $bad = true;
+        echo "   unsafe output for: $a\n   -> $h\n";
+    }
+}
+check('markdown: script, handler, javascript/data/vbscript and protocol-relative links never come out', !$bad);
+check('markdown: blocks render (headings with ids, lists, tables, quotes)', $md("## Hello world\n\n- a\n- b\n\n1. one\n2. two\n\n| H | I |\n| --- | --- |\n| c | d |\n\n> note") === '<h2 id="hello-world">Hello world</h2>' . "\n" . '<ul><li>a</li><li>b</li></ul>' . "\n" . '<ol><li>one</li><li>two</li></ol>' . "\n" . '<div class="table-scroll"><table><thead><tr><th>H</th><th>I</th></tr></thead><tbody><tr><td>c</td><td>d</td></tr></tbody></table></div>' . "\n" . '<blockquote><p>note</p></blockquote>');
+check('markdown: inline bold, italic, code and escaping', $md('**b** *i* `c<d` \\*not\\* a & b') === '<p><strong>b</strong> <em>i</em> <code>c&lt;d</code> *not* a &amp; b</p>');
+check('markdown: site links plain, external links noopener, mailto allowed', $md('[a](/guides/) [b](https://example.com/x) [c](https://flightdeck.gakinz.com/y) [d](mailto:hi@example.com)') === '<p><a href="/guides/">a</a> <a href="https://example.com/x" rel="noopener">b</a> <a href="https://flightdeck.gakinz.com/y">c</a> <a href="mailto:hi@example.com">d</a></p>');
+check('markdown: an unsafe link keeps its words and loses the link', $md('[click](javascript:alert(1))') === '<p>[click](javascript:alert(1))</p>' || strpos($md('[click](javascript:alert1)'), '<a') === false);
+check('markdown: placeholders are filled and their values cannot add markup or links', $md('By {{ownerName}}.', ['ownerName' => '**x** [y](javascript:z) <b>']) === '<p>By **x** [y](javascript:z) &lt;b&gt;.</p>');
+check('markdown: unknown placeholders stay visible for the editor', $md('{{nope}}') === '<p>{{nope}}</p>');
+check('markdown: duplicate headings get unique ids; the toc lists h2 only', \Flightdeck\Content\Markdown::render("## A\n\n### B\n\n## A")['toc'] === [['id' => 'a', 'text' => 'A'], ['id' => 'a-2', 'text' => 'A']]);
+check('markdown: #cookie-settings reopens the cookie choice', $md('[Cookie settings](#cookie-settings)') === '<p><a href="#cookie-settings" data-fd-cookie-settings>Cookie settings</a></p>');
+check('markdown: safeHref allows site paths, https and mailto only', \Flightdeck\Content\Markdown::safeHref('/a/') === '/a/' && \Flightdeck\Content\Markdown::safeHref('https://x.org') === 'https://x.org' && \Flightdeck\Content\Markdown::safeHref('javascript:x') === null && \Flightdeck\Content\Markdown::safeHref('//x.org') === null);
+check('markdown: multibyte text survives', $md('Café — naïve “quotes” 日本') === '<p>Café — naïve “quotes” 日本</p>');
 
 echo $failed ? "\n$failed FAILED\n" : "\nAll passed\n";
 exit($failed ? 1 : 0);

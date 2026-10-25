@@ -14,6 +14,7 @@ import {registerSW} from 'virtual:pwa-register';
 import Lenis from 'lenis';
 import 'lenis/dist/lenis.css';
 import {ClerkProvider,Show,SignInButton,SignUpButton,UserButton,useAuth,useUser} from '@clerk/react';
+import './styles/tokens.css';
 import './style.css';
 const today=()=>ukDate();
 const CLERK_KEY=import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string|undefined;
@@ -55,7 +56,7 @@ const toTop=()=>{if(lenis)lenis.scrollTo(0,{immediate:true});else window.scrollT
 function useHashRoute():[string,(r:string)=>void]{const [r,setR]=useState(readRoute);useEffect(()=>{const f=()=>{setR(readRoute());toTop();gaPageview()};window.addEventListener('hashchange',f);return()=>window.removeEventListener('hashchange',f)},[]);return [r,(n:string)=>{const next=n==='overview'?'':'/'+n;if(location.hash.replace(/^#/,'')!==next)location.hash=next;else setR(readRoute())}]}
 const ChecklistView=lazy(()=>import('./Checklist'));
 const AdminView=lazy(()=>import('./Admin'));
-const Landing=lazy(()=>import('./Landing'));
+const SignInScreen=lazy(()=>import('./SignInScreen'));
 // Signed-out visitors get the landing page; signed-in users get the dashboard. Without a Clerk key the app is open (no accounts).
 // Signing out reloads onto the landing page, where the dashboard (and its own clean-up) is not mounted. Anything an account left on this
 // device is wiped here so the next person on a shared computer does not see it. A guest's own list (no owner mark) is left alone.
@@ -63,7 +64,7 @@ function SignedOutCleanup(){useEffect(()=>{try{if(localStorage.getItem('flightde
 function Gate(){const {isLoaded,isSignedIn}=useAuth();const [slow,setSlow]=useState(false);
  useEffect(()=>{if(isLoaded)return;const t=setTimeout(()=>setSlow(true),10000);return()=>clearTimeout(t)},[isLoaded]);
  if(!isLoaded)return <div className="boot" role="status" aria-label="Loading">{slow&&<div className="boot-msg"><Plane size={26}/><h2>Sign-in could not load</h2><p>Flightdeck could not reach its sign-in service. Check your connection, then reload the page.</p><button className="btn btn-primary" onClick={()=>location.reload()}>Reload</button></div>}</div>;
- return isSignedIn?<Dashboard/>:<><SignedOutCleanup/><Suspense fallback={<div className="boot" role="status" aria-label="Loading"/>}><Landing/></Suspense></>}
+ return isSignedIn?<Dashboard/>:<><SignedOutCleanup/><Suspense fallback={<div className="boot" role="status" aria-label="Loading"/>}><SignInScreen/></Suspense></>}
 function Dashboard(){
  const [number,setNumber]=useState(''),[date,setDate]=useState(today),[live,setLive]=useState(true),[data,setData]=useState<FlightResponse|null>(null),[selected,setSelected]=useState(0),[busy,setBusy]=useState(false),[error,setError]=useState(''),[tab,setTab]=useHashRoute(),[online,setOnline]=useState(navigator.onLine),[now,setNow]=useState(new Date()),[auto,setAuto]=useState(false),[changes,setChanges]=useState<string[]>([]),[saved,setSaved]=useState<SavedItem[]>(()=>{try{return JSON.parse(localStorage.getItem('flightdeck-saved')||'[]')}catch{return []}}),[install,setInstall]=useState<any>(null),[needRefresh,setNeedRefresh]=useState(false),[userId,setUserId]=useState<string|null>(null),[packFor,setPackFor]=useState<SavedItem|null>(null),[me,setMe]=useState<{isAdmin:boolean;unread:number|null}>({isAdmin:false,unread:null}),[signedIn,setSignedIn]=useState(false);
  const updateRef=useRef<((reload?:boolean)=>Promise<void>)|null>(null);
@@ -86,7 +87,7 @@ useEffect(()=>{if(!CLERK_KEY||!userId){setMe({isAdmin:false,unread:null});return
  function save(){if(!active.current)return;ga('flight_saved');const a=active.current;const items=[a,...saved.filter(s=>s.number!==a.number||s.date!==a.date)].slice(0,6);setSaved(items);try{localStorage.setItem('flightdeck-saved',JSON.stringify(items))}catch{setError('Your browser could not save this flight.')}}
  const refresh=()=>{const a=active.current;if(a)void load(a.number,a.date,true)};
  useEffect(()=>{const m=location.hash.match(FLIGHT_LINK);if(m){setNumber(m[1]);setDate(m[2]);void load(m[1],m[2])}},[]);
- async function share(){const a=active.current;if(!a)return;const url=`${location.origin}/#/flight/${a.number}/${a.date}`;
+ async function share(){const a=active.current;if(!a)return;const url=`${location.origin}/app/#/flight/${a.number}/${a.date}`;
   try{if(navigator.share){await navigator.share({title:`${a.number} on Flightdeck`,url});return}await navigator.clipboard.writeText(url);setShareNote('Link copied');setTimeout(()=>setShareNote(''),3000)}
   catch(e){if((e as Error).name!=='AbortError'){setShareNote('Copy this link: '+url)}}}
  // One list drives both menus: the sidebar (full labels, icon-only between 701 and 1000px) and the phone row (short labels).

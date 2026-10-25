@@ -1,5 +1,6 @@
-# Flightdeck on cPanel/Apache. /api goes to the PHP entrypoint BEFORE the SPA fallback.
+# Flightdeck on cPanel/Apache. /api -> PHP API; the public website -> site.php (pages rendered from CMS content); /app/ -> the app.
 Options -Indexes
+DirectoryIndex site.php
 
 AddType application/manifest+json .webmanifest
 RewriteEngine On
@@ -11,24 +12,33 @@ RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 RewriteCond %{REQUEST_URI} !^/api/index\.php$
 RewriteRule ^api(/.*)?$ api/index.php [L,QSA]
 
-RewriteCond %{REQUEST_FILENAME} -f [OR]
-RewriteCond %{REQUEST_FILENAME} -d
+# Site pages BEFORE the real-file check: releases are additive, so the old static copies of these pages may still be on the server.
+RewriteRule ^(index\.html)?$ site.php [L]
+RewriteRule ^(about|contact|privacy|cookies|terms|travel-checklist|guides|help|coverage|how-it-works|accessibility)(/.*)?$ site.php [L]
+RewriteRule ^(sitemap\.xml|ads\.txt|404\.html)$ site.php [L]
+
+# The app: its own files are served as they are; anything else under /app/ gets the app shell (hash routes).
+RewriteRule ^app$ /app/ [R=301,L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^app/ app/index.html [L]
+# Clerk's own return paths still get the app shell.
+RewriteRule ^(sso-callback|sign-in|sign-up|v1|__clerk)(/|$) app/index.html [L]
+
+RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule ^ - [L]
-# The app lives at "/" (hash routes). Clerk's own return paths still get the shell; anything else that is not a real file is a true 404.
-RewriteRule ^(index\.html)?$ index.html [L]
-RewriteRule ^(sso-callback|sign-in|sign-up|v1|__clerk)(/|$) index.html [L]
-ErrorDocument 404 /404.html
-RewriteRule ^ - [R=404,L]
+# Everything else is a site page the owner may have added in the console, or a true 404, which site.php renders.
+RewriteRule ^ site.php [L]
+ErrorDocument 404 /site.php
 
 <IfModule mod_headers.c>
   # Revalidate the shell, manifest and service worker so releases update; hashed assets can cache.
-  <FilesMatch "^(index\.html|sw\.js|registerSW\.js|consent\.js|manifest\.webmanifest|workbox-.*\.js)$">
+  <FilesMatch "^(index\.html|sw\.js|registerSW\.js|consent\.js|manifest\.webmanifest|site-build\.json|workbox-.*\.js)$">
     Header set Cache-Control "no-cache"
   </FilesMatch>
   <FilesMatch "\.woff2$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
-  # Fingerprinted build output only (index-AbC123.js). Scripts with fixed names (sw, consent, page, contact...) must keep revalidating.
+  # Fingerprinted build output only (index-AbC123.js, site-AbC123.css). Scripts with fixed names (sw, consent, page, contact...) must keep revalidating.
   <FilesMatch "^(?!(index|sw|registerSW|consent|page|contact|travel-checklist)\.js$|workbox-).*\.(js|css)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>

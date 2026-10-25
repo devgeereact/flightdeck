@@ -60,7 +60,7 @@ export default function FlightView({flight,data,now,busy,auto,setAuto,changes,on
   const onTabKey=(e:React.KeyboardEvent,i:number)=>{const j=nextTabIndex(e.key,i,PANELS.length);if(j===null)return;e.preventDefault();setPanel(PANELS[j].id);tabRefs.current[j]?.focus()};
   const steps=journeySteps(flight);
   // Calendar file from the times on screen; offered only when both ends have a time.
-  const ics=flightIcs(flight,`${location.origin}/#/flight/${flight.number}/${(flight.scheduledOut||flight.estimatedOut||'').slice(0,10)}`);
+  const ics=flightIcs(flight,`${location.origin}/app/#/flight/${flight.number}/${(flight.scheduledOut||flight.estimatedOut||'').slice(0,10)}`);
   const addToCalendar=()=>{if(!ics)return;const url=URL.createObjectURL(new Blob([ics],{type:'text/calendar;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download=`${flight.number}-${(flight.scheduledOut||'').slice(0,10)}.ics`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000)};
   const delayed=flight.cancelled||(flight.delayMinutes!=null&&flight.delayMinutes>0);
   const progressText=flight.progress!==null

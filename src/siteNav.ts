@@ -1,25 +1,34 @@
-// The ONE list of site links. The app footer, the landing page, the public pages and their tests all read it, so a link can never point
-// somewhere different in one place. `href` is the public address; `appHref` is used instead inside the signed-in app (its own screens).
+// The default site links. The app footer reads them, and scripts/seed-content.mjs copies them into the CMS seed, so the public site
+// starts with the same links (after that the owner edits the site's links in the console). `href` is the public address; `appHref`
+// is used instead inside the app (its own screens).
 export interface SiteLink { label: string; href: string; appHref?: string }
 export interface SiteLinkGroup { title: string; links: SiteLink[] }
 
 export const HEADER_LINKS: SiteLink[] = [
-  { label: 'Packing list', href: '/travel-checklist/' },
+  { label: 'How it works', href: '/how-it-works/' },
+  { label: 'Coverage', href: '/coverage/' },
   { label: 'Guides', href: '/guides/' },
-  { label: 'About', href: '/about/' },
-  { label: 'Contact', href: '/contact/' },
+  { label: 'Packing list', href: '/travel-checklist/' },
+  { label: 'Help', href: '/help/' },
 ];
 
-// Two groups of four so no menu is longer than another.
 export const FOOTER_GROUPS: SiteLinkGroup[] = [
-  { title: 'Explore', links: [
-    { label: 'Flight tracker', href: '/', appHref: '#/' },
-    { label: 'Packing list', href: '/travel-checklist/', appHref: '#/checklist' },
-    { label: 'Travel guides', href: '/guides/' },
-    { label: 'About', href: '/about/' },
+  { title: 'Flightdeck', links: [
+    { label: 'Open the app', href: '/app/', appHref: '#/' },
+    { label: 'How it works', href: '/how-it-works/' },
+    { label: 'Data and coverage', href: '/coverage/' },
+    { label: 'Help and FAQ', href: '/help/' },
   ] },
-  { title: 'Help and legal', links: [
+  { title: 'Guides and tools', links: [
+    { label: 'Travel guides', href: '/guides/' },
+    { label: 'Printable packing list', href: '/travel-checklist/', appHref: '#/checklist' },
+  ] },
+  { title: 'About', links: [
+    { label: 'About Flightdeck', href: '/about/' },
     { label: 'Contact us', href: '/contact/' },
+    { label: 'Accessibility', href: '/accessibility/' },
+  ] },
+  { title: 'Legal', links: [
     { label: 'Privacy', href: '/privacy/' },
     { label: 'Cookies', href: '/cookies/' },
     { label: 'Terms', href: '/terms/' },
