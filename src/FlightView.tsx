@@ -15,7 +15,7 @@ gsap.registerPlugin(useGSAP);
 
 type Props={flight:Flight;data:FlightResponse;now:Date;busy:boolean;auto:boolean;setAuto:(v:boolean)=>void;changes:string[];onRefresh:()=>void;onSave:()=>void;onShare?:()=>void;shareNote?:string};
 type Panel='journey'|'airport'|'weather'|'updates'|'destination';
-const PANELS:{id:Panel;label:string;icon:any}[]=[{id:'journey',label:'Journey',icon:Clock},{id:'airport',label:'Airport',icon:Luggage},{id:'weather',label:'Weather',icon:CloudSun},{id:'updates',label:'Updates',icon:Radio},{id:'destination',label:'Destination',icon:Compass}];
+const PANELS:{id:Panel;label:string;short?:string;icon:any}[]=[{id:'journey',label:'Journey',icon:Clock},{id:'airport',label:'Airport',icon:Luggage},{id:'weather',label:'Weather',icon:CloudSun},{id:'updates',label:'Updates',icon:Radio},{id:'destination',label:'Destination',short:'City',icon:Compass}];
 const here=()=>Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 function Detail({label,value}:{label:string;value:string|null}){return <div className="detail"><span>{label}</span><strong>{value||'Not reported'}</strong></div>}
@@ -106,7 +106,7 @@ export default function FlightView({flight,data,now,busy,auto,setAuto,changes,on
       </section>
     </div>
     <section className="panel fv-tabs">
-      <div className="fv-tablist" role="tablist" aria-label="Flight details">{PANELS.map((p,i)=><button key={p.id} ref={el=>{tabRefs.current[i]=el}} role="tab" id={'fv-t-'+p.id} aria-selected={panel===p.id} aria-controls="fv-panel" tabIndex={panel===p.id?0:-1} className={panel===p.id?'on':''} onClick={()=>setPanel(p.id)} onKeyDown={e=>onTabKey(e,i)}><p.icon size={15} aria-hidden="true"/>{p.label}</button>)}</div>
+      <div className="fv-tablist" role="tablist" aria-label="Flight details">{PANELS.map((p,i)=><button key={p.id} ref={el=>{tabRefs.current[i]=el}} role="tab" aria-label={p.label} id={'fv-t-'+p.id} aria-selected={panel===p.id} aria-controls="fv-panel" tabIndex={panel===p.id?0:-1} className={panel===p.id?'on':''} onClick={()=>setPanel(p.id)} onKeyDown={e=>onTabKey(e,i)}><p.icon size={15} aria-hidden="true"/><span className="tab-label" data-short={p.short}>{p.label}</span></button>)}</div>
       <div className="fv-body" id="fv-panel" role="tabpanel" tabIndex={0} aria-labelledby={'fv-t-'+panel}>
         {panel==='journey'&&<ol className="timeline">{steps.map((step,i)=><li className="timeline-row" key={step.key}><span className={step.done?'timeline-dot filled':'timeline-dot'}>{step.done?<Check size={10}/>:i+1}</span><div><strong>{step.label}</strong><small>{step.kind}</small><em className="step-note">{step.note}</em></div><span>{step.t?`${time(step.t,step.tz)}${step.tz?'':' UTC'}`:'—'}{step.t&&<small className="step-day">{day(step.t,step.tz)}</small>}</span></li>)}</ol>}
         {panel==='airport'&&<div className="fv-airport">

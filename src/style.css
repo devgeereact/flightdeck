@@ -392,3 +392,15 @@ main{--sf-gutter:var(--gutter)}
 .fb-foot small a{color:#214e3e;text-decoration:underline}
 
 @media print{.skip-link{display:none}}
+
+/* Flight actions on phones: one tidy group, Save first, the "Updated" time on its own line underneath. */
+@media(max-width:700px){
+.fv-bar{flex-direction:column;align-items:stretch;gap:10px}
+.fv-bar>div:last-child{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.fv-bar>div:last-child>.btn-primary{order:-1}
+.fv-bar>div:last-child>.updated{order:10;flex-basis:100%}
+.fv-bar>div:last-child>.icon-button{order:5}
+}
+
+/* Phones: a tab with a long name shows a short one (the full name stays its accessible name). */
+@media(max-width:700px){.fv-tablist .tab-label[data-short]{font-size:0}.fv-tablist .tab-label[data-short]::after{content:attr(data-short);font-size:12.5px}}

@@ -68,11 +68,48 @@ All rules that vary are hedged and point to GOV.UK, the CAA, the airline or the 
 
 ## UX and accessibility
 
-(Filled in after the implementer agent's branch is merged and checked.)
+All 20 audit findings were implemented, then I checked them in Chrome at phone (375px), tablet (800px) and desktop widths.
 
-## Tests
+- **Navigation.**
+  - Tablets (701 to 1000px) had no navigation at all. They now get an icon sidebar.
+  - On phones the menu is one scrollable row with 44px buttons and the current page highlighted.
+- **Flight tabs on phones.** All five fit as a grid with icons, and "Destination" shows as "City" on small screens. The tabs work with the keyboard (arrow keys, Home, End).
+- **Flight actions on phones.** They are one tidy group: Save first, then Add to calendar, Share and Refresh, with "Updated" underneath.
+- **Inputs.**
+  - The search fields show a clear focus ring.
+  - Inputs are 16px on phones, so iPhones no longer zoom in.
+  - One focus style is used everywhere.
+- **Landing page.** It keeps the one-screen look but can scroll if the text is enlarged. The duplicate "Sign in" is hidden on small phones.
+- **Packing list on phones.** The header is compact and the suggestions fold away. Previous and Next keep the section chip in view.
+- **Owner console.**
+  - Charts draw at the real width, with readable axes and the latest value in the header.
+  - On phones the tabs scroll and the cards show two per row.
+- **Consistency.**
+  - One button system (`.btn`, `.btn-primary`, `.btn-secondary`) is used across the app and the public pages.
+  - No text is smaller than 12.5px, and body text and notices are 14px.
+  - Labels are written in normal case and shown in capitals by CSS, so screen readers read words.
+- **Accessibility.**
+  - A "Skip to content" link has been added.
+  - The navigation marks the current page.
+  - The console tabs are proper tabs.
+  - The feedback type uses real radio buttons.
+  - Touch targets are 44px on touch screens.
+  - Smooth scrolling switches off for people who prefer reduced motion.
+- **Clean-up.**
+  - About 20 dead CSS rules are removed, including the old footer rule that padded the app footer.
+  - The copy fixes are in, such as "Costs and limits", "Mark as read" and a link to the privacy page.
 
-(Final counts filled in at the end.)
+## Tests (all run locally on the final code)
+
+| Suite | Result |
+|---|---|
+| `pnpm build` (types, app, public pages) | passes |
+| `pnpm test` (unit and page tests) | 92 of 92 pass (71 before tonight) |
+| `pnpm test:ui` (the real built app in a test browser, fixed flight data) | 47 of 47 checks pass (28 before tonight) |
+| `php php/tests/run.php` (server) | all pass, including new security and time tests |
+| Visual check in Chrome | phone 375px, tablet 800px, desktop 1440px: no sideways overflow, all screens readable |
+
+Not tested: a real phone, a real big monitor, and anything on the live site (by your instruction).
 
 ## Decisions I made as lead
 
