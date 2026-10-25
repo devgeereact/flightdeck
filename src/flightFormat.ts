@@ -1,8 +1,23 @@
 // Small helpers for showing a flight. Plain functions, no React, so the tests and the views can share them.
 import type {Flight} from './types';
 
-export const time=(t:string|null,tz:string|null)=>t?new Intl.DateTimeFormat('en-GB',{hour:'2-digit',minute:'2-digit',timeZone:tz||'UTC'}).format(new Date(t)):'Not available';
-export const day=(t:string|null,tz:string|null)=>t?new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',timeZone:tz||'UTC'}).format(new Date(t)):'';
+// Every time is an instant (ISO with Z or an offset) shown in a named IANA zone, so BST/GMT and other clock changes come from the
+// time zone database, never from arithmetic. No zone means UTC (callers label it). A time or zone that cannot be read gives null:
+// a wrong time is never shown in place of a missing one.
+export function inZone(t:string|null|undefined,tz:string|null|undefined,opts:Intl.DateTimeFormatOptions):string|null{
+  if(!t)return null;
+  const d=new Date(t);
+  if(Number.isNaN(d.getTime()))return null;
+  try{return new Intl.DateTimeFormat('en-GB',{...opts,timeZone:tz||'UTC'}).format(d)}catch{return null}
+}
+export const time=(t:string|null,tz:string|null)=>inZone(t,tz,{hour:'2-digit',minute:'2-digit',hourCycle:'h23'})??'Not available';
+export const day=(t:string|null,tz:string|null)=>inZone(t,tz,{day:'numeric',month:'short'})??'';
+/** Today's date in the UK (Europe/London) as YYYY-MM-DD, whatever the device's own time zone. The default search date. */
+export function ukDate(now:Date|number=Date.now()):string{
+  const p:Record<string,string>={};
+  for(const x of new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(now)))p[x.type]=x.value;
+  return `${p.year}-${p.month}-${p.day}`;
+}
 export const airlines:Record<string,string>={BA:'https://www.britishairways.com/travel/flightstatus/public/en_gb',EK:'https://www.emirates.com/english/manage-booking/flight-status/',AF:'https://www.airfrance.com/flight-status'};
 export const regionName=(code?:string|null)=>{try{return code?new Intl.DisplayNames(['en-GB'],{type:'region'}).of(code)||code:''}catch{return code||''}};
 export const withHint=(value:string|null,hint?:string)=>value||(hint?`${hint} (usual, not confirmed)`:null);

@@ -132,7 +132,7 @@ test('summary: scheduled outbound flight with a terminal and no gate', () => {
 });
 
 test('summary: delays, early running (only with live data), cancellation, diversion, usual-route-only', () => {
-  assert.ok(summarise(f({ estimatedOut: '2026-10-24T22:09:00.000Z', delayMinutes: 39 })).some((x) => /now expected to leave at 23:09/.test(x) && true) || true);
+  assert.ok(summarise(f({ estimatedOut: '2026-10-24T22:09:00.000Z', delayMinutes: 39 })).some((x) => /now expected to leave at 23:09 London time/.test(x)));
   assert.ok(summarise(f({ delayMinutes: 39 })).includes('It is running 39 minutes late.'));
   assert.ok(summarise(f({ delayMinutes: 1 })).includes('It is running 1 minute late.'));
   assert.ok(!summarise(f({ delayMinutes: -5, liveUpdates: false })).some((x) => /early/.test(x)));

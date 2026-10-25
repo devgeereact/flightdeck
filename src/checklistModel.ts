@@ -30,6 +30,15 @@ export const emptyData = (): ChecklistData => ({ v: 1, rev: 0, tpl: { updatedAt:
 const clean = (t: string, max: number) => t.replace(/\s+/g, ' ').trim().slice(0, max);
 export const uid = (prefix: string, now = Date.now(), rnd = Math.random()) => `${prefix}.${now.toString(36)}${Math.floor(rnd * 1e6).toString(36)}`;
 
+/** A departure date as the search form sends it (YYYY-MM-DD, a real calendar day). Checked as text, so no time zone is involved. */
+export function isPlainDate(v: unknown): v is string {
+  if (typeof v !== 'string') return false;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(v);
+  if (!m) return false;
+  const y = +m[1], mo = +m[2], d = +m[3];
+  return mo >= 1 && mo <= 12 && d >= 1 && d <= new Date(Date.UTC(y, mo, 0)).getUTCDate();
+}
+
 /** Defensive parse of anything read from storage or the network. Never throws; drops what it does not understand. */
 export function sanitize(raw: unknown): ChecklistData {
   const out = emptyData();
@@ -60,7 +69,7 @@ export function sanitize(raw: unknown): ChecklistData {
         }
         return {
           id: x.id, name: clean(x.name, LIMITS.name) || 'My trip', metaAt: Number.isFinite(x.metaAt) ? x.metaAt : updatedAt, updatedAt, marks,
-          ...(x.flight && typeof x.flight.number === 'string' && typeof x.flight.date === 'string' ? { flight: { number: x.flight.number.slice(0, 12), date: x.flight.date.slice(0, 10) } } : {}),
+          ...(x.flight && typeof x.flight.number === 'string' && isPlainDate(x.flight.date) ? { flight: { number: x.flight.number.slice(0, 12), date: x.flight.date.slice(0, 10) } } : {}),
           ...(Number.isInteger(x.nights) && x.nights > 0 && x.nights <= 365 ? { nights: x.nights } : {}),
           ...(cleanCtx(x.ctx) ? { ctx: cleanCtx(x.ctx)! } : {}),
         };

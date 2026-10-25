@@ -334,12 +334,22 @@ final class Flight
         return $f;
     }
 
-    /** Scheduled details are only requested close to now, so the small free allowance is not wasted. */
+    /**
+     * Scheduled details are only requested close to now, so the small free allowance is not wasted.
+     * $date is the departure date in the DEPARTURE AIRPORT's local time, which is not known before the lookup, and the user may be
+     * anywhere. Local calendar dates on Earth run from UTC-12 to UTC+14, so the window is "yesterday" at the earliest place to
+     * "three days ahead" at the latest place. Comparing with the UTC date alone was a day off near midnight (00:00-01:00 UK time in
+     * summer, the evening in the Americas, the morning in Asia and New Zealand).
+     */
     public static function scheduleDateOk(string $date, int $nowMs): bool
     {
-        $day = strtotime($date . ' 00:00:00 UTC');
-        $today = strtotime(gmdate('Y-m-d', intdiv($nowMs, 1000)) . ' 00:00:00 UTC');
-        return $day !== false && $day >= $today - 86400 && $day <= $today + 3 * 86400;
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/D', $date)) {
+            return false;
+        }
+        $sec = intdiv($nowMs, 1000);
+        $earliest = gmdate('Y-m-d', $sec - 12 * 3600 - 86400);
+        $latest = gmdate('Y-m-d', $sec + 14 * 3600 + 3 * 86400);
+        return $date >= $earliest && $date <= $latest;
     }
 
     public static function isAirborneStatus(array $f): bool

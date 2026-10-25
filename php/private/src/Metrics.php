@@ -95,6 +95,22 @@ final class Metrics
         return $s;
     }
 
+    /** Day buckets are UK calendar days (Europe/London: GMT in winter, BST in summer), the owner's own days. */
+    public const ZONE = 'Europe/London';
+
+    /** The UK calendar date (YYYY-MM-DD) of a Unix time. */
+    public static function day(int $sec): string
+    {
+        return (new \DateTimeImmutable('@' . $sec))->setTimezone(new \DateTimeZone(self::ZONE))->format('Y-m-d');
+    }
+
+    /** Unix time of 00:00 UK time on a YYYY-MM-DD date (false if unreadable). */
+    private static function dayStart(string $date)
+    {
+        $d = \DateTimeImmutable::createFromFormat('!Y-m-d', $date, new \DateTimeZone(self::ZONE));
+        return $d === false ? false : $d->getTimestamp();
+    }
+
     private function file(string $date): string
     {
         return $this->dir . '/' . $date . '.json';
@@ -105,7 +121,7 @@ final class Metrics
         if (!$this->c && !$this->m && !$this->u && !$this->lat) {
             return;
         }
-        $date = gmdate('Y-m-d', $nowSec ?? time());
+        $date = self::day($nowSec ?? time());
         $path = $this->file($date);
         $h = @fopen($path . '.lock', 'c');
         if ($h === false) {
@@ -161,7 +177,11 @@ final class Metrics
     {
         foreach (glob($this->dir . '/????-??-??.json') ?: [] as $f) {
             $d = basename($f, '.json');
-            $age = ($nowSec - (int) strtotime($d . ' 00:00:00 UTC')) / 86400;
+            $start = self::dayStart($d);
+            if ($start === false) {
+                continue;
+            }
+            $age = ($nowSec - $start) / 86400;
             if ($age > self::KEEP_DAYS) {
                 @unlink($f);
             } elseif ($age > 2) {
@@ -181,10 +201,12 @@ final class Metrics
     public function range(int $days, ?int $nowSec = null): array
     {
         $days = max(1, min(self::KEEP_DAYS, $days));
-        $now = $nowSec ?? time();
+        // Step back in calendar days from noon UK time today: a clock-change day is 23 or 25 hours long, so subtracting 86400
+        // seconds would list one day twice or skip one.
+        $noon = new \DateTimeImmutable(self::day($nowSec ?? time()) . ' 12:00:00', new \DateTimeZone(self::ZONE));
         $out = [];
         for ($i = $days - 1; $i >= 0; $i--) {
-            $date = gmdate('Y-m-d', $now - $i * 86400);
+            $date = $noon->modify('-' . $i . ' days')->format('Y-m-d');
             $x = json_decode((string) @file_get_contents($this->file($date)), true);
             $x = is_array($x) ? $x : [];
             $out[] = [
