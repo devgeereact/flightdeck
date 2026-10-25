@@ -56,7 +56,7 @@ table{width:100%;border-collapse:collapse;font-size:14px;margin:14px 0 22px;back
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;list-style:none;padding:0}.cards li{margin:0}.cards a{display:block;background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;text-decoration:none;height:100%}.cards a:hover{border-color:#b9cdbd}.cards strong{display:block;color:var(--gd);font-size:17px;margin-bottom:6px}.cards span{color:var(--mut);font-size:14px}
 
 .ad-slot{margin:28px 0;min-height:90px}
-.pub-crumbs{display:flex;gap:8px;align-items:center;font-size:13px;color:#5d6e64;margin:0 0 14px}.pub-crumbs a{color:#4d5f55;text-decoration:none;font-weight:600}.pub-crumbs a:hover{color:#244b38;text-decoration:underline}.pub-crumbs span[aria-hidden]{color:#9aa99d}
+.pub-crumbs{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;font-size:13px;color:#5d6e64;margin:0 0 14px}.pub-crumbs a{color:#4d5f55;text-decoration:none;font-weight:600}.pub-crumbs a:hover{color:#244b38;text-decoration:underline}.pub-crumbs span[aria-hidden]{color:#9aa99d}
 .pub-tags{display:flex;gap:8px 14px;flex-wrap:wrap;align-items:center;margin:14px 0 0;font-size:13px;color:#5d6e64}.pub-tag{background:#e7efdf;color:#2f5a3a;border-radius:20px;padding:4px 12px;font-weight:700;font-size:12px}
 .pub-layout{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:24px;align-items:start}.pub-layout.no-toc{grid-template-columns:minmax(0,1fr)}.pub-layout .pub-body{order:1}.pub-toc{order:2;position:sticky;top:20px;background:#fff;border:1px solid #e1e6dc;border-radius:12px;padding:18px 18px 14px}
 .pub-toc p{margin:0 0 10px;font:700 11px Manrope,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#566a5d}.pub-toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px;counter-reset:t}.pub-toc li{margin:0;counter-increment:t}.pub-toc a{display:flex;gap:10px;padding:7px 8px;border-radius:8px;font-size:13.5px;line-height:1.4;color:#4d5f55;text-decoration:none}.pub-toc a:before{content:counter(t);color:#769070;font-weight:700;min-width:14px}.pub-toc a:hover{background:#edf2e8;color:#244b38}
@@ -103,14 +103,23 @@ const shell = ({ slug, title, description, body, kind, updated, category, relate
   const ldObj = kind === 'guide'
     ? { '@context': 'https://schema.org', '@type': 'Article', headline: title, description, dateModified: updated || config.lastReviewed, mainEntityOfPage: `${config.url}/${slug}/`, author: { '@type': 'Person', name: config.ownerName || config.siteName }, publisher: { '@type': 'Organization', name: config.siteName, url: config.url } }
     : { '@context': 'https://schema.org', '@type': 'WebPage', name: title, description, url: `${config.url}/${slug}/`, isPartOf: { '@type': 'WebSite', name: config.siteName, url: config.url } };
-  const ld = `<script type="application/ld+json">${JSON.stringify(ldObj).replace(/</g, '\\u003c')}</script>`;
+  // Guides also get a BreadcrumbList that matches the visible trail: Guides > category (its section on the index) > this guide.
+  const crumbLd = kind === 'guide'
+    ? { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Guides', item: `${config.url}/guides/` },
+      { '@type': 'ListItem', position: 2, name: catTitle(category), item: `${config.url}/guides/#cat-${category}` },
+      { '@type': 'ListItem', position: 3, name: title, item: `${config.url}/${slug}/` },
+    ] }
+    : null;
+  // JSON-LD is a data block, not executable script, so it is allowed under the strict Content-Security-Policy.
+  const ld = [ldObj, crumbLd].filter(Boolean).map((o) => `<script type="application/ld+json">${JSON.stringify(o).replace(/</g, '\\u003c')}</script>`).join('');
   const wrap = kind === 'legal' || kind === 'guide';
   const here = `/${slug}/`;
   const current = (href) => (here === href || (href !== '/' && here.startsWith(href)) ? ' aria-current="page"' : '');
   let main = body; let toc = [];
   if (wrap) ({ html: main, toc } = withToc(body));
   const minutes = minutesOf(body);
-  const crumbs = kind === 'guide' ? `<nav class="pub-crumbs" aria-label="Breadcrumb"><a href="/guides/">Guides</a><span aria-hidden="true">›</span><span>${esc(catTitle(category))}</span></nav>` : '';
+  const crumbs = kind === 'guide' ? `<nav class="pub-crumbs" aria-label="Breadcrumb"><a href="/guides/">Guides</a><span aria-hidden="true">›</span><a href="/guides/#cat-${esc(category)}">${esc(catTitle(category))}</a><span aria-hidden="true">›</span><span aria-current="page">${esc(title)}</span></nav>` : '';
   const tags = kind === 'guide' ? `<p class="pub-tags"><span class="pub-tag">${esc(catTitle(category))}</span><span>${minutes} min read</span><span>Last reviewed ${esc(updated || config.lastReviewed)}</span></p>` : (updated ? `<p class="meta">Last reviewed ${esc(updated)}</p>` : '');
   const tocHtml = toc.length >= 3 ? `<aside class="pub-toc" aria-label="On this page"><p>On this page</p><ol>${toc.map((t) => `<li><a href="#${t.id}">${esc(t.text)}</a></li>`).join('')}</ol></aside>` : '';
   const takeHtml = takeaways && takeaways.length ? `<div class="pub-take"><p class="pub-take-h">Key points</p><ul>${takeaways.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>` : '';

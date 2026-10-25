@@ -21,7 +21,7 @@ function build({ config = base, env = {} } = {}) {
   const read = (rel) => fs.readFileSync(path.join(dist, rel), 'utf8');
   return { dist, files: files(), read, out, exists: (rel) => fs.existsSync(path.join(dist, rel)) };
 }
-const PAGES = ['privacy', 'cookies', 'terms', 'about', 'contact', 'travel-checklist', 'guides', 'guides/flight-status-explained', 'guides/outbound-and-inbound-flights', 'guides/what-to-do-if-your-flight-is-delayed-or-cancelled', 'guides/pack-your-cabin-bag-for-a-long-flight', 'guides/baggage-reclaim-and-missing-bags', 'guides/flight-numbers-airline-codes-and-codeshares', 'guides/departure-day-airport-timeline'];
+const PAGES = ['privacy', 'cookies', 'terms', 'about', 'contact', 'travel-checklist', 'guides', 'guides/flight-status-explained', 'guides/outbound-and-inbound-flights', 'guides/what-to-do-if-your-flight-is-delayed-or-cancelled', 'guides/pack-your-cabin-bag-for-a-long-flight', 'guides/baggage-reclaim-and-missing-bags', 'guides/flight-numbers-airline-codes-and-codeshares', 'guides/departure-day-airport-timeline', 'guides/how-to-read-an-airport-departure-board', 'guides/connecting-flights-and-missed-connections', 'guides/cabin-bag-or-hold-bag', 'guides/what-flight-tracking-can-and-cannot-tell-you'];
 const html = (b) => PAGES.map((p) => [p, b.read(p + '/index.html')]);
 
 test('the app and the public pages load no third-party fonts or styles: fonts are served from our own /fonts/', () => {
@@ -68,12 +68,15 @@ test('public pages request nothing from third parties: the only scripts are our 
 test('outbound links are explicit and safe (noopener); every internal link points at a real page', () => {
   const b = build();
   const known = new Set(['/', '/#/checklist', '/icon.svg', '#', ...PAGES.map((p) => `/${p}/`)]);
+  const guideIdx = b.read('guides/index.html');
   for (const [p, h] of html(b)) {
     for (const m of h.matchAll(/<a\b[^>]*\bhref="([^"]+)"[^>]*>/g)) {
       const href = m[1];
       if (/^https?:/.test(href)) { if (!href.startsWith(base.url)) assert.match(m[0], /rel="noopener"/, `${p}: ${href}`); continue; }
       if (href.startsWith('mailto:')) continue;
       if (href.startsWith('#')) { if (href.length > 1) assert.ok(h.includes(`id="${href.slice(1)}"`), `${p}: anchor ${href} has no target`); continue; }
+      const hash = href.match(/^(\/[^#]*)#(.+)$/);
+      if (hash && hash[1] === '/guides/') { assert.ok(guideIdx.includes(`id="${hash[2]}"`), `${p}: ${href} has no target on the guide index`); continue; }
       assert.ok(known.has(href), `${p}: broken internal link ${href}`);
     }
   }
@@ -138,7 +141,7 @@ test('the guides are real articles, not thin pages', () => {
     const text = b.read(p + '/index.html').replace(/<style>[\s\S]*?<\/style>/g, '').replace(/<script[\s\S]*?<\/script>/g, '').replace(/<[^>]+>/g, ' ');
     assert.ok(text.split(/\s+/).filter(Boolean).length > 380, `${p} is too short`);
   }
-  assert.equal([...b.read('guides/index.html').matchAll(/<li><a href="\/guides\/[a-z]/g)].length, 7);
+  assert.equal([...b.read('guides/index.html').matchAll(/<li><a href="\/guides\/[a-z]/g)].length, PAGES.filter((x) => x.startsWith('guides/')).length);
 });
 
 test('ADS DEFAULT OFF: the default build contains no ad code, no ads.txt, nothing from Google ads', () => {
@@ -211,4 +214,41 @@ test('guide pages have breadcrumbs, reading time, an On this page menu and relat
   const idx = b.read('guides/index.html');
   for (const p of PAGES.filter((x) => x.startsWith('guides/'))) assert.ok(idx.includes(`href="/${p}/"`), `index lacks ${p}`);
   assert.equal((idx.match(/class="pub-cat"/g) || []).length, 3);
+});
+
+test('every JSON-LD block parses; guides carry an Article and a BreadcrumbList that matches the visible trail', async () => {
+  const { guideCategories } = await import('../content/pages.mjs');
+  const b = build();
+  const idx = b.read('guides/index.html');
+  for (const [p, h] of html(b)) {
+    const blocks = [...h.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+    assert.ok(blocks.length >= 1, `${p} has no JSON-LD`);
+    const data = blocks.map((x) => { try { return JSON.parse(x); } catch (e) { return assert.fail(`${p}: invalid JSON-LD (${e.message})`); } });
+    for (const d of data) assert.equal(d['@context'], 'https://schema.org', p);
+    if (!p.startsWith('guides/')) { assert.ok(!data.some((d) => d['@type'] === 'BreadcrumbList'), `${p} should not have a BreadcrumbList`); continue; }
+    assert.ok(data.some((d) => d['@type'] === 'Article'), `${p} has no Article`);
+    const crumbs = data.find((d) => d['@type'] === 'BreadcrumbList');
+    assert.ok(crumbs, `${p} has no BreadcrumbList`);
+    const items = crumbs.itemListElement;
+    assert.deepEqual(items.map((i) => i.position), [1, 2, 3], p);
+    assert.equal(items[0].item, `${base.url}/guides/`, p);
+    assert.equal(items[2].item, `${base.url}/${p}/`, p);
+    const cat = guideCategories.find((c) => items[1].item === `${base.url}/guides/#cat-${c.id}`);
+    assert.ok(cat && items[1].name === cat.title, `${p}: breadcrumb category`);
+    assert.equal(items[2].name, h.match(/<h1>([^<]+)<\/h1>/)[1].replace(/&amp;/g, '&'), `${p}: breadcrumb name matches the h1`);
+    assert.ok(h.includes(`<a href="/guides/#cat-${cat.id}">`), `${p}: visible breadcrumb links to its category`);
+    const start = idx.indexOf(`id="cat-${cat.id}"`);
+    assert.ok(idx.slice(start, idx.indexOf('</section>', start)).includes(`href="/${p}/"`), `${p} is not listed under ${cat.title} on the index`);
+  }
+  assert.ok(!b.files.some((f) => b.read(f).includes('FAQPage')), 'no FAQ schema without visible questions and answers');
+});
+
+test('guide metadata stays within search limits', async () => {
+  const { pages } = await import('../content/pages.mjs');
+  for (const g of pages(base).filter((x) => x.kind === 'guide')) {
+    assert.ok(`${g.title} · ${base.siteName}`.length <= 69, `${g.slug}: title too long`);
+    assert.ok(g.description.length <= 160, `${g.slug}: description too long`);
+    assert.equal(g.takeaways.length, 3, g.slug);
+    assert.ok(['reading', 'prepare', 'trouble'].includes(g.category), g.slug);
+  }
 });

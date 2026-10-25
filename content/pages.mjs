@@ -391,6 +391,133 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <h2>A short packing list for the night before</h2>
 <p>Passports, chargers, medication, house keys and a final check of the flight. The full list is on the <a href="/travel-checklist/">printable packing list</a>.</p>`,
   },
+  {
+    slug: 'guides/how-to-read-an-airport-departure-board', kind: 'guide', category: 'reading', takeaways: ["Find your flight by flight number and time, not by destination alone.", "The status column tells you what to do next, and its wording varies by airport.", "Gates often appear late and can change, so stay where you can see a screen."], title: 'How to read an airport departure board', description: 'What each column on an airport departure screen means, what the common status messages ask you to do, and why your gate may not appear until late.',
+    body: `
+<p>The departure board is the airport's own record of what is happening, and on the day it is the most up to date source you have. It can look crowded, but every board carries much the same information, and once you know where to look it takes a few seconds to read.</p>
+<h2>The columns, left to right</h2>
+<p>Layouts differ between airports, but most boards show these, usually sorted by departure time:</p>
+<ul>
+<li><strong>Time</strong>: the scheduled departure time, in the airport's local time. If the flight is running late, a second time or a status such as "Expected 14:35" shows the new estimate.</li>
+<li><strong>Destination</strong>: the city the flight is going to. If the flight stops on the way, some boards show both places.</li>
+<li><strong>Flight</strong>: the airline code and number, such as BA117. This is the safest way to pick out your flight, because several flights can go to the same city within an hour.</li>
+<li><strong>Check-in or zone</strong>: on boards before security, the desks or zone where your airline checks in and takes hold bags.</li>
+<li><strong>Gate</strong>: where you board. It is often blank for a while, and that is normal.</li>
+<li><strong>Status or remarks</strong>: what is happening now, and what you should do.</li>
+</ul>
+<h2>Common status messages</h2>
+<p>The exact words vary from airport to airport, but these are the usual ones and what they mean for you:</p>
+<ul>
+<li><strong>Wait in lounge</strong> or <strong>Gate shown at</strong> a set time: the gate is not known yet. Stay in the departure area, near a screen.</li>
+<li><strong>Go to gate</strong> or <strong>Gate open</strong>: head to the gate now. At a large airport the walk can take a while.</li>
+<li><strong>Boarding</strong>: passengers are getting on the aircraft.</li>
+<li><strong>Final call</strong> or <strong>Gate closing</strong>: the last moment to reach the gate. Go straight there.</li>
+<li><strong>Gate closed</strong>: boarding has finished, and passengers who are not on board may not be allowed to fly.</li>
+<li><strong>Delayed</strong>: the flight will leave later than scheduled. Look for a new time on the board or in your airline's app.</li>
+<li><strong>Cancelled</strong>: the flight will not operate. Contact the airline and read <a href="/guides/what-to-do-if-your-flight-is-delayed-or-cancelled/">what to do if your flight is delayed or cancelled</a>.</li>
+<li><strong>Departed</strong> or <strong>Airborne</strong>: the flight has left.</li>
+</ul>
+<h2>Why your gate is not shown yet</h2>
+<p>Airports assign gates around the aircraft that are actually on the ground, and those plans change through the day. Many airports therefore keep the gate back until shortly before boarding, so that passengers are not sent to a gate that then changes. A blank gate does not mean anything is wrong. It does mean you should stay where you can see a screen or hear announcements, and check again before you settle down for a long meal.</p>
+<h2>Codeshares and several numbers</h2>
+<p>If your flight is sold by more than one airline, the board may list several flight numbers on one line, or cycle through them. If you cannot find the number on your booking, look for the airline that operates the flight, which your booking should name. The guide to <a href="/guides/flight-numbers-airline-codes-and-codeshares/">flight numbers and codeshares</a> explains why.</p>
+<h2>When the board and an app disagree</h2>
+<p>Airline apps, websites and flight trackers all draw on data that can lag behind the airport's own systems. If what you see on your phone differs from the board, follow the board and the announcements, and ask staff if the difference matters. You can read more about <a href="/guides/what-flight-tracking-can-and-cannot-tell-you/">what flight tracking can and cannot tell you</a>.</p>
+<p>Before you leave home, <a href="/">Flightdeck</a> shows your flight's status, scheduled and estimated times and, when they are reported, the terminal and gate. At the airport, the board has the final word.</p>`,
+  },
+  {
+    slug: 'guides/connecting-flights-and-missed-connections', kind: 'guide', category: 'trouble', takeaways: ["Whether flights are on one booking or separate tickets changes who has to help you.", "Allow for transfer security, terminal changes and any transit visa rules.", "If you miss a connection, go to the airline's transfer desk and check the CAA for your rights."], title: 'Connecting flights and what to do if you miss one', description: 'How a flight connection works, why one booking and separate tickets are treated differently, and the steps to take if a delay makes you miss your onward flight.',
+    body: `
+<p>A connection means changing aircraft at an airport on the way to where you are going. Most connections go smoothly, but a delay on the first flight can leave you short of time. Knowing how your journey was booked tells you who is responsible for getting you there.</p>
+<h2>One booking or separate tickets</h2>
+<p>This is the most important thing to check, and your booking confirmation will tell you.</p>
+<ul>
+<li><strong>One booking</strong> (one booking reference covering every flight): the airline sold you the whole journey. If a delay on an earlier flight makes you miss a later one, the airline will normally rebook you to your destination. The details, including any meals or hotel, depend on the airline's conditions and the rules that apply to your route.</li>
+<li><strong>Separate tickets</strong> (different booking references, sometimes sold as "self-transfer"): each flight is its own contract. The second airline usually has no duty to help if you miss its flight because the first one was late. Some booking sites sell their own protection for this, so check exactly what you bought.</li>
+</ul>
+<h2>How much time you need</h2>
+<p>Airports set a minimum connection time for changing between flights, and airlines normally only sell connections on one booking that meet it. That minimum assumes things go to plan. With separate tickets nobody checks the gap for you, and you may need to collect your bags, check in again and go back through security, so allow much more time.</p>
+<h2>At the connecting airport</h2>
+<ol>
+<li><strong>Follow the signs for transfers</strong> or flight connections, not the exit, unless your airline has told you to collect your bags.</li>
+<li><strong>Check your bags.</strong> On one booking, hold bags are often checked through to your final destination. Your bag tag or the check-in desk can confirm this. With separate tickets you will usually need to collect them and check them in again.</li>
+<li><strong>Expect security again.</strong> Many airports screen transfer passengers, so liquids bought before your first flight may be checked again.</li>
+<li><strong>Find your next gate</strong> on the departure screens. See <a href="/guides/how-to-read-an-airport-departure-board/">how to read a departure board</a>.</li>
+</ol>
+<p>Some countries require a transit visa or other paperwork even if you do not leave the airport, and rules differ by nationality. Check the <a href="https://www.gov.uk/foreign-travel-advice" rel="noopener">GOV.UK foreign travel advice</a> for each country you pass through.</p>
+<h2>If you miss your connection</h2>
+<ol>
+<li><strong>Go to the airline's transfer desk</strong> or use its app. If you are on one booking and the delay was the airline's, many airlines will already have rebooked you automatically, so check the app first.</li>
+<li><strong>Get the new arrangements in writing,</strong> including the new flight and anything offered for meals or a hotel.</li>
+<li><strong>Keep receipts and notes,</strong> as you would for any delay. The guide on <a href="/guides/what-to-do-if-your-flight-is-delayed-or-cancelled/">delays and cancellations</a> has a fuller list.</li>
+<li><strong>Tell anyone meeting you</strong> about the new arrival time.</li>
+</ol>
+<h2>Your rights</h2>
+<p>What you are entitled to after a missed connection depends on where the journey started, which airline operated each flight, whether it was all on one booking, how late you arrived and why. Do not rely on general summaries. Use the <a href="https://www.caa.co.uk/passengers/" rel="noopener">CAA passenger advice</a>, your airline's conditions of carriage, and your travel insurance.</p>
+<p>On the way, <a href="/">Flightdeck</a> can show each flight's status and estimated times, so you see early if the first leg is running late.</p>`,
+  },
+  {
+    slug: 'guides/cabin-bag-or-hold-bag', kind: 'guide', category: 'prepare', takeaways: ["Allowances depend on your airline and fare, so check your own booking.", "Medicines, valuables, documents and spare batteries belong in the cabin.", "Liquid and security rules differ by airport, so check before you pack."], title: 'Cabin bag or hold bag: what goes where', description: 'How to decide what goes in your cabin bag and what goes in the hold, what to check in your allowance, and the items that should always stay with you.',
+    body: `
+<p>Most trips involve two bags: one you carry on board and one that goes in the hold. Deciding what goes where is mostly common sense, but a few items have firm rules, and allowances differ more than many people expect.</p>
+<h2>Start with your own allowance</h2>
+<p>There is no single standard. What you can take depends on the airline and on the fare you bought, and the same airline can offer different allowances on different fares. Some fares include only a small bag that must fit under the seat, with a larger cabin bag or any hold bag costing extra. Before you pack, find these in your booking or on the airline's baggage page:</p>
+<ul>
+<li>How many cabin items you can take, and their maximum size and weight.</li>
+<li>Whether a hold bag is included, and its weight limit.</li>
+<li>What happens if a bag is over the limit, and whether it is cheaper to add a bag before you travel than at the airport.</li>
+</ul>
+<p>Weighing your bags at home avoids surprises at the desk.</p>
+<h2>What should stay in the cabin</h2>
+<p>Keep anything you cannot do without, or could not replace quickly, with you:</p>
+<ul>
+<li>Passport, boarding pass, money and cards.</li>
+<li>Medicines you need during the journey or in the first days, in their original packaging. See the <a href="https://www.gov.uk/hand-luggage-restrictions" rel="noopener">GOV.UK hand luggage guidance</a> for medicines and liquids.</li>
+<li>Keys, jewellery, laptops, cameras and other valuables.</li>
+<li>Power banks and spare lithium batteries. Airlines generally do not allow these in the hold, and limits apply in the cabin, so check your airline's rules.</li>
+<li>A change of clothes and a wash kit, in case your hold bag arrives late.</li>
+</ul>
+<h2>What is better in the hold</h2>
+<ul>
+<li>Bulky clothes and shoes you will not need on the way.</li>
+<li>Larger toiletries and other liquids that would not pass cabin security limits.</li>
+<li>Items that are not allowed through security in the cabin, such as many sharp tools and scissors, where they are permitted in the hold at all.</li>
+</ul>
+<p>Some items are banned from both. Your airline's dangerous goods page lists them.</p>
+<h2>Liquids and security checks</h2>
+<p>Rules for liquids in the cabin depend on the airport and the scanners it uses, and they have changed several times. Do not assume the rules at one airport apply at another, including on your way home. Check the security page of each airport you leave from shortly before you travel, and follow what security staff tell you on the day.</p>
+<h2>When your cabin bag goes in the hold anyway</h2>
+<p>On full flights, airlines sometimes ask passengers to put cabin bags in the hold at the gate. It helps to pack so that you could take out your medicines, documents, batteries and valuables in a minute, for example in a small pouch at the top of the bag.</p>
+<h2>Plan it once</h2>
+<p>For a long trip, the guide to <a href="/guides/pack-your-cabin-bag-for-a-long-flight/">packing your cabin bag for a long flight</a> goes further. The <a href="/travel-checklist/">printable packing list</a> covers the whole trip, and in <a href="/">Flightdeck</a> you can keep your own version for every journey. If a bag does not turn up at the other end, see <a href="/guides/baggage-reclaim-and-missing-bags/">baggage reclaim and missing bags</a>.</p>`,
+  },
+  {
+    slug: 'guides/what-flight-tracking-can-and-cannot-tell-you', kind: 'guide', category: 'reading', takeaways: ["Live position depends on the aircraft transmitting and a receiver being in range.", "Times and gates come from schedules and airline data, which can lag.", "For decisions on the day, the airline and the airport screens come first."], title: 'What flight tracking can and cannot tell you', description: 'Where flight tracking data comes from, why a plane can vanish from the map or a gate appear late, and which source to trust when they disagree.',
+    body: `
+<p>Flight tracking apps, Flightdeck included, can tell you a lot about a flight. They are also built from several separate sources, each with its own gaps. Knowing where the information comes from helps you judge how far to rely on it.</p>
+<h2>Two kinds of information</h2>
+<p>A flight tracker usually combines two different things:</p>
+<ul>
+<li><strong>Flight data</strong>: the schedule, estimated and actual times, terminal, gate, baggage belt and status. This comes from airlines, airports and data companies that collect their feeds.</li>
+<li><strong>Position data</strong>: where the aircraft is, how high and how fast. Many aircraft broadcast this themselves, and networks of receivers on the ground pick it up.</li>
+</ul>
+<p>The two arrive by different routes and at different speeds, which is why a map can show a plane moving while the times have not yet caught up, or the other way round.</p>
+<h2>Why a plane can disappear from the map</h2>
+<p>Live position depends on the aircraft transmitting and on a receiver being within range. Over oceans, deserts and remote areas there are often no ground receivers, so the position stops updating until the aircraft comes back into range. A gap on the map is almost always a gap in coverage, not a sign that something has happened to the flight. Some aircraft also do not appear in public data at all, and position reports can arrive with a short delay.</p>
+<h2>Why the gate shows up late</h2>
+<p>Airports often decide gates close to departure, and they can change. Even after the airport has set one, it can take time to reach the airline's systems and then the data providers that trackers use. That is why a gate or baggage belt may be missing in an app while it is already on the airport screens, and why a gate shown early can turn out to be wrong. The guide to <a href="/guides/how-to-read-an-airport-departure-board/">reading a departure board</a> explains what the screens show.</p>
+<h2>Estimates are predictions</h2>
+<p>An estimated time is the best current guess, and it moves as the flight progresses. An estimated arrival made before take-off is less reliable than one made when the aircraft is close to landing. The guide to <a href="/guides/flight-status-explained/">flight status</a> explains how scheduled, estimated and actual times differ.</p>
+<h2>What tracking cannot tell you</h2>
+<ul>
+<li>Whether you personally will be let on board, rebooked or compensated. Only the airline can answer that.</li>
+<li>Decisions that have not reached the data yet, such as a gate change announced over the speakers a minute ago.</li>
+<li>Your rights after a delay or cancellation. For those, use the <a href="https://www.caa.co.uk/passengers/" rel="noopener">CAA passenger advice</a>.</li>
+</ul>
+<p>When a tracker and the airline or airport disagree, follow the airline and the airport.</p>
+<h2>What Flightdeck shows</h2>
+<p>Flightdeck shows a flight's status, its scheduled, estimated and actual times, and the terminal, gate and baggage belt when they are reported. When the aircraft is transmitting and within range of receivers, it shows its live position, using data from <a href="https://opensky-network.org/" rel="noopener">The OpenSky Network</a>. It also shows the weather at your destination and keeps a reusable packing list. When a detail is not reported, Flightdeck says so instead of guessing. <a href="/">Track a flight</a>, or see <a href="/about/">where the data comes from</a>.</p>`,
+  },
 
 ];
 
