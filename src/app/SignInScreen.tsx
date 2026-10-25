@@ -2,8 +2,8 @@ import {useEffect} from 'react';
 import {Plane,ArrowLeft} from 'lucide-react';
 import {SignInButton,SignUpButton} from '@clerk/react';
 import {registerSW} from 'virtual:pwa-register';
-import {track,trackOnce,ga} from './track';
-import SiteFooter from './SiteFooter';
+import {track,trackOnce,ga} from '../shared/track';
+import SiteFooter from '../SiteFooter';
 
 const FLIGHT_LINK=/^#\/flight\/([A-Z0-9]{3,8})\/(\d{4}-\d{2}-\d{2})$/;
 const dayLabel=(d:string)=>{const t=new Date(d+'T12:00:00Z');return Number.isNaN(t.getTime())?d:t.toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'UTC'})};

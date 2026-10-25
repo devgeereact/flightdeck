@@ -8,10 +8,10 @@ import {loadLocal,saveLocal,getOwner,setOwner,clearLocal} from './checklistStore
 import {syncOnce,httpApi} from './checklistSync';
 import {suggest} from './checklistRules';
 import {contextFromFlight,weatherStale} from './tripContext';
-import {summarise} from './summary';
-import {withMotion,fromAny} from './motion';
-import {apiFetch} from './api';
-import {track,ga} from './track';
+import {summarise} from '../flight/summary';
+import {withMotion,fromAny} from '../../shared/motion';
+import {apiFetch} from '../../shared/api';
+import {track,ga} from '../../shared/track';
 import './packingBoard.css';
 
 gsap.registerPlugin(useGSAP);

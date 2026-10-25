@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {flightIcs} from '../src/ics';
+import {flightIcs} from '../src/features/flight/ics';
 
 const f:any={number:'BA59',airline:'British Airways',cancelled:false,origin:{code:'LHR',name:'London Heathrow',city:'London'},destination:{code:'CPT',name:'Cape Town International',city:'Cape Town'},
   scheduledOut:'2026-10-25T21:20:00.000Z',estimatedOut:null,scheduledIn:'2026-10-26T10:10:00.000Z',estimatedIn:null,terminalOut:'5'};

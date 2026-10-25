@@ -28,7 +28,7 @@ $serve = static function (string $file, string $type): bool {
 if ($path === '/site.css') {
     header('Content-Type: text/css');
     header('Cache-Control: no-cache');
-    foreach (['src/fonts.css', 'src/styles/tokens.css', 'src/siteFooter.css', 'src/packingBoard.css', 'src/styles/site.css'] as $f) {
+    foreach (['src/fonts.css', 'src/styles/tokens.css', 'src/siteFooter.css', 'src/features/checklist/packingBoard.css', 'src/styles/site.css'] as $f) {
         readfile($root . '/' . $f);
         echo "\n";
     }

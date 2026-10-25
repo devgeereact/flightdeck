@@ -1,6 +1,6 @@
 // A short plain-English account of a flight, built ONLY from fields the providers reported. Nothing is inferred beyond what is stated:
 // if a detail is missing, the sentence for it is simply left out (or says it is not reported). No AI, no guessing.
-import type { Flight, Airport } from './types';
+import type { Flight, Airport } from '../../types';
 import { inZone } from './flightFormat';
 
 const tm = (iso: string | null | undefined, tz: string | null) => inZone(iso, tz, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });

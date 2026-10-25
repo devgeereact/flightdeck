@@ -1,6 +1,6 @@
 import {useEffect,useRef,useState} from 'react';
 import {MessageSquare,X,Send,Check} from 'lucide-react';
-import {track,ga} from './track';
+import {track,ga} from '../shared/track';
 
 type Kind='feedback'|'bug'|'contact';
 const LABEL:Record<Kind,string>={feedback:'Share feedback',bug:'Report a problem',contact:'Ask a question'};

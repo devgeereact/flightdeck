@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {smoothScrollAllowed} from '../src/smoothScroll';
-import {nextTabIndex} from '../src/tabKeys';
+import {smoothScrollAllowed} from '../src/shared/smoothScroll';
+import {nextTabIndex} from '../src/shared/tabKeys';
 
 const media=(reduce:boolean)=>(q:string)=>({matches:reduce&&q==='(prefers-reduced-motion: reduce)'});
 class RO{}

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {duration,countdown} from '../src/countdown';
+import {duration,countdown} from '../src/features/flight/countdown';
 
 const base:any={id:'x',number:'BA59',airline:'BA',status:'Scheduled',cancelled:false,diverted:false,origin:{code:'LHR'},destination:{code:'CPT'},scheduledOut:null,estimatedOut:null,actualOut:null,scheduledIn:null,estimatedIn:null,actualIn:null,takeoff:null,landing:null};
 const now=Date.UTC(2026,9,25,1,0);

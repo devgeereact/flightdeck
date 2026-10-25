@@ -2,9 +2,9 @@
 // Run the suite under another TZ too (e.g. TZ=America/Los_Angeles pnpm test): nothing here may depend on the device's zone.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { time, day, ukDate, journeySteps } from '../src/flightFormat.ts';
-import { summarise } from '../src/summary.ts';
-import { isPlainDate, sanitize } from '../src/checklistModel.ts';
+import { time, day, ukDate, journeySteps } from '../src/features/flight/flightFormat.ts';
+import { summarise } from '../src/features/flight/summary.ts';
+import { isPlainDate, sanitize } from '../src/features/checklist/checklistModel.ts';
 import type { Flight } from '../src/types.ts';
 
 const LHR = { code: 'LHR', name: 'London Heathrow', city: 'London', country: 'United Kingdom', countryCode: 'GB', timezone: 'Europe/London', lat: 51.47, lon: -0.4543 };

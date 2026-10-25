@@ -19,7 +19,7 @@ const rawGa = (process.env.VITE_GA_ID || '').trim();
 const gaId = /^G-[A-Z0-9]{6,12}$/.test(rawGa) ? rawGa : '';
 if (rawGa && !gaId) console.warn('[build-public] VITE_GA_ID is not a valid GA4 Measurement ID (expected G-XXXXXXXXXX); building without analytics.');
 
-const css = ['src/fonts.css', 'src/styles/tokens.css', 'src/siteFooter.css', 'src/packingBoard.css', 'src/styles/site.css']
+const css = ['src/fonts.css', 'src/styles/tokens.css', 'src/siteFooter.css', 'src/features/checklist/packingBoard.css', 'src/styles/site.css']
   .map((f) => read(f).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\n{2,}/g, '\n').trim()).join('\n') + '\n';
 
 fs.mkdirSync(dist, { recursive: true });

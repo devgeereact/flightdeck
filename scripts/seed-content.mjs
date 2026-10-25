@@ -13,7 +13,7 @@ const imp = (rel) => import(pathToFileURL(path.join(root, rel)).href);
 const config = JSON.parse(fs.readFileSync(path.join(root, 'site.config.json'), 'utf8'));
 const { pages, guideCategories } = await imp('content/pages.mjs');
 const site = await imp('content/site-content.mjs');
-const { TEMPLATE } = await imp('src/checklistTemplate.ts');
+const { TEMPLATE } = await imp('src/features/checklist/checklistTemplate.ts');
 
 // Settings become placeholders so a change in the console reaches every page that mentions them.
 const P = { ownerName: '{{ownerName}}', contactEmail: '{{contactEmail}}', lastReviewed: '{{lastReviewed}}', url: '{{siteUrl}}', siteName: 'Flightdeck' };

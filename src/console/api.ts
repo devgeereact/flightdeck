@@ -1,4 +1,4 @@
-import {apiFetch} from '../api';
+import {apiFetch} from '../shared/api';
 
 /** A failed console request: the server's message, its status, and per-field errors when a form did not validate. */
 export class ApiError extends Error{

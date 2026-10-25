@@ -1,5 +1,5 @@
 // Small helpers for showing a flight. Plain functions, no React, so the tests and the views can share them.
-import type {Flight} from './types';
+import type {Flight} from '../../types';
 
 // Every time is an instant (ISO with Z or an offset) shown in a named IANA zone, so BST/GMT and other clock changes come from the
 // time zone database, never from arithmetic. No zone means UTC (callers label it). A time or zone that cannot be read gives null:

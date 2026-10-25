@@ -1,5 +1,5 @@
 // What we know about a trip's flight, boiled down to the few facts the packing suggestions need. Pure functions, no network.
-import type { Flight } from './types';
+import type { Flight } from '../../types';
 
 export type TripContext = {
   dir: 'outbound' | 'inbound' | 'domestic' | 'overseas' | null;

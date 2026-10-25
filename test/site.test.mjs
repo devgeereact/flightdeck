@@ -9,7 +9,7 @@ import { execFileSync } from 'node:child_process';
 const root = path.resolve(import.meta.dirname, '..');
 const seed = JSON.parse(fs.readFileSync(path.join(root, 'php/private/src/Content/seed.json'), 'utf8'));
 const base = seed.settings;
-const { TEMPLATE } = await import(path.join(root, 'src/checklistTemplate.ts'));
+const { TEMPLATE } = await import(path.join(root, 'src/features/checklist/checklistTemplate.ts'));
 
 const PAGES = Object.keys(seed.pages).filter((s) => s !== 'home');
 const GUIDES = PAGES.filter((p) => p.startsWith('guides/'));
@@ -218,7 +218,7 @@ test('every JSON-LD block parses; guides carry an Article and a BreadcrumbList t
 });
 
 test('public pages share the app button system and focus ring, and no text is smaller than 12.5px', () => {
-  const css = ['src/styles/site.css', 'src/styles/tokens.css', 'src/siteFooter.css', 'src/packingBoard.css', 'src/style.css'].map((f) => [f, fs.readFileSync(path.join(root, f), 'utf8')]);
+  const css = ['src/styles/site.css', 'src/styles/tokens.css', 'src/siteFooter.css', 'src/features/checklist/packingBoard.css', 'src/style.css'].map((f) => [f, fs.readFileSync(path.join(root, f), 'utf8')]);
   const siteCss = css[0][1];
   assert.ok(siteCss.includes('.btn{') && siteCss.includes('.btn-primary{') && siteCss.includes('.btn-secondary{'));
   assert.ok(siteCss.includes(':focus-visible{outline:2px solid var(--fd-brand);outline-offset:2px}'));

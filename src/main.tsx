@@ -2,52 +2,28 @@ import React,{lazy,Suspense,useEffect,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {Plane,ArrowUpRight,ArrowRight,Search,RefreshCw,Navigation,CalendarDays,Info,ChevronRight,Bookmark,Download,AlertCircle,ListChecks,ShieldCheck} from 'lucide-react';
 import type {Flight,FlightResponse} from './types';
-import {apiFetch,setTokenGetter} from './api';
-import {getOwner as checklistOwner,clearLocal as clearChecklist} from './checklistStore';
-import {track,ga,gaPageview} from './track';
-import Feedback from './Feedback';
+import {apiFetch} from './shared/api';
+import {track,ga,gaPageview} from './shared/track';
+import Feedback from './app/Feedback';
 import SiteFooter from './SiteFooter';
-import Announcements from './Announcements';
-import FlightView from './FlightView';
-import {time,ukDate} from './flightFormat';
-import {smoothScrollAllowed} from './smoothScroll';
+import Announcements from './app/Announcements';
+import InstallHelp from './app/InstallHelp';
+import {AuthBar,SavedSync,SignedOutCleanup,TokenBridge} from './app/auth';
+import {dayLabel,dayDiff,rememberResult,recallResult,type SavedItem} from './app/savedFlights';
+import FlightView from './features/flight/FlightView';
+import {time,ukDate} from './features/flight/flightFormat';
+import {smoothScrollAllowed} from './shared/smoothScroll';
 import {registerSW} from 'virtual:pwa-register';
 import Lenis from 'lenis';
 import 'lenis/dist/lenis.css';
-import {ClerkProvider,Show,SignInButton,SignUpButton,UserButton,useAuth,useUser} from '@clerk/react';
+import {ClerkProvider,useAuth} from '@clerk/react';
 import './styles/tokens.css';
 import './style.css';
 const today=()=>ukDate();
 const CLERK_KEY=import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string|undefined;
-// Calendar days are counted against the UK date, so "Today" means today in the UK.
-const ymdUTC=(d:string)=>Date.UTC(+d.slice(0,4),+d.slice(5,7)-1,+d.slice(8,10));
-const dayDiff=(d:string)=>Math.round((ymdUTC(d)-ymdUTC(today()))/86400000);
-const dayLabel=(d:string)=>{const n=dayDiff(d);return n===0?'Today':n===1?'Tomorrow':n===-1?'Yesterday':new Intl.DateTimeFormat('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric',timeZone:'UTC'}).format(new Date(d+'T12:00:00Z'))};
-// The last few results, kept on this device only so a flight can still be read without a connection. Always shown as "last fetched at", never as live.
-const LAST_KEY='flightdeck-last-results';
-function rememberResult(key:string,data:FlightResponse){try{const all=JSON.parse(localStorage.getItem(LAST_KEY)||'{}');all[key]={at:Date.now(),data};const keep=Object.keys(all).sort((a,b)=>all[b].at-all[a].at).slice(0,6);localStorage.setItem(LAST_KEY,JSON.stringify(Object.fromEntries(keep.map(k=>[k,all[k]]))))}catch{/* storage full or blocked: nothing to keep */}}
-function recallResult(key:string):{at:number;data:FlightResponse}|null{try{return JSON.parse(localStorage.getItem(LAST_KEY)||'{}')[key]||null}catch{return null}}
 // A flight can be opened from a link: #/flight/BA59/2026-10-25
 const FLIGHT_LINK=/^#\/flight\/([A-Z0-9]{3,8})\/(\d{4}-\d{2}-\d{2})$/;
 const localZone=()=>Intl.DateTimeFormat().resolvedOptions().timeZone;
-function TokenBridge(){const {getToken}=useAuth();useEffect(()=>{setTokenGetter(()=>getToken());return()=>setTokenGetter(null)},[getToken]);return null}
-type SavedItem={number:string;date:string};
-const sameItem=(a:SavedItem,b:SavedItem)=>a.number===b.number&&a.date===b.date;
-const cleanSaved=(v:unknown):SavedItem[]=>Array.isArray(v)?v.filter((x:any)=>x&&typeof x.number==='string'&&typeof x.date==='string').map((x:any)=>({number:x.number,date:x.date})).slice(0,12):[];
-function SignedInName(){const {user}=useUser();const name=user?.firstName||user?.fullName||user?.username||user?.primaryEmailAddress?.emailAddress?.split('@')[0]||'';return name?<span className="user-name" title={user?.primaryEmailAddress?.emailAddress||name}>{name}</span>:null}
-function AuthBar(){return <div className="auth-bar"><Show when="signed-out"><SignInButton mode="modal"><button className="btn btn-secondary">Sign in</button></SignInButton><SignUpButton mode="modal"><button className="btn btn-primary">Create account</button></SignUpButton></Show><Show when="signed-in"><SignedInName/><UserButton/></Show></div>}
-// Keeps the saved-flights list in the signed-in user's Clerk profile (unsafeMetadata, editable only by that user) so it follows them across devices.
-function SavedSync({saved,setSaved,setSignedIn,setUserId}:{saved:SavedItem[];setSaved:(v:SavedItem[])=>void;setSignedIn:(v:boolean)=>void;setUserId:(v:string|null)=>void}){
- const {isLoaded,isSignedIn,user}=useUser();const hydrated=useRef<string|null>(null);
- const owner=(v?:string)=>{try{if(v===undefined)return localStorage.getItem('flightdeck-saved-owner');if(v)localStorage.setItem('flightdeck-saved-owner',v);else localStorage.removeItem('flightdeck-saved-owner')}catch{}return null};
- useEffect(()=>{if(!isLoaded)return;setSignedIn(!!isSignedIn);setUserId(user?.id??null);
-  // Signed out (including after the page reload that signing out causes) while this device still holds an account's list: wipe it, so the next person on a shared device does not see it.
-  if(!isSignedIn||!user){hydrated.current=null;if(owner()){setSaved([]);owner('')}return}
-  if(hydrated.current===user.id)return;hydrated.current=user.id;
-  const cloud=cleanSaved(user.unsafeMetadata?.savedFlights);const mine=owner()===user.id||!owner()?saved:[];const merged=[...cloud,...mine.filter(l=>!cloud.some(c=>sameItem(c,l)))].slice(0,12);owner(user.id);setSaved(merged)},[isLoaded,isSignedIn,user?.id]);
- useEffect(()=>{if(!isLoaded||!isSignedIn||!user||hydrated.current!==user.id)return;const cloud=cleanSaved(user.unsafeMetadata?.savedFlights);
-  if(JSON.stringify(cloud)===JSON.stringify(saved))return;const t=setTimeout(()=>{user.update({unsafeMetadata:{...user.unsafeMetadata,savedFlights:saved}}).catch(()=>{})},600);return()=>clearTimeout(t)},[saved,isLoaded,isSignedIn,user?.id]);
- return null}
 const ROUTES=['overview','saved','checklist','admin'];
 // The owner console has its own sections under #/admin/<section>/..., so only the first part picks the screen.
 const readRoute=()=>{const h=location.hash.replace(/^#\/?/,'').split('/')[0];return ROUTES.includes(h)?h:'overview'};
@@ -56,13 +32,10 @@ let lenis:Lenis|null=null;
 const toTop=()=>{if(lenis)lenis.scrollTo(0,{immediate:true});else window.scrollTo(0,0)};
 // Tiny hash router: #/checklist etc. Works with the static host (no server rewrites) and with the browser back button.
 function useHashRoute():[string,(r:string)=>void]{const [r,setR]=useState(readRoute);useEffect(()=>{const f=()=>{setR(readRoute());toTop();gaPageview()};window.addEventListener('hashchange',f);return()=>window.removeEventListener('hashchange',f)},[]);return [r,(n:string)=>{const next=n==='overview'?'':'/'+n;if(location.hash.replace(/^#/,'')!==next)location.hash=next;else setR(readRoute())}]}
-const ChecklistView=lazy(()=>import('./Checklist'));
+const ChecklistView=lazy(()=>import('./features/checklist/Checklist'));
 const AdminView=lazy(()=>import('./console/ConsoleShell'));
-const SignInScreen=lazy(()=>import('./SignInScreen'));
+const SignInScreen=lazy(()=>import('./app/SignInScreen'));
 // Signed-out visitors get the landing page; signed-in users get the dashboard. Without a Clerk key the app is open (no accounts).
-// Signing out reloads onto the landing page, where the dashboard (and its own clean-up) is not mounted. Anything an account left on this
-// device is wiped here so the next person on a shared computer does not see it. A guest's own list (no owner mark) is left alone.
-function SignedOutCleanup(){useEffect(()=>{try{if(localStorage.getItem('flightdeck-saved-owner')){localStorage.removeItem('flightdeck-saved');localStorage.removeItem('flightdeck-saved-owner')}}catch{}try{localStorage.removeItem(LAST_KEY)}catch{}if(checklistOwner())clearChecklist()},[]);return null}
 function Gate(){const {isLoaded,isSignedIn}=useAuth();const [slow,setSlow]=useState(false);
  useEffect(()=>{if(isLoaded)return;const t=setTimeout(()=>setSlow(true),10000);return()=>clearTimeout(t)},[isLoaded]);
  if(!isLoaded)return <div className="boot" role="status" aria-label="Loading">{slow&&<div className="boot-msg"><Plane size={26}/><h2>Sign-in could not load</h2><p>Flightdeck could not reach its sign-in service. Check your connection, then reload the page.</p><button className="btn btn-primary" onClick={()=>location.reload()}>Reload</button></div>}</div>;
@@ -117,14 +90,4 @@ useEffect(()=>{if(!CLERK_KEY||!userId){setMe({isAdmin:false,unread:null});return
  <div className="sf-gap"/>
  <SiteFooter inApp/></main></div>
 }
-// Shown when the browser does not offer its own install prompt. Plain steps for the browsers people actually use.
-function InstallHelp({onClose}:{onClose:()=>void}){
- const ref=useRef<HTMLDialogElement>(null);
- useEffect(()=>{const d=ref.current;if(d&&!d.open)d.showModal?.();return()=>{if(d?.open)d.close()}},[]);
- return <dialog ref={ref} className="fb-dialog install-help" aria-labelledby="ih-title" onClose={onClose} onClick={e=>{if(e.target===ref.current)ref.current?.close()}}>
-  <div className="fb-head"><h2 id="ih-title">Install Flightdeck</h2><button className="fb-close" onClick={()=>ref.current?.close()} aria-label="Close">×</button></div>
-  <div className="ih-body"><p>Installing puts Flightdeck on your home screen or dock, opens it in its own window and keeps your packing list available without a connection.</p>
-   <ul><li><strong>iPhone or iPad (Safari):</strong> tap the Share button, then Add to Home Screen.</li><li><strong>Android (Chrome):</strong> open the menu (three dots), then Install app or Add to Home screen.</li><li><strong>Chrome or Edge on a computer:</strong> click the install icon at the right of the address bar, or open the menu and choose Install Flightdeck.</li><li><strong>Safari on a Mac:</strong> choose File, then Add to Dock.</li><li><strong>Firefox:</strong> Firefox does not install web apps. Use another browser, or bookmark this page.</li></ul>
-   <button className="btn btn-primary" onClick={()=>ref.current?.close()}>Got it</button></div>
- </dialog>}
 const app=CLERK_KEY?<Gate/>:<Dashboard/>;createRoot(document.getElementById('root')!).render(<React.StrictMode>{CLERK_KEY?<ClerkProvider publishableKey={CLERK_KEY} afterSignOutUrl="/" appearance={{variables:{colorPrimary:'#214e3e',borderRadius:'8px',fontFamily:'DM Sans, sans-serif'}}}>{app}</ClerkProvider>:app}</React.StrictMode>);

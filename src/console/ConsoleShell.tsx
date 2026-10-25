@@ -4,7 +4,7 @@ import {useGSAP} from '@gsap/react';
 import {DrawSVGPlugin} from 'gsap/DrawSVGPlugin';
 import {Activity,AlertTriangle,BarChart3,BookOpen,FileText,Gauge,HeartPulse,History,Inbox as InboxIcon,LineChart,ListTree,Megaphone,MessageCircleQuestion,RefreshCw,Server,Settings,Users} from 'lucide-react';
 import {call,nf} from './api';
-import {withMotion,fromAny} from '../motion';
+import {withMotion,fromAny} from '../shared/motion';
 import {Analytics,Costs,Overview,SystemView,Usage,UsersView} from './Ops';
 import Inbox from './Inbox';
 import HealthView from './HealthView';

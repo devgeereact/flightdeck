@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { suggest, RULE_IDS } from '../src/checklistRules.ts';
-import { contextFromFlight, haversineKm, isRainy, weatherStale, type TripContext } from '../src/tripContext.ts';
-import { summarise } from '../src/summary.ts';
-import * as M from '../src/checklistModel.ts';
-import { TEMPLATE } from '../src/checklistTemplate.ts';
+import { suggest, RULE_IDS } from '../src/features/checklist/checklistRules.ts';
+import { contextFromFlight, haversineKm, isRainy, weatherStale, type TripContext } from '../src/features/checklist/tripContext.ts';
+import { summarise } from '../src/features/flight/summary.ts';
+import * as M from '../src/features/checklist/checklistModel.ts';
+import { TEMPLATE } from '../src/features/checklist/checklistTemplate.ts';
 
 const ctx = (o: Partial<TripContext> = {}): TripContext => ({ dir: 'outbound', intl: true, dest: 'CPT', destName: 'Cape Town', lat: -33.97, lon: 18.6, tempC: 18, rain: false, km: 9670, at: 1, ...o });
 const items = TEMPLATE.flatMap((s) => s.items.map((i) => i.text));

@@ -1,5 +1,5 @@
 // A calendar file (.ics) for one flight. Times are written in UTC, so every calendar app shows them in the reader's own time zone.
-import type {Flight} from './types';
+import type {Flight} from '../../types';
 
 const stamp=(iso:string)=>new Date(iso).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
 // RFC 5545 text: escape backslash, semicolon, comma and line breaks.

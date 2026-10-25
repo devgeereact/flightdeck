@@ -1,5 +1,5 @@
 // "Leaves in 2 h 15 min" style labels, worked out only from times the providers reported. No time, no label.
-import type {Flight} from './types';
+import type {Flight} from '../../types';
 
 const AIR=new Set(['Departed','EnRoute','Approaching']);
 
