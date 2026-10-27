@@ -34,8 +34,8 @@ src/features/flight/           flight view, formatting (time rules ADR-012), sum
 src/features/checklist/        packing list UI, model, storage, sync, rules, template, board styles
 src/console/                   owner console: shell, operations (Ops.tsx), inbox, provider health, audit, content editor
 src/shared/                    API client (token in Authorization and X-Session-Token), tracking, motion, tab keys, smooth scroll
-src/styles/                    tokens.css (design tokens), site.css (public site), console.css; src/style.css (app)
-src/site/                      public site scripts (site.js, contact.js, travel-checklist.js)
+src/styles/                    tokens.css (design tokens), site.css (public site, one layer), workspace.css (app), console.css; src/style.css (app base)
+src/site/                      public site scripts (site.js, contact.js, travel-checklist.js); the build also copies node_modules/lenis (smooth scroll) to /lenis-<hash>.js
 src/siteNav.ts                 default links (app footer, CMS seed)    src/types.ts  flight contracts
 ```
 

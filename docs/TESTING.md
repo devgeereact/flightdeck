@@ -30,9 +30,9 @@ Test locally FIRST, then push. Required before pushing main or asking for a rele
 
 | Command | What it proves |
 |---|---|
-| `pnpm test` | (100 tests after the Node archive) Unit and page tests, plus `test/site.test.mjs` (every public page rendered by PHP: document structure, no third parties, safe links, legal wording, ads gate, JSON-LD, shared links, announcements) and `test/cms-http.test.mjs` (real PHP router, throwaway private folder, locally signed tokens: 401/403 on every CMS route, draft vs live, conflict, restore, XSS, pages, FAQs, announcements, settings, navigation, operations). 106 tests. |
+| `pnpm test` | (104 tests as of 26 Oct 2026) Unit and page tests, plus `test/site.test.mjs` (every public page rendered by PHP: document structure, no third parties, safe links, legal wording, ads gate, JSON-LD, shared links, announcements) and `test/cms-http.test.mjs` (real PHP router, throwaway private folder, locally signed tokens: 401/403 on every CMS route, draft vs live, conflict, restore, XSS, pages, FAQs, announcements, settings, navigation, operations). 106 tests. |
 | `pnpm test:php` | PHP suite, including Markdown XSS cases, media re-encoding, health and enquiry notes (media tests skip where GD is missing). |
-| `pnpm test:ui` | The app in jsdom (47 checks). Uses the real php/private folder and .env keys, as before. |
+| `pnpm test:ui` | The app in jsdom (50 checks). Uses the real php/private folder and .env keys, as before. |
 | `pnpm test:console` | The owner console in jsdom against a throwaway server (16 checks: edit, field error, draft, preview, publish, history restore, new FAQ, resolve enquiry, health, audit, non-owner refused). |
 | `node scripts/seed-content.mjs --check` | The CMS seed matches its sources (also run inside `pnpm test`). |
 | `bash scripts/check-apache-routes.sh` | macOS only: dist/ under Apache + PHP-FPM in the host's layout, with stale static pages present: 22 route and header checks. |

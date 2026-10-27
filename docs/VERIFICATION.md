@@ -89,3 +89,26 @@ Environment: macOS, Node 24.22.1, pnpm 12.15.0, PHP 8.5.12 (CLI, built-in server
 | Visual (headless Chrome screenshots) | site home 1440/375, guide 1280, coverage/help/contact 375, 404 375/1280, sign-in 1280/375, console pages/editor/inbox/health 1440: no overflow, labels and states as designed |
 
 NOT tested: the live server (LiteSpeed, its PHP 8.4 and GD), a real phone (installed-app forwarding, PWA update across the /app/ move), Clerk production sign-in with the new /app/ path, a real screen reader, real provider calls through the new health recorder (unit-tested only). These are in the release plan (docs/RELEASE-PLAN-REBRAND.md, step 4).
+
+## Second redesign, airport signage, 26 October 2026 (local, NOT committed, pushed or released)
+
+Environment: macOS, Node 24.22.1, PHP 8.5.12 (built-in server), Chrome headless shell 156 (Puppeteer cache). Design record: docs/DESIGN.md (section "Second redesign"), ADR-019.
+
+| Check | Result |
+|---|---|
+| `pnpm build` (tsc, Vite, public assets incl. `lenis-<hash>.js`) | PASS |
+| `pnpm test` | PASS 104/104 (home test now asserts the board, no times in it, the old headline gone, and the reduced-motion guard) |
+| `pnpm test:php` | PASS (199 PASS lines, "All passed") |
+| `pnpm test:ui` | PASS 50/50 (one assertion updated for the new empty-state wording) |
+| `pnpm test:console` | PASS 16/16 (a first run failed only because a stale harness server from an earlier crashed run still held port 3993; killed and re-run) |
+| `node scripts/seed-content.mjs --check` | PASS (seed regenerated; closing title is now "Look up your flight.") |
+| Screenshots 1440 / 768 / 375 | 44 captures of public pages, app states, sign-in and console: no sideways overflow |
+| Contrast of new pairs | all text pairs at least 4.5:1; one draft pair at 2.6:1 found and fixed (see DESIGN.md) |
+
+Defects found and fixed by this pass: app search card button wrapped into a second column on phones (page 276px too wide); provider-health page 13px too wide on phones; low-contrast step and contents numerals.
+
+NOT tested: a real phone or installed PWA, a screen reader, Safari and Firefox on this pass, the real Clerk sign-in widget (the sign-in page was rendered with a stub for its two buttons), the cookie banner with analytics on, print output beyond the unchanged packing-list rules, any provider call (the app screenshots use a labelled fixture through request interception), the live server. Smooth scrolling feel was not judged by eye in a real browser; only that it is wired, off under reduced motion, and the pages are complete without it.
+
+### Follow-up, 26 October 2026: network error text and console type
+
+`pnpm build` PASS; `pnpm test` 104/104; `pnpm test:ui` PASS 51 checks (new B16b: a failed request shows a plain sentence, never the service worker text); `pnpm test:console` PASS 16/16. Console screenshots at 1440 and 375px (pages, editor, FAQ, inbox, health, overview, users): no overflow. Cause of the reported error: the local live-account preview (https://local.flightdeck.gakinz.com) was not running (no listener on 443 or its PHP on 3993), so the service worker had nothing to reach. Restarting it needs `pnpm dev:live-account` in Terminal (it asks for the administrator password for port 443); it rebuilds `.local-live/dist` at start, so it only shows these changes after a restart. NOT tested: the live-account preview itself, because it cannot be started without that password.

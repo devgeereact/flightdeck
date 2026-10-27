@@ -28,3 +28,6 @@ Production release pipeline built and proven: `production` branch + .github/work
 
 ## Update 25 Oct 2026: rebrand and CMS (Route A)
 Owner decisions: audience personal and free (non-commercial, not promoted); evolve the green identity; public site at `/` rendered by PHP from CMS content, app at `/app/` (ADR-015); CMS = content, settings and branding, inbox and operations; owner only, no editor role; file-based storage (ADR-016); safe Markdown only (ADR-017). Built and verified locally (VERIFICATION.md), not released. Backup: `~/repo-backups/flightdeck-2026-10-25-1808-pre-rebrand` (verified bundle, source, private files). Release plan: RELEASE-PLAN-REBRAND.md. Open: server GD and backup scope, release approval, clean-up approval, Node reference archive decision.
+
+## Decision 26 Oct 2026
+Design language is airport signage and printed timetables (hairlines, small radii, one dark board panel, tabular data); brand colours and fonts unchanged; Lenis on public pages and the app, never under reduced motion; no fabricated flight data anywhere in marketing visuals; third-party design references (NerdWallet, 21st) inform structure only. See docs/DESIGN.md and ADR-019.
