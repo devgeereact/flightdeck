@@ -1,7 +1,7 @@
 // Public-website assets for the server-rendered pages (php/private/src/Site). Pages themselves are rendered by PHP from CMS content;
 // this writes the files they load, with content hashes so they can be cached for a year:
 //   site-<hash>.css   fonts + tokens + footer + packing board + site styles
-//   site-<hash>.js, js/contact-<hash>.js, js/travel-checklist-<hash>.js
+//   site-<hash>.js, lenis-<hash>.js, js/contact-<hash>.js, js/travel-checklist-<hash>.js
 //   site-build.json   the file names above and the public GA4 Measurement ID, read by public/site.php
 //   robots.txt
 // Usage: node scripts/build-public.mjs [--dist dist]
@@ -37,6 +37,8 @@ const build = {
   js: hashed('', 'site', 'js', read('src/site/site.js')),
   contactJs: hashed('js', 'contact', 'js', read('src/site/contact.js')),
   checklistJs: hashed('js', 'travel-checklist', 'js', read('src/site/travel-checklist.js')),
+  // Smooth scrolling for the public pages only (never the app or console). site.js starts it unless the visitor prefers reduced motion.
+  lenisJs: hashed('', 'lenis', 'js', read('node_modules/lenis/dist/lenis.min.js')),
   gaId,
 };
 fs.writeFileSync(path.join(dist, 'site-build.json'), JSON.stringify(build) + '\n');

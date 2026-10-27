@@ -49,16 +49,16 @@
      {
       "label": "Data and coverage",
       "href": "/coverage/"
-     },
-     {
-      "label": "Help and FAQ",
-      "href": "/help/"
      }
     ]
    },
    {
     "title": "Guides and tools",
     "links": [
+     {
+      "label": "Help and FAQ",
+      "href": "/help/"
+     },
      {
       "label": "Travel guides",
       "href": "/guides/"
@@ -402,7 +402,7 @@
     ]
    },
    "final": {
-    "title": "Ready when you are",
+    "title": "Look up your flight.",
     "text": "Create a free account to look up flights, save them and keep your packing list. The guides and the printable packing list need no account."
    }
   },
@@ -529,6 +529,26 @@
     {
      "id": "cl.advance.5",
      "text": "Wash clothes"
+    },
+    {
+     "id": "cl.advance.6",
+     "text": "Check entry and transit requirements"
+    },
+    {
+     "id": "cl.advance.7",
+     "text": "Check airline baggage allowance"
+    },
+    {
+     "id": "cl.advance.8",
+     "text": "Arrange airport transport"
+    },
+    {
+     "id": "cl.advance.9",
+     "text": "Check roaming or eSIM options"
+    },
+    {
+     "id": "cl.advance.10",
+     "text": "Share itinerary with a trusted contact"
     }
    ]
   },
@@ -615,6 +635,26 @@
     {
      "id": "cl.clothes.20",
      "text": "Belts"
+    },
+    {
+     "id": "cl.clothes.21",
+     "text": "Comfortable travel outfit"
+    },
+    {
+     "id": "cl.clothes.22",
+     "text": "Spare outfit in cabin bag"
+    },
+    {
+     "id": "cl.clothes.23",
+     "text": "Light layers for the flight"
+    },
+    {
+     "id": "cl.clothes.24",
+     "text": "Laundry bag"
+    },
+    {
+     "id": "cl.clothes.25",
+     "text": "Reusable shopping bag"
     }
    ]
   },
@@ -653,6 +693,26 @@
     {
      "id": "cl.bathroom.8",
      "text": "Toothpaste and toothbrush"
+    },
+    {
+     "id": "cl.bathroom.9",
+     "text": "Deodorant"
+    },
+    {
+     "id": "cl.bathroom.10",
+     "text": "Sunscreen"
+    },
+    {
+     "id": "cl.bathroom.11",
+     "text": "Lip balm"
+    },
+    {
+     "id": "cl.bathroom.12",
+     "text": "Hairbrush or comb"
+    },
+    {
+     "id": "cl.bathroom.13",
+     "text": "Period products, if needed"
     }
    ]
   },
@@ -755,6 +815,26 @@
     {
      "id": "cl.accessories.24",
      "text": "Satellite navigator"
+    },
+    {
+     "id": "cl.accessories.25",
+     "text": "Reusable water bottle (empty before security)"
+    },
+    {
+     "id": "cl.accessories.26",
+     "text": "Headphones and charging cable"
+    },
+    {
+     "id": "cl.accessories.27",
+     "text": "Luggage tags"
+    },
+    {
+     "id": "cl.accessories.28",
+     "text": "Packing cubes"
+    },
+    {
+     "id": "cl.accessories.29",
+     "text": "Hand sanitiser and tissues"
     }
    ]
   },
@@ -845,6 +925,26 @@
     {
      "id": "cl.papers.21",
      "text": "Watch"
+    },
+    {
+     "id": "cl.papers.22",
+     "text": "Offline copies of bookings"
+    },
+    {
+     "id": "cl.papers.23",
+     "text": "Emergency contact details"
+    },
+    {
+     "id": "cl.papers.24",
+     "text": "Travel insurance contact number"
+    },
+    {
+     "id": "cl.papers.25",
+     "text": "Accommodation address saved offline"
+    },
+    {
+     "id": "cl.papers.26",
+     "text": "Copies of important documents stored securely"
     }
    ]
   },
@@ -892,6 +992,26 @@
     {
      "id": "cl.work.10",
      "text": "Car mobile phone holder"
+    },
+    {
+     "id": "cl.work.11",
+     "text": "Laptop power adaptor"
+    },
+    {
+     "id": "cl.work.12",
+     "text": "Check access to work accounts"
+    },
+    {
+     "id": "cl.work.13",
+     "text": "Offline copy of presentation"
+    },
+    {
+     "id": "cl.work.14",
+     "text": "USB-C or display adaptor"
+    },
+    {
+     "id": "cl.work.15",
+     "text": "Notebook and pen"
     }
    ]
   },
@@ -914,6 +1034,26 @@
     {
      "id": "cl.night.4",
      "text": "Flight check-in"
+    },
+    {
+     "id": "cl.night.5",
+     "text": "Charge phone and power bank"
+    },
+    {
+     "id": "cl.night.6",
+     "text": "Download boarding pass"
+    },
+    {
+     "id": "cl.night.7",
+     "text": "Check flight and airport updates"
+    },
+    {
+     "id": "cl.night.8",
+     "text": "Set departure alarm"
+    },
+    {
+     "id": "cl.night.9",
+     "text": "Separate cabin and hold baggage"
     }
    ]
   },
@@ -956,6 +1096,26 @@
     {
      "id": "cl.last.9",
      "text": "Check doors and windows"
+    },
+    {
+     "id": "cl.last.10",
+     "text": "Check passport and boarding pass are accessible"
+    },
+    {
+     "id": "cl.last.11",
+     "text": "Take house keys and wallet"
+    },
+    {
+     "id": "cl.last.12",
+     "text": "Unplug non-essential appliances"
+    },
+    {
+     "id": "cl.last.13",
+     "text": "Check transport pickup time"
+    },
+    {
+     "id": "cl.last.14",
+     "text": "Take essential medicines in cabin bag"
     }
    ]
   }

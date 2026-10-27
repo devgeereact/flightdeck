@@ -48,7 +48,7 @@ export const pages = {
         { title: 'What is often missing', items: ['Gates and belts, which airports often assign late', 'Position over oceans and remote areas', 'Schedules when the shared monthly allowance runs out'] },
       ],
     },
-    final: { title: 'Ready when you are', text: 'Create a free account to look up flights, save them and keep your packing list. The guides and the printable packing list need no account.' },
+    final: { title: 'Look up your flight.', text: 'Create a free account to look up flights, save them and keep your packing list. The guides and the printable packing list need no account.' },
   },
 
   'how-it-works': {

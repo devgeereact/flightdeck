@@ -166,7 +166,8 @@ final class Site
         }, $this->c['navigation']['footer'] ?? []));
         $robots = !empty($o['noindex']) || $this->preview ? '<meta name="robots" content="noindex">' : '';
         $year = gmdate('Y', $this->nowSec);
-        $scripts = '<script src="/consent.js" defer></script><script src="' . self::e($this->assets['js']) . '" defer></script>' . ($o['scripts'] ?? '');
+        $lenis = !empty($this->assets['lenisJs']) ? '<script src="' . self::e($this->assets['lenisJs']) . '" defer></script>' : '';
+        $scripts = '<script src="/consent.js" defer></script>' . $lenis . '<script src="' . self::e($this->assets['js']) . '" defer></script>' . ($o['scripts'] ?? '');
         $adsHead = !empty($o['ads']) ? '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-' . self::e($this->config['ads_pub_id']) . '" crossorigin="anonymous"></script>' : '';
         $site = self::e($this->s['siteName'] ?? 'Flightdeck');
         return '<!doctype html>
@@ -351,9 +352,9 @@ final class Site
         }
         $intro = $this->md((string) $p['body'])['html'];
         $slot = $this->adSlot('checklist');
-        $main = '<div class="page">' . $this->head($p) . '<div class="sub noprint">' . $intro . '</div>'
-            . '<div class="tools noprint"><button class="btn btn-primary" type="button" data-print>Print this list</button><a class="btn btn-secondary" href="/app/#/checklist">Keep it in Flightdeck</a><span class="stat">' . count($tpl) . ' sections · ' . $total . ' items</span></div>'
-            . '<div class="ck-layout" id="packing-board"><nav class="ck-rail" aria-label="Packing list sections">' . $rail . '</nav><div class="ck-panels">' . $panels . '</div></div>'
+        $main = '<div class="page packing-page">' . $this->head($p) . '<div class="sub noprint">' . $intro . '</div>'
+            . '<p class="packing-access noprint">Free to use and print. No sign-in needed. Your ticks stay in this browser.</p><div class="tools noprint"><button class="btn btn-primary" type="button" data-print>Print this list</button><button class="btn btn-secondary" type="button" data-print-blank>Print blank copy</button><a class="btn btn-secondary" href="/app/#/checklist">Keep it in Flightdeck</a><span class="stat">' . count($tpl) . ' sections · ' . $total . ' items</span></div>'
+            . '<div class="packing-summary noprint"><div><strong id="packing-total" role="status" aria-live="polite">0 of ' . $total . ' packed</strong><span>Choose a section, or show the complete list.</span></div><label class="packing-show-all"><input type="checkbox" id="packing-show-all"> Show all sections</label></div><div class="packing-print-meta"><span>Name / trip: ____________________</span><span>Departure date: ________________</span></div><div class="ck-layout" id="packing-board"><nav class="ck-rail" aria-label="Packing list sections">' . $rail . '</nav><div class="ck-panels">' . $panels . '</div></div>'
             . $slot
             . '<h2 class="noprint">How to use it</h2><ol class="ck-steps noprint"><li><b>1. Start days ahead</b><span>The first section holds the things that take time: visas, insurance and vaccinations.</span></li><li><b>2. Pack by section</b><span>Clothes, then the bathroom bag, then accessories, so nothing is forgotten halfway through.</span></li><li><b>3. Make it yours</b><span>Cross out what you never need and add what you always forget. In Flightdeck your edits are saved for every trip.</span></li><li><b>4. Finish with the last lists</b><span>The night-before and last-minute sections catch the keys, the charger and the back door.</span></li></ol>'
             . '<div class="prose noprint"><p>For entry requirements, visas and health advice for your destination, use the official <a href="https://www.gov.uk/foreign-travel-advice" rel="noopener">GOV.UK foreign travel advice</a>. Planning the day itself? Read the <a href="/guides/departure-day-airport-timeline/">departure day timeline</a> and the guide to <a href="/guides/pack-your-cabin-bag-for-a-long-flight/">packing your cabin bag</a>.</p></div>'
@@ -431,7 +432,7 @@ final class Site
         $points = implode('', array_map(function ($x): string {
             return '<li>' . $this->inl((string) $x) . '</li>';
         }, $p['points'] ?? []));
-        $hero = '<section class="hero" aria-labelledby="hero-title"><div class="wrap"><div>'
+        $hero = '<section class="hero" aria-labelledby="hero-title"><div class="wrap hero-grid"><div class="hero-copy">'
             . '<p class="eyebrow">' . self::e($h['eyebrow'] ?? '') . '</p><h1 id="hero-title">' . self::e($h['title'] ?? $p['title']) . '</h1><p class="lede">' . $this->inl((string) ($h['text'] ?? '')) . '</p>'
             . '<form class="lookup" id="lookup" action="/app/" method="get" novalidate><div class="form-row">'
             . '<label class="field"><span>Flight number</span><input name="number" id="lookup-number" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="8" placeholder="BA117" required pattern="[A-Za-z0-9]{2,3}\s?[0-9]{1,4}[A-Za-z]?"></label>'
@@ -439,7 +440,8 @@ final class Site
             . '<button class="btn btn-primary btn-lg" type="submit">Track flight</button></div>'
             . '<p class="lookup-note" id="lookup-msg" role="status" aria-live="polite">Free account needed to look up flights. <a href="/help/#faq-account">Why?</a></p></form>'
             . ($points !== '' ? '<ul class="points">' . $points . '</ul>' : '') . '</div>'
-            . $this->sample() . '</div></section>';
+            . $this->resultBoard() . '</div>'
+            . '<div class="wrap sources"><p class="fd-label">Data from</p><ul><li><b>AeroDataBox</b> schedules and gates</li><li><b>OpenSky Network</b> aircraft position</li><li><b>adsbdb</b> usual routes</li><li><b>Open-Meteo</b> weather</li></ul></div></section>';
         $steps = implode('', array_map(function ($s): string {
             return '<li><h3>' . self::e($s['title']) . '</h3><p>' . $this->inl((string) $s['text']) . '</p></li>';
         }, $p['steps'] ?? []));
@@ -455,11 +457,11 @@ final class Site
         $faqs = array_slice($this->faqs(), 0, 4);
         $final = $p['final'] ?? ['title' => '', 'text' => ''];
         $main = $hero
-            . ($steps !== '' ? '<section class="band band-white" aria-labelledby="how-h"><div class="wrap"><div class="band-head"><h2 id="how-h">How it works</h2><p>Three steps, and you always see where each detail came from.</p></div><ol class="steps">' . $steps . '</ol><p class="band-foot"><a href="/how-it-works/">More about how Flightdeck works</a></p></div></section>' : '')
-            . ($features !== '' ? '<section class="band" aria-labelledby="feat-h"><div class="wrap"><div class="band-head"><h2 id="feat-h">What you get</h2><p>Everything on one page, each detail labelled with what it is.</p></div><ul class="features">' . $features . '</ul></div></section>' : '')
-            . ($cols !== '' ? '<section class="band band-deep" aria-labelledby="cov-h"><div class="wrap"><div class="band-head"><h2 id="cov-h">' . self::e($cov['title'] ?? 'Honest about the data') . '</h2><p>' . self::e($cov['text'] ?? '') . '</p></div><div class="coverage">' . $cols . '</div><p class="band-foot"><a href="/coverage/">Read about the data and its limits</a></p></div></section>' : '')
-            . ($faqs ? '<section class="band band-white" aria-labelledby="faq-h"><div class="wrap"><div class="band-head"><h2 id="faq-h">Questions</h2><p>The short answers. There are more on the <a href="/help/">help page</a>.</p></div>' . $this->faqList($faqs) . '</div></section>' : '')
-            . '<section class="band final" aria-labelledby="final-h"><div class="wrap"><h2 id="final-h">' . self::e($final['title']) . '</h2><p>' . $this->inl((string) $final['text']) . '</p><div class="actions"><a class="btn btn-primary btn-lg" href="/app/">Open Flightdeck</a><a class="btn btn-secondary btn-lg" href="/guides/">Read the guides</a></div></div></section>';
+            . ($steps !== '' ? '<section class="band band-white" aria-labelledby="how-h"><div class="wrap split"><div class="band-head"><h2 id="how-h">How it works</h2><p>Three steps, and you always see where each detail came from.</p><p class="band-foot"><a href="/how-it-works/">More about how Flightdeck works</a></p></div><ol class="steps" data-reveal>' . $steps . '</ol></div></section>' : '')
+            . ($features !== '' ? '<section class="band" aria-labelledby="feat-h"><div class="wrap split"><div class="band-head"><h2 id="feat-h">What you get</h2><p>Everything on one page, each detail labelled with what it is.</p></div><ul class="features" data-reveal>' . $features . '</ul></div></section>' : '')
+            . ($cols !== '' ? '<section class="band band-deep" aria-labelledby="cov-h"><div class="wrap"><div class="band-head"><h2 id="cov-h">' . self::e($cov['title'] ?? 'Honest about the data') . '</h2><p>' . self::e($cov['text'] ?? '') . '</p></div><div class="coverage" data-reveal>' . $cols . '</div><p class="band-foot"><a href="/coverage/">Read about the data and its limits</a></p></div></section>' : '')
+            . ($faqs ? '<section class="band band-white" aria-labelledby="faq-h"><div class="wrap split"><div class="band-head"><h2 id="faq-h">Questions</h2><p>The short answers. There are more on the <a href="/help/">help page</a>.</p></div><div data-reveal>' . $this->faqList($faqs) . '</div></div></section>' : '')
+            . '<section class="final" aria-labelledby="final-h"><div class="wrap"><div><h2 id="final-h">' . self::e($final['title']) . '</h2><p>' . $this->inl((string) $final['text']) . '</p></div><div class="actions"><a class="btn btn-primary btn-lg" href="/app/">Open Flightdeck</a><a class="btn btn-secondary btn-lg" href="/guides/">Read the guides</a></div></div></section>';
         $url = $this->url('');
         $ld = [
             ['@context' => 'https://schema.org', '@type' => 'WebSite', 'name' => $this->s['siteName'], 'url' => $url],
@@ -469,15 +471,21 @@ final class Site
         return $this->layout(['title' => $p['title'], 'bareTitle' => true, 'description' => $p['description'], 'url' => $url, 'here' => '/', 'main' => $main, 'ld' => $ld]);
     }
 
-    /** The illustrative flight card. Clearly a sample: fixed, labelled, and showing "not reported yet" the way the app does. */
-    private function sample(): string
+    /**
+     * The anatomy of a result: which detail comes from which source, and what a missing detail looks like.
+     * It carries no flight record, no times and no aircraft position, and makes no provider call.
+     */
+    private function resultBoard(): string
     {
-        return '<figure class="sample" aria-labelledby="sample-cap" style="margin:0"><span class="sample-tag">Sample, not a real flight</span>'
-            . '<div class="sample-head"><span class="sample-num fd-data">BA117</span><span class="sample-status">En route</span></div>'
-            . '<div class="sample-route"><div><b class="fd-data">LHR</b><small>London Heathrow</small></div><div class="sample-line" aria-hidden="true"><i></i>' . str_replace('aria-hidden="true"', '', self::PLANE) . '</div><div style="text-align:right"><b class="fd-data">JFK</b><small>New York JFK</small></div></div>'
-            . '<div class="board fd-data"><div><small>Departed</small><strong>08:41</strong></div><div><small>Est. arrival</small><strong>11:32</strong></div><div><small>Gate in</small><strong class="unknown">Not reported yet</strong></div>'
-            . '<div><small>Terminal</small><strong>5</strong></div><div><small>Altitude</small><strong>11,280 m</strong></div><div><small>Baggage belt</small><strong class="unknown">Not reported yet</strong></div></div>'
-            . '<figcaption class="sample-foot" id="sample-cap">An illustration of how a flight looks in Flightdeck. Times are shown in each airport\'s local time.</figcaption></figure>';
+        $rows = [['Status', 'AeroDataBox'], ['Scheduled time', 'AeroDataBox'], ['Estimated time', 'AeroDataBox'], ['Actual time', 'AeroDataBox'],
+            ['Terminal and gate', 'the airport'], ['Baggage belt', null], ['Aircraft position', 'OpenSky Network'], ['Destination weather', 'Open-Meteo']];
+        $list = implode('', array_map(static function (array $r): string {
+            return '<div><dt>' . self::e($r[0]) . '</dt><dd' . ($r[1] === null ? ' class="missing"' : '') . '>' . ($r[1] === null ? 'Not reported yet' : self::e($r[1])) . '</dd></div>';
+        }, $rows));
+        return '<aside class="board" aria-labelledby="board-title"><p class="board-kicker">What a result is made of</p><h2 id="board-title">Every detail names its source.</h2>'
+            . '<div class="board-route" aria-hidden="true"><span>Departure</span><svg viewBox="0 0 240 44" preserveAspectRatio="none"><path class="base" d="M4 38H236"/><path class="arc" pathLength="1" d="M4 38C70 -6 170 -6 236 38"/><circle class="node" cx="4" cy="38" r="4"/><circle class="node" cx="236" cy="38" r="4"/></svg><span>Arrival</span></div>'
+            . '<dl class="board-rows">' . $list . '</dl>'
+            . '<p class="board-foot">Your flight fills this in. A detail the sources have not reported stays <strong>Not reported yet</strong>, never a guess.</p></aside>';
     }
 
     private function notFound(): string

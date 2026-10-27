@@ -17,9 +17,9 @@ export const FOOTER_GROUPS: SiteLinkGroup[] = [
     { label: 'Open the app', href: '/app/', appHref: '#/' },
     { label: 'How it works', href: '/how-it-works/' },
     { label: 'Data and coverage', href: '/coverage/' },
-    { label: 'Help and FAQ', href: '/help/' },
   ] },
   { title: 'Guides and tools', links: [
+    { label: 'Help and FAQ', href: '/help/' },
     { label: 'Travel guides', href: '/guides/' },
     { label: 'Printable packing list', href: '/travel-checklist/', appHref: '#/checklist' },
   ] },
