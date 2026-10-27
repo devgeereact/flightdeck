@@ -16,7 +16,7 @@ gsap.registerPlugin(useGSAP,DrawSVGPlugin);
 type Id=ContentSectionId|'inbox'|'overview'|'usage'|'costs'|'health'|'users'|'analytics'|'system'|'audit';
 const GROUPS:{title:string;items:{id:Id;label:string;icon:typeof Activity}[]}[]=[
  {title:'Content',items:[{id:'pages',label:'Pages',icon:FileText},{id:'guides',label:'Guides',icon:BookOpen},{id:'faqs',label:'Help and FAQ',icon:MessageCircleQuestion},{id:'announcements',label:'Announcements',icon:Megaphone},{id:'navigation',label:'Menus',icon:ListTree}]},
- {title:'Inbox',items:[{id:'inbox',label:'Enquiries and feedback',icon:InboxIcon}]},
+ {title:'Inbox',items:[{id:'inbox',label:'Enquiries',icon:InboxIcon}]},
  {title:'Operations',items:[{id:'overview',label:'Overview',icon:Activity},{id:'usage',label:'Usage',icon:BarChart3},{id:'costs',label:'Costs and limits',icon:Gauge},{id:'health',label:'Provider health',icon:HeartPulse}]},
  {title:'People',items:[{id:'users',label:'Users',icon:Users},{id:'analytics',label:'Google Analytics',icon:LineChart}]},
  {title:'Settings',items:[{id:'settings',label:'Site settings',icon:Settings},{id:'system',label:'System',icon:Server},{id:'audit',label:'Audit log',icon:History}]},

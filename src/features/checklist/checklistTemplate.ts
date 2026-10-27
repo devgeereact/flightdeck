@@ -48,4 +48,20 @@ export const TEMPLATE: TemplateSection[] = [
   ]),
 ];
 
+// Additions are appended within each original section: existing ids and saved ticks never shift.
+const EXTRAS: Record<string, string[]> = {
+  advance: ['Check entry and transit requirements', 'Check airline baggage allowance', 'Arrange airport transport', 'Check roaming or eSIM options', 'Share itinerary with a trusted contact'],
+  clothes: ['Comfortable travel outfit', 'Spare outfit in cabin bag', 'Light layers for the flight', 'Laundry bag', 'Reusable shopping bag'],
+  bathroom: ['Deodorant', 'Sunscreen', 'Lip balm', 'Hairbrush or comb', 'Period products, if needed'],
+  accessories: ['Reusable water bottle (empty before security)', 'Headphones and charging cable', 'Luggage tags', 'Packing cubes', 'Hand sanitiser and tissues'],
+  papers: ['Offline copies of bookings', 'Emergency contact details', 'Travel insurance contact number', 'Accommodation address saved offline', 'Copies of important documents stored securely'],
+  work: ['Laptop power adaptor', 'Check access to work accounts', 'Offline copy of presentation', 'USB-C or display adaptor', 'Notebook and pen'],
+  night: ['Charge phone and power bank', 'Download boarding pass', 'Check flight and airport updates', 'Set departure alarm', 'Separate cabin and hold baggage'],
+  last: ['Check passport and boarding pass are accessible', 'Take house keys and wallet', 'Unplug non-essential appliances', 'Check transport pickup time', 'Take essential medicines in cabin bag'],
+};
+for (const section of TEMPLATE) {
+  const offset = section.items.length;
+  section.items.push(...EXTRAS[section.id].map((text, i) => ({id: `cl.${section.id}.${offset + i + 1}`, text})));
+}
+
 export const TEMPLATE_ITEM_COUNT = TEMPLATE.reduce((n, sec) => n + sec.items.length, 0);

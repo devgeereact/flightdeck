@@ -1,18 +1,18 @@
 /* Packing list board, shared by the app (Checklist.tsx) and the public packing list page (build-public.mjs inlines this file).
    A section rail on the left and ONE section open at a time on the right, so no card grows past the others. */
 .ck-layout{display:grid;grid-template-columns:290px minmax(0,1fr);gap:20px;align-items:start}
-.ck-rail{position:sticky;top:20px;display:grid;gap:4px;background:#fff;border:1px solid #e1e6dc;border-radius:12px;padding:10px}
+.ck-rail{position:sticky;top:20px;display:grid;gap:4px;background:#fff;border:1px solid #e1e6dc;border-radius:var(--fd-radius-md);padding:10px}
 .ck-rail-item{display:grid;grid-template-columns:28px 1fr auto;grid-template-areas:'n t c' '. b b';align-items:center;gap:2px 10px;text-align:left;border:0;background:none;border-radius:8px;padding:10px;color:#4d5f55;font:600 13.5px 'DM Sans',system-ui,sans-serif}
 .ck-rail-item:hover{background:#f4f7f1}.ck-rail-item.on{background:#edf2e8;color:#133c35}
 .ck-rail-item .ck-n{grid-area:n}.ck-rail-title{grid-area:t;line-height:1.3}.ck-rail-count{grid-area:c;font-size:13px;font-weight:600;color:#5d6e64}
 .ck-rail-bar{grid-area:b;height:4px;border-radius:4px;background:#e8eee4;overflow:hidden;margin-top:6px}.ck-rail-bar b{display:block;height:100%;background:#759966;border-radius:4px;transition:width .3s}
 .ck-rail-item.full .ck-n{background:#4f8a5b}.ck-rail-item.full .ck-rail-bar b{background:#4f8a5b}
-.ck-n{display:grid;place-items:center;min-width:28px;height:28px;border-radius:9px;background:#173e34;color:#d6eb9e;font:800 13px Manrope,system-ui,sans-serif;flex-shrink:0}
+.ck-n{display:grid;place-items:center;min-width:28px;height:28px;border-radius:var(--fd-radius-md);background:#173e34;color:#d6eb9e;font:800 13px Manrope,system-ui,sans-serif;flex-shrink:0}
 .ck-panels>.ck-sec{padding:0;display:block}.ck-panels>.ck-sec[hidden]{display:none}
 .ck-sec-head{display:flex;align-items:flex-start;gap:14px;padding:22px 26px 6px}.ck-sec-head>div{flex:1;min-width:0}
 .ck-sec-title{font:700 20px/1.3 Manrope,system-ui,sans-serif;letter-spacing:-.02em;color:#133c35;margin:0}
 .ck-sec-hint{padding:0;margin:4px 0 0;font-size:14px;color:#5d6e64}
-.ck-sec-count{background:#f1f4ee;border-radius:20px;padding:4px 12px;font:600 12.5px 'DM Sans',system-ui,sans-serif;color:#5d6e64;white-space:nowrap}
+.ck-sec-count{background:#f1f4ee;border-radius:var(--fd-radius-sm);padding:4px 12px;font:600 12.5px 'DM Sans',system-ui,sans-serif;color:#5d6e64;white-space:nowrap}
 .ck-panels .ck-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:0 28px;padding:6px 26px 10px;margin:0}
 .ck-panels .ck-list li{border-bottom:1px solid #f0f3ec;border-radius:0}
 .ck-panels .ck-check{padding:10px 0;font-size:14.5px;gap:12px}
@@ -38,6 +38,23 @@
 .ck-layout .text-button:hover{background:#f4f7f1}
 .ck-layout .text-button.primary{background:#214e3e;color:#fff;border-color:#214e3e}.ck-layout .text-button.primary:hover{background:#1a4033}
 a.ck-rail-item{text-decoration:none}
-.ck-panels>.ck-sec{background:#fff;border:1px solid #e1e6dc;border-radius:12px}
+.ck-panels>.ck-sec{background:#fff;border:1px solid #e1e6dc;border-radius:var(--fd-radius-md)}
 .ck-panels>.ck-sec:target{scroll-margin-top:16px}
 @media print{.ck-layout .ck-box{border:1.4px solid #222;background:#fff!important;color:#000}.ck-layout .ck-check input:checked+.ck-box svg{opacity:1;color:#000}}
+
+/* Public printable tool follows the same packing-room design as the app. */
+.ck-rail{border-color:var(--fd-line);border-radius:var(--fd-radius-lg);padding:12px}.ck-rail-item{border-radius:var(--fd-radius-md);padding:12px;color:var(--fd-ink)}.ck-rail-item.on{background:var(--fd-tint)}.ck-sec-title{color:var(--fd-heading);letter-spacing:-.035em}.ck-panels>.ck-sec{border-color:var(--fd-line);border-radius:var(--fd-radius-lg)}.ck-sec-head{padding:24px 26px 18px;border-bottom:1px solid var(--fd-line);margin-bottom:8px}.ck-sec-count{background:var(--fd-tint);color:var(--fd-muted);padding:6px 12px}.ck-layout .ck-check{min-height:48px;line-height:1.6;color:var(--fd-ink)}.ck-layout .ck-box{width:22px;height:22px;border-radius:7px}.ck-layout .ck-check input:checked+.ck-box{background:var(--fd-brand);border-color:var(--fd-brand)}.ck-pager{padding-top:18px;padding-bottom:18px;border-color:var(--fd-line);background:var(--fd-surface-raised);border-radius:0 0 20px 20px}
+@media(max-width:900px){.ck-rail{padding:8px}.ck-sec-head{padding:22px 18px 16px}}
+@media print{.ck-panels>.ck-sec{border-radius:0}.ck-sec-head{padding:6px 0 2px;border:0;margin:0}.ck-layout .ck-check{min-height:0;line-height:1.3}.ck-layout .ck-box{width:14px;height:14px;border-radius:2px}}
+
+/* Consistent checkbox columns: aligned rows, comfortable labels, and complete paper output. */
+.ck-panels .ck-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 24px}.ck-layout .ck-list li{min-width:0;align-items:stretch}.ck-layout .ck-check{align-items:flex-start;min-height:64px;height:100%;padding:16px 0;line-height:1.6}.ck-layout .ck-box{margin-top:1px}.ck-layout .ck-text{min-width:0;overflow-wrap:anywhere}.ck-sec-head{min-height:100px}.ck-sec-head .ck-n{flex-shrink:0}.ck-sec-head>div{align-self:center}.ck-sec-count{align-self:center;font-variant-numeric:tabular-nums}.ck-panels>.ck-sec{overflow:hidden}
+@media(min-width:701px){.app .ck-panels .ck-list{grid-template-columns:repeat(2,minmax(0,1fr))}.app .ck-panels .ck-check{min-height:64px;padding:16px 0;align-items:flex-start}}
+@media(max-width:640px){.ck-panels .ck-list{grid-template-columns:minmax(0,1fr)}.ck-sec-head{min-height:0}.ck-layout .ck-check{min-height:56px;padding:12px 0}}
+@media print{
+ .ck-panels>.ck-sec,.ck-panels>.ck-sec[hidden],.app .ck-panels>.ck-sec,.app .ck-panels>.ck-sec[hidden]{display:block!important;break-inside:avoid;overflow:visible;border:0;border-bottom:1px solid #bbb;border-radius:0;margin:0 0 12px}
+ .ck-sec-head,.app .ck-sec-head{min-height:0;break-after:avoid;padding:10px 0 4px;margin:0;border:0}.ck-sec-title{font-size:12pt}.ck-sec-count{background:none;color:#222;padding:0}.ck-sec-hint{font-size:9pt}
+ .ck-panels .ck-list,.app .ck-panels .ck-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px;padding:0;margin:0}
+ .ck-layout .ck-list li{break-inside:avoid;border:0}.ck-layout .ck-check,.app .ck-panels .ck-check{font-size:9pt;line-height:1.4;min-height:0;padding:4px 0;gap:8px}.ck-layout .ck-box{width:12px;height:12px;border-radius:2px;margin-top:1px}
+ .ck-print-blank .ck-check input:checked~.ck-text{color:#000;text-decoration:none}.ck-print-blank .ck-box svg{visibility:hidden!important}
+}

@@ -19,10 +19,11 @@ export default function SignInScreen(){
  return <div className="signin-page">
   <header className="signin-top"><a className="brand" href="/"><span className="brand-mark"><Plane size={22}/></span><span>flightdeck<span className="brand-dot">.</span></span></a><a className="btn btn-secondary" href="/"><ArrowLeft size={16}/>Home</a></header>
   <main id="main" className="signin-main">
+   <div className="signin-story"><p className="workspace-eyebrow">FREE ACCOUNT</p><h2>Your flights and packing list, on every device.</h2><p>Each flight look-up uses a limited allowance from our data providers, so look-ups need a free account.</p><ul className="signin-points"><li>Keep up to 12 saved flights</li><li>Tick off your packing list on your phone, with one list per trip</li><li>The guides and the printable packing list stay open to everyone</li></ul><a href="/coverage/">How the data works →</a></div>
    <section className="signin-card" aria-labelledby="signin-h">
     <span className="signin-mark" aria-hidden="true"><Plane size={26}/></span>
     <h1 id="signin-h">{target?`Sign in to see ${target}`:'Sign in to Flightdeck'}</h1>
-    <p>Look up flights, save them across your devices and keep your packing list. A free account is needed because every lookup uses a limited allowance from our data providers.</p>
+    <p>Sign in to look up flights and open your saved flights and packing lists. New here? Create a free account.</p>
     <div className="signin-actions">
      <SignInButton mode="modal"><button className="btn btn-primary btn-lg">Sign in</button></SignInButton>
      <SignUpButton mode="modal"><button className="btn btn-secondary btn-lg" onClick={()=>{track('cta_click');ga('cta_click',{source:'app_signin'})}}>Create free account</button></SignUpButton>

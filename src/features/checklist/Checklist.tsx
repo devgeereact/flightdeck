@@ -128,8 +128,9 @@ export default function Checklist({saved,signedIn,userId,request,onRequestDone,o
  useGSAP(()=>{withMotion(()=>{const q=gsap.utils.selector(boardRef);fromAny(gsap,q('.ck-sec:not([hidden]) .ck-sec-head, .ck-sec:not([hidden]) .ck-list li'),{autoAlpha:0,y:8,duration:.35,ease:'power2.out',stagger:{amount:.3}})})},{scope:boardRef,dependencies:[activeSec?.id,trip?.id],revertOnUpdate:true});
 
  if(!trip)return <section className="panel ck-empty">
-  <ListChecks size={34}/>
-  <h2>Pack once. Reuse it every trip.</h2>
+  <span className="packing-empty-icon"><ListChecks size={34}/></span>
+  <p className="workspace-eyebrow">THE PACKING ROOM</p>
+  <h1>Pack once. Reuse it every trip.</h1>
   <p>Start from a ready-made list of {M.view(M.emptyData(),null).reduce((n,s)=>n+s.items.length,0)} things, in the order a trip happens: days before, clothes, bathroom bag, documents, the night before and the last minute. Tick things off, add your own and hide what you never need. The list is kept for next time{signedIn?' and follows you to your other devices':' on this device. Sign in to keep it across devices'}.</p>
   <form className="ck-start" onSubmit={e=>{e.preventDefault();commit(d=>M.addTrip(d,newName||'My next trip'));setNewName('')}}>
    <label><span>Name this trip</span><input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="e.g. Cape Town in October" maxLength={M.LIMITS.name} aria-label="Trip name"/></label>
@@ -140,7 +141,7 @@ export default function Checklist({saved,signedIn,userId,request,onRequestDone,o
  </section>;
 
  const flightLabel=trip.flight?tripNameFor(trip.flight):'';
- return <section className="cl" aria-label="Packing list"><h1 className="sr-only">Packing list</h1>
+ return <section className="cl" aria-label="Packing list"><header className="packing-heading"><div><p className="workspace-eyebrow">THE PACKING ROOM</p><h1>Good trips start prepared.</h1><p>Your essentials, organised. One less thing to keep in your head.</p></div><ListChecks size={32} aria-hidden="true"/></header>
   <div className="ck-top panel">
    <div className="ck-tripbar"><div className="ck-tabs" role="group" aria-label="Your trips">
     {data.trips.map(t=><button key={t.id} aria-pressed={t.id===trip.id} className={t.id===trip.id?'ck-tab active':'ck-tab'} onClick={()=>{commit(d=>({...d,active:t.id}));setConfirmReset(false)}}>{t.name}</button>)}</div>
