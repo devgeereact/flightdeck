@@ -340,6 +340,8 @@ $unknown = $auth->check($mint($good, ['kid' => 'rotated']), $nowSec);
 check('auth: unknown key id is refused after one rate-limited refresh', $unknown['status'] === 401 && $fetches === 2 && $auth->check($mint($good, ['kid' => 'rotated']), $nowSec)['status'] === 401 && $fetches === 2);
 $parties = new ClerkAuth($iss, new Store($tmp . '-i'), $jwksUp, ['https://flightdeck.gakinz.com']);
 check('auth: authorized-party (azp) is enforced when configured', $parties->check($mint($good), $nowSec)['ok'] && !$parties->check($mint(['azp' => 'https://evil.example.com'] + $good), $nowSec)['ok']);
+$localParties = new ClerkAuth($iss, $authStore, $jwksUp, ['https://local.flightdeck.gakinz.com']);
+check('auth: local production-account preview accepts only its exact HTTPS origin', $localParties->check($mint(['azp' => 'https://local.flightdeck.gakinz.com'] + $good), $nowSec)['ok'] && !$localParties->check($mint($good), $nowSec)['ok'] && !$localParties->check($mint(['azp' => 'http://localhost:3996'] + $good), $nowSec)['ok']);
 $down = new ClerkAuth($iss, new Store($tmp . '-j'), static function () {
     return [0, ''];
 });

@@ -3,6 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {JSDOM} from 'jsdom';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
@@ -239,10 +240,14 @@ test('guide metadata stays within search limits', () => {
   }
 });
 
-test('home: lookup form hands off to the app, the sample flight is labelled, coverage is honest', () => {
+test('home: lookup form hands off to the app, no synthetic flight is presented, coverage is honest', () => {
   const h = page('/');
   assert.ok(h.includes('id="lookup"') && h.includes('action="/app/"') && h.includes('name="number"') && h.includes('type="date"'));
-  assert.ok(h.includes('Sample, not a real flight') && h.includes('Not reported yet'));
+  assert.ok(h.includes('Every detail names its source.') && h.includes('class="missing">Not reported yet'), 'the board shows how a result is built and what a missing detail looks like');
+  assert.ok(!/class="board"[\s\S]*\d{1,2}:\d{2}/.test(h.slice(h.indexOf('class="board"'), h.indexOf('</aside>', h.indexOf('class="board"')))), 'the board carries no times');
+  assert.ok(!h.includes('A calmer journey.'), 'the old vague headline is gone');
+  assert.ok(h.includes('data-reveal') && fs.readFileSync(path.join(root, 'src/site/site.js'), 'utf8').includes('prefers-reduced-motion: reduce'), 'motion stands down for reduced motion');
+  assert.ok(!h.includes('08:41') && !h.includes('En route'));
   for (const must of ['every 10 minutes', 'every 2 minutes', 'yesterday to three days ahead', 'monthly allowance']) assert.ok(h.includes(must), must);
   assert.ok(!/live tracking of every|real-time for all|guaranteed|testimonial|\d[\d,]* users/i.test(h), 'no invented claims');
   const js = fs.readFileSync(path.join(root, 'src/site/site.js'), 'utf8');
@@ -264,4 +269,36 @@ test('announcements show only inside their time window and never carry markup', 
 
 test('the seed is up to date with its sources', () => {
   execFileSync('node', ['scripts/seed-content.mjs', '--check'], { cwd: root, stdio: 'pipe' });
+});
+
+
+test('footer has three links per group, with Help in Guides and tools', () => {
+  assert.deepEqual(seed.navigation.footer.map(g => g.links.length), [3, 3, 3, 3]);
+  assert.ok(seed.navigation.footer.find(g => g.title === 'Guides and tools').links.some(l => l.href === '/help/'));
+});
+
+test('public packing needs no account: ticks persist, all sections open, checked and blank print work', () => {
+  const dom = new JSDOM(page('/travel-checklist/'), {url:'https://flightdeck.test/travel-checklist/', runScripts:'outside-only'});
+  const w = dom.window, d = w.document;
+  w.localStorage.setItem('flightdeck-public-packing', JSON.stringify({'list-papers-and-documents-1':1}));
+  let prints=0;
+  w.print=()=>{prints++};
+  w.eval(fs.readFileSync(path.join(root,'src/site/site.js'),'utf8'));
+  w.eval(fs.readFileSync(path.join(root,'src/site/travel-checklist.js'),'utf8'));
+  assert.ok(d.body.textContent.includes('No sign-in needed'));
+  assert.equal(d.querySelectorAll('.ck-check').length,141);
+  assert.equal(d.querySelectorAll('.ck-sec:not([hidden])').length,1);
+  assert.ok(d.querySelector('[data-k="list-papers-and-documents-1"]').checked,'an existing Passport tick survives template expansion');
+  const all=d.getElementById('packing-show-all');all.click();
+  assert.equal(d.querySelectorAll('.ck-sec:not([hidden])').length,8);
+  d.querySelector('.ck-check input').click();
+  assert.equal(d.getElementById('packing-total').textContent,'2 of 141 packed');
+  d.querySelector('[data-print]').click();assert.equal(prints,1);
+  d.querySelector('[data-print-blank]').click();assert.equal(prints,2);
+  assert.ok(d.getElementById('packing-board').classList.contains('ck-print-blank'));
+  w.dispatchEvent(new w.Event('afterprint'));
+  assert.ok(!d.getElementById('packing-board').classList.contains('ck-print-blank'));
+  assert.ok(d.querySelector('[data-k="list-papers-and-documents-1"]').checked,'printing blank must not erase ticks');
+  assert.equal(JSON.parse(w.localStorage.getItem('flightdeck-public-packing'))['list-papers-and-documents-1'],1);
+  dom.window.close();
 });

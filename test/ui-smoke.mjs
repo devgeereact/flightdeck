@@ -31,7 +31,7 @@ const fixtureFlights = (date) => {
 const check = (name, ok, extra = '') => { console.log((ok ? 'PASS ' : 'FAIL ') + name + (ok ? '' : '  -> ' + extra)); if (!ok) failed++; };
 
 execFileSync('pnpm', ['exec', 'vite', 'build', '--config', 'vite.ui-test.config.ts', '--logLevel', 'error'], {cwd: root, stdio: 'inherit'});
-const code = fs.readFileSync(path.join(root, '.ui-test-build/app.js'), 'utf8');
+const code = fs.readFileSync(path.join(root, '.local-test/build/app.js'), 'utf8');
 
 // provider keys come from .env into the server's environment only; nothing is printed
 const env = {...process.env, FLIGHTDECK_PRIVATE: path.join(root, 'php/private'), FLIGHTDECK_AUTH: 'off'}; // jsdom has no Clerk session
@@ -96,7 +96,7 @@ try {
       check('F2 choosing a radio changes the form (title becomes "Report a problem"), and the privacy text links to the privacy page', d0.querySelector('#fb-title')?.textContent === 'Report a problem' && !!d0.querySelector('.fb-foot a[href="/privacy/"]'));
     }
     check('A2 flight number box starts empty', val(a, 'input[aria-label="Flight number"]') === '');
-    check('A3 shows the "Track a flight" prompt, no flight preloaded', t0.includes('Track a flight') && !a.w.document.querySelector('.flight-card'));
+    check('A3 shows the empty-state prompt, no flight preloaded', t0.includes('Enter a flight number above.') && !a.w.document.querySelector('.flight-card'));
     await search(a, 'BA59'); await sleep(1500);
     const t = a.text(), d = a.w.document;
     const found = !!d.querySelector('.flight-card') && t.includes('BA59'), none = t.includes('No flights found');
@@ -141,6 +141,11 @@ try {
     const realFetch = a.w.fetch; a.w.fetch = async (input, init) => { if (String(input).includes('/api/flights')) throw new TypeError('Failed to fetch'); return realFetch(input, init); };
     await search(a, 'BA59'); await sleep(800);
     check('B16 offline: the last result stays readable and says when it was fetched', !!d.querySelector('.flight-card') && /You're offline\. This is what Flightdeck last fetched at/.test(a.text()), a.text().slice(0, 300));
+    // the service worker's own failure text must never reach the page: a flight with no saved copy gets a plain sentence
+    Object.defineProperty(a.w.navigator, 'onLine', {get: () => true, configurable: true});
+    a.w.fetch = async (input, init) => { if (String(input).includes('/api/flights')) throw new TypeError('FetchEvent.respondWith received an error: no-response: no-response :: [{"url":"https://local.flightdeck.gakinz.com/api/flights","error":{}}]'); return realFetch(input, init); };
+    await search(a, 'LH400'); await sleep(800);
+    check('B16b a failed request reads as a plain sentence, not the service worker text', /Flightdeck could not be reached/.test(a.text()) && !/FetchEvent|no-response/.test(a.text()), a.text().slice(0, 300));
     a.w.fetch = realFetch; Object.defineProperty(a.w.navigator, 'onLine', {get: () => true, configurable: true});
     check('B7 no runtime errors', a.errors.length === 0, a.errors.join(' | '));
     a.w.close();
@@ -164,7 +169,15 @@ try {
     const ib = [...sv.w.document.querySelectorAll('button')].find(b => b.textContent.includes('Install app'));
     ib.dispatchEvent(new sv.w.MouseEvent('click', {bubbles: true})); await sleep(300);
     check('B19 Install app without a browser prompt opens written help instead of a pop-up', sv.text().includes('Install Flightdeck') && sv.text().includes('Add to Home Screen'));
+    sv.w.document.querySelector('button[aria-label="Remove LH400"]').click(); await sleep(150);
+    check('B20 removing a saved card updates the collection and browser storage', sv.w.document.querySelectorAll('.saved-flight').length === 1 && JSON.parse(sv.w.localStorage.getItem('flightdeck-saved')).length === 1);
+    sv.w.document.querySelector('.saved-open').click(); await sleep(800);
+    check('B21 opening a saved card fetches and displays the flight', !!sv.w.document.querySelector('.flight-card') && sv.text().includes('BA59'));
     sv.w.close();
+    const pack = await boot({fixtures: true, hash: '#/saved', storage: {'flightdeck-saved': JSON.stringify([{number: 'BA59', date: ukToday}])}}); await sleep(300);
+    pack.w.document.querySelector('button[aria-label="Make a packing list for BA59"]').click(); await sleep(800);
+    check('B22 a saved card creates a linked packing list', !!pack.w.document.querySelector('.ck-top') && pack.text().includes('Check this flight') && pack.w.document.querySelectorAll('h1').length === 1);
+    pack.w.close();
   }
   if (LIVE && cfg.liveAvailable) { // optional: the same journey against the real providers. Run with UI_TEST_LIVE=1; it spends a few provider units.
     const l = await boot(); await sleep(2500);
@@ -183,32 +196,32 @@ try {
     check('K1 checklist route shows the first-time screen, not the flight search', k.text().includes('Pack once. Reuse it every trip.') && !d.querySelector('.search-card'));
     setVal(k.w, d.querySelector('.ck-start input'), 'Cape Town in October');
     d.querySelector('.ck-start').dispatchEvent(new k.w.Event('submit', {bubbles: true, cancelable: true})); await sleep(600);
-    check('K2 starting makes a trip with all 8 sections and 101 items unticked, one section open at a time', d.querySelectorAll('.ck-panels .ck-sec').length === 8 && d.querySelectorAll('.ck-check').length === 101 && k.text().includes('0 of 101 packed') && d.querySelectorAll('.ck-panels .ck-sec:not([hidden])').length === 1, k.text().slice(300, 600));
+    check('K2 starting makes a trip with all 8 sections and 141 items unticked, one section open at a time', d.querySelectorAll('.ck-panels .ck-sec').length === 8 && d.querySelectorAll('.ck-check').length === 141 && k.text().includes('0 of 141 packed') && d.querySelectorAll('.ck-panels .ck-sec:not([hidden])').length === 1, k.text().slice(300, 600));
     check('K2b trips are plain buttons with aria-pressed (no tabs without a tab panel)', !d.querySelector('.ck-tabs[role="tablist"], .ck-tab[role="tab"]') && d.querySelector('.ck-tabs .ck-tab')?.getAttribute('aria-pressed') === 'true' && d.querySelector('.sidebar nav [aria-current="page"]')?.getAttribute('aria-label') === 'Packing list');
     check('K3 sections run in trip order, ending with the night before and last minute', [...d.querySelectorAll('.ck-rail-title')].map(e => e.textContent).join('|') === 'Days in advance|Clothes and accessories|Bathroom bag|Accessories|Papers and documents|Mostly work related|The night before|Last minute');
     const passport = byText(d, '.ck-check', 'Passport');
     click(k.w, passport.querySelector('input')); await sleep(400);
-    check('K4 ticking Passport updates the count and keeps it on the device', k.text().includes('1 of 101 packed') && Object.values(JSON.parse(k.w.localStorage.getItem('flightdeck-checklist')).trips[0].marks).filter(v => v > 0).length === 1);
+    check('K4 ticking Passport updates the count and keeps it on the device', k.text().includes('1 of 141 packed') && Object.values(JSON.parse(k.w.localStorage.getItem('flightdeck-checklist')).trips[0].marks).filter(v => v > 0).length === 1);
     const saved = k.w.localStorage.getItem('flightdeck-checklist');
     const k2 = await boot({hash: '#/checklist', storage: {'flightdeck-checklist': saved}}); await sleep(1500);
     const d2 = k2.w.document;
-    check('K5 after a reload the trip, its name and the tick are still there', k2.text().includes('1 of 101 packed') && d2.querySelector('.ck-name').value === 'Cape Town in October' && byText(d2, '.ck-check', 'Passport').querySelector('input').checked);
+    check('K5 after a reload the trip, its name and the tick are still there', k2.text().includes('1 of 141 packed') && d2.querySelector('.ck-name').value === 'Cape Town in October' && byText(d2, '.ck-check', 'Passport').querySelector('input').checked);
     byText(d2, '.ck-sec', 'Last minute').querySelector('.ck-sec-foot .text-button').dispatchEvent(new k2.w.MouseEvent('click', {bubbles: true})); await sleep(300);
     setVal(k2.w, d2.querySelector('.ck-add input'), 'Travel pillow');
     d2.querySelector('.ck-add').dispatchEvent(new k2.w.Event('submit', {bubbles: true, cancelable: true})); await sleep(400);
-    check('K6 adding your own item puts it in that section and the total grows', !!byText(d2, '.ck-check', 'Travel pillow') && k2.text().includes('1 of 102 packed'));
+    check('K6 adding your own item puts it in that section and the total grows', !!byText(d2, '.ck-check', 'Travel pillow') && k2.text().includes('1 of 142 packed'));
     click(k2.w, byText(d2, 'button', 'Edit list')); await sleep(300);
     const x = d2.querySelector('button[aria-label="Hide Watch"]'); click(k2.w, x); await sleep(300);
-    check('K7 hiding an item removes it from the total, and Restore all brings it back', k2.text().includes('of 101 packed') && k2.text().includes('1 item hidden'));
+    check('K7 hiding an item removes it from the total, and Restore all brings it back', k2.text().includes('of 141 packed') && k2.text().includes('1 item hidden'));
     click(k2.w, byText(d2, 'button', 'Restore all')); await sleep(300);
-    check('K8 restore works', k2.text().includes('of 102 packed') && !k2.text().includes('item hidden'));
+    check('K8 restore works', k2.text().includes('of 142 packed') && !k2.text().includes('item hidden'));
     click(k2.w, byText(d2, 'button', 'Done editing')); await sleep(200);
     click(k2.w, byText(d2, 'button', 'Reset ticks')); await sleep(200);
     check('K9 reset asks first, then unticks everything for the next trip', k2.text().includes('Yes, untick everything'));
     click(k2.w, byText(d2, 'button', 'Yes, untick everything')); await sleep(300);
-    check('K10 after reset nothing is ticked but the list and the added item remain', k2.text().includes('0 of 102 packed') && !!byText(d2, '.ck-check', 'Travel pillow'));
+    check('K10 after reset nothing is ticked but the list and the added item remain', k2.text().includes('0 of 142 packed') && !!byText(d2, '.ck-check', 'Travel pillow'));
     click(k2.w, byText(d2, 'button', 'Still to pack')); await sleep(300);
-    check('K11 "Still to pack" filter keeps the list visible and no runtime errors occurred', d2.querySelectorAll('.ck-check').length === 102 && k.errors.length === 0 && k2.errors.length === 0, k.errors.concat(k2.errors).join(' | '));
+    check('K11 "Still to pack" filter keeps the list visible and no runtime errors occurred', d2.querySelectorAll('.ck-check').length === 142 && k.errors.length === 0 && k2.errors.length === 0, k.errors.concat(k2.errors).join(' | '));
     k.w.close(); k2.w.close();
     const tampered = await boot({hash: '#/checklist', storage: {'flightdeck-checklist': '{"trips":"nope","tpl":7,"rev":"x"}'}}); await sleep(1200);
     check('K12 a corrupted saved list never crashes the page', tampered.text().includes('Pack once. Reuse it every trip.') && tampered.errors.length === 0);

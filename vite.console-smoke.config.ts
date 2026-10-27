@@ -5,6 +5,6 @@ import {fileURLToPath} from 'node:url';
 export default defineConfig({
  plugins:[react()],
  define:{'process.env.NODE_ENV':'"production"'},
- build:{rollupOptions:{output:{inlineDynamicImports:true}},outDir:'.ui-test-build/console-smoke',emptyOutDir:true,cssCodeSplit:false,minify:false,
+ build:{rollupOptions:{output:{inlineDynamicImports:true}},outDir:'.local-test/build/console-smoke',emptyOutDir:true,cssCodeSplit:false,minify:false,
   lib:{entry:fileURLToPath(new URL('./test/harness/app/console-harness.tsx',import.meta.url)),formats:['iife'],name:'FlightdeckConsole',fileName:()=>'console.js'}}
 });

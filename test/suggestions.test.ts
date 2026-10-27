@@ -62,7 +62,7 @@ test('long-haul rules need a known distance; nights rules need a trip length', (
   assert.ok(ids(suggest(ctx({ km: 5000, intl: null }), null, items)).includes('sg.neck-pillow'));
   assert.ok(!ids(suggest(ctx({ km: 1200, intl: null }), null, items)).includes('sg.neck-pillow'));
   assert.ok(!ids(suggest(ctx({ km: null, intl: null }), null, items)).includes('sg.neck-pillow'));
-  assert.ok(ids(suggest(ctx({ km: null, intl: null }), 10, items)).includes('sg.laundry'));
+  assert.ok(ids(suggest(ctx({ km: null, intl: null }), 10, items.filter(i=>i!=='Laundry bag'))).includes('sg.laundry'));
   assert.ok(!ids(suggest(ctx({ km: null, intl: null }), 3, items)).includes('sg.laundry'));
   assert.ok(!ids(suggest(ctx({ km: null, intl: null }), null, items)).includes('sg.laundry'));
   assert.ok(!ids(suggest(ctx({ km: null, intl: null }), 0, items)).includes('sg.laundry'));

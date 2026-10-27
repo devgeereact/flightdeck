@@ -1,9 +1,9 @@
-// Local test mailbox: accepts any login on 127.0.0.1:2525 and writes each message to test/.mail/<n>.eml. For trying "reply from the console"
+// Local test mailbox: accepts any login on 127.0.0.1:2525 and writes each message to .local-test/mail/<n>.eml. For trying "reply from the console"
 // without sending real email. Run: node test/fake-smtp.mjs
 import net from 'node:net';
 import fs from 'node:fs';
 import path from 'node:path';
-const dir = path.join(import.meta.dirname, '.mail');
+const dir = path.join(import.meta.dirname, '../.local-test/mail');
 fs.mkdirSync(dir, { recursive: true });
 let n = Date.now();
 net.createServer((sock) => {

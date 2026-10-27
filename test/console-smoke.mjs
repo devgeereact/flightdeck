@@ -12,7 +12,7 @@ let failed = 0;
 const check = (name, ok, extra = '') => { console.log((ok ? 'PASS ' : 'FAIL ') + name + (ok ? '' : '  -> ' + extra)); if (!ok) failed++; };
 
 execFileSync('pnpm', ['exec', 'vite', 'build', '--config', 'vite.console-smoke.config.ts', '--logLevel', 'error'], { cwd: root, stdio: 'inherit' });
-const code = fs.readFileSync(path.join(root, '.ui-test-build/console-smoke/console.js'), 'utf8');
+const code = fs.readFileSync(path.join(root, '.local-test/build/console-smoke/console.js'), 'utf8');
 const h = await startHarness({ port: 3993 });
 process.on('exit', () => h.stop());
 

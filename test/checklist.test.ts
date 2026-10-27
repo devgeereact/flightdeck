@@ -8,7 +8,7 @@ const start = () => M.addTrip(M.emptyData(), 'Cape Town', { number: 'BA59', date
 
 test('template: transcribed from the paper form, unique stable ids, nothing empty', () => {
   assert.equal(TEMPLATE.length, 8);
-  assert.equal(TEMPLATE_ITEM_COUNT, 101);
+  assert.equal(TEMPLATE_ITEM_COUNT, 141);
   const ids = TEMPLATE.flatMap((s) => s.items.map((i) => i.id));
   assert.equal(new Set(ids).size, ids.length);
   assert.ok(ids.every((id) => /^cl\.[a-z]+\.\d+$/.test(id)));
@@ -23,7 +23,7 @@ test('a new trip is active, named, and starts with nothing ticked', () => {
   assert.equal(d.active, d.trips[0].id);
   assert.deepEqual(M.doneIds(d.trips[0]), []);
   assert.equal(M.progress(M.view(d, d.active)).percent, 0);
-  assert.equal(M.progress(M.view(d, d.active)).total, 101);
+  assert.equal(M.progress(M.view(d, d.active)).total, 141);
 });
 
 test('tick / untick / reset affect only that trip and are idempotent', () => {
@@ -59,10 +59,10 @@ test('editing the list: add, rename, hide, restore; custom items delete outright
   assert.equal(M.view(d, a).find((s) => s.id === 'papers')!.items[1].text, 'Passport (valid 6 months)');
   d = M.removeItem(d, 'cl.clothes.4', T0 + 6);
   const clothes = M.view(d, a).find((s) => s.id === 'clothes')!;
-  assert.equal(clothes.items.length, 19);
+  assert.equal(clothes.items.length, 24);
   assert.equal(clothes.hiddenCount, 1);
   d = M.restoreAll(d, T0 + 7);
-  assert.equal(M.view(d, a).find((s) => s.id === 'clothes')!.items.length, 20);
+  assert.equal(M.view(d, a).find((s) => s.id === 'clothes')!.items.length, 25);
   d = M.removeItem(d, custom, T0 + 8);
   assert.equal(d.tpl.added.length, 0);
   assert.deepEqual(M.doneIds(d.trips[0]), []);
@@ -72,9 +72,9 @@ test('hide and show a whole section (e.g. work items on a holiday)', () => {
   let d = start();
   d = M.hideSection(d, 'work', T0 + 1);
   assert.equal(M.view(d, d.active).find((s) => s.id === 'work')!.items.length, 0);
-  assert.equal(M.progress(M.view(d, d.active)).total, 91);
+  assert.equal(M.progress(M.view(d, d.active)).total, 126);
   d = M.showSection(d, 'work', T0 + 2);
-  assert.equal(M.progress(M.view(d, d.active)).total, 101);
+  assert.equal(M.progress(M.view(d, d.active)).total, 141);
 });
 
 test('removing a trip leaves a tombstone and picks another active trip', () => {
@@ -247,4 +247,19 @@ test('sync: a trip deleted on one device is deleted on the other, and not resurr
   assert.equal(laptop.trips.length, 0);
   phone = await syncOnce(phone, api);
   assert.equal(phone.trips.length, 0);
+});
+
+
+test('expanded template retains original item IDs and existing user customisations', () => {
+  const oldCounts = {advance:5, clothes:20, bathroom:8, accessories:24, papers:21, work:10, night:4, last:9};
+  for (const sec of TEMPLATE) {
+    assert.equal(sec.items.length,oldCounts[sec.id]+5);
+    assert.equal(sec.items[oldCounts[sec.id]-1].id,`cl.${sec.id}.${oldCounts[sec.id]}`);
+  }
+  let data=start();const trip=data.active!;
+  data=M.tick(data,trip,'cl.papers.2',true,T0+1);
+  data=M.renameItem(data,'cl.papers.2','My passport',T0+2);
+  const item=M.view(data,trip).flatMap(s=>s.items).find(i=>i.id==='cl.papers.2')!;
+  assert.equal(item.text,'My passport');assert.equal(item.done,true);
+  assert.equal(M.progress(M.view(data,trip)).total,141);
 });
