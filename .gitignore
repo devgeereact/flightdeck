@@ -5,7 +5,12 @@ dist/
 .DS_Store
 php/private/config.php
 php/private/var/
-.ui-test-build/
 .env.local
-test/.mail/
 .claude/worktrees/
+
+# Local HTTPS certificates and isolated account-preview storage
+.local-live/
+
+# Project-local test scratch and private recovery state (global rule)
+/.local-test/
+/.local-state/
