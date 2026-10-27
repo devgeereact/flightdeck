@@ -34,12 +34,20 @@ if ($path === '/site.css') {
     }
     return true;
 }
-$siteJs = ['/site.js' => 'src/site/site.js', '/js/contact.js' => 'src/site/contact.js', '/js/travel-checklist.js' => 'src/site/travel-checklist.js'];
+$siteJs = ['/site.js' => 'src/site/site.js', '/lenis.js' => 'node_modules/lenis/dist/lenis.min.js', '/js/contact.js' => 'src/site/contact.js', '/js/travel-checklist.js' => 'src/site/travel-checklist.js'];
 if (isset($siteJs[$path])) {
     return $serve($root . '/' . $siteJs[$path], 'text/javascript');
 }
 // FLIGHTDECK_DIST: tests serve their own build folder (the console harness); normally dist.
-$dist = realpath(getenv('FLIGHTDECK_DIST') ?: $root . '/dist');
+// The live-account preview has its own build; ordinary localhost never receives its production key.
+$previewPrivate = realpath($root . '/.local-live/private');
+$localLive = $previewPrivate !== false && realpath(getenv('FLIGHTDECK_PRIVATE') ?: '') === $previewPrivate;
+$dist = realpath(getenv('FLIGHTDECK_DIST') ?: $root . ($localLive ? '/.local-live/dist' : '/dist'));
+// App sign-in on the ordinary preview uses the already-configured HTTPS account preview.
+if (!$localLive && !getenv('FLIGHTDECK_DIST') && is_dir($root . '/.local-live/dist') && preg_match('#^/app(/|$)#', $path)) {
+    header('Location: https://local.flightdeck.gakinz.com' . ($_SERVER['REQUEST_URI'] ?? '/app/'), true, 302);
+    return true;
+}
 $types = ['js' => 'text/javascript', 'css' => 'text/css', 'svg' => 'image/svg+xml', 'html' => 'text/html; charset=utf-8', 'png' => 'image/png', 'woff2' => 'font/woff2',
           'webmanifest' => 'application/manifest+json', 'json' => 'application/json', 'xml' => 'application/xml', 'txt' => 'text/plain; charset=utf-8'];
 // The app and Clerk's return paths get the app shell, like the real host.

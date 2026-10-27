@@ -17,7 +17,7 @@ use Flightdeck\Site\Site;
 /** Asset URLs: the hashed files named in site-build.json (written by scripts/build-public.mjs), or the dev router's live files. */
 $assets = static function (string $publicDir): array {
     $build = json_decode((string) @file_get_contents($publicDir . '/site-build.json'), true);
-    $dev = ['css' => '/site.css', 'js' => '/site.js', 'contactJs' => '/js/contact.js', 'checklistJs' => '/js/travel-checklist.js', 'gaId' => ''];
+    $dev = ['css' => '/site.css', 'js' => '/site.js', 'contactJs' => '/js/contact.js', 'checklistJs' => '/js/travel-checklist.js', 'lenisJs' => '/lenis.js', 'gaId' => ''];
     return is_array($build) ? $build + $dev : $dev;
 };
 

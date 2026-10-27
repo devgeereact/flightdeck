@@ -6,10 +6,11 @@
   "scripts": {
     "dev": "concurrently -k \"php -S 127.0.0.1:3001 php/dev-router.php\" \"vite --host 127.0.0.1\"",
     "build": "tsc --noEmit && vite build && node scripts/build-public.mjs",
-    "test": "tsx --test test/*.test.ts test/*.test.mjs",
-    "test:php": "php php/tests/run.php",
-    "test:ui": "node test/ui-smoke.mjs",
-    "test:console": "node test/console-smoke.mjs"
+    "test": "node scripts/with-local-test.mjs tsx --test test/*.test.ts test/*.test.mjs",
+    "test:php": "node scripts/with-local-test.mjs php php/tests/run.php",
+    "test:ui": "node scripts/with-local-test.mjs node test/ui-smoke.mjs",
+    "test:console": "node scripts/with-local-test.mjs node test/console-smoke.mjs",
+    "dev:live-account": "node scripts/local-live.mjs"
   },
   "dependencies": {
     "@clerk/react": "6.17.8",

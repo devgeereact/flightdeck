@@ -35,6 +35,7 @@ if (($config['opensky_client_id'] ?? '') === '' || ($config['opensky_client_secr
 
 // Sign-in enforcement: on when the Clerk issuer is known (explicit config, CLERK_ISSUER, or derived from the Clerk publishable key).
 // FLIGHTDECK_AUTH=off switches it off for local automated tests only.
+$config['clerk_authorized_parties'] = $config['clerk_authorized_parties'] ?? array_values(array_filter(array_map('trim', explode(',', (string) $env('CLERK_AUTHORIZED_PARTIES')))));
 $config['clerk_issuer'] = $config['clerk_issuer'] ?? $env('CLERK_ISSUER') ?? \Flightdeck\ClerkAuth::issuerFromPublishableKey($env('CLERK_PUBLISHABLE_KEY', 'VITE_CLERK_PUBLISHABLE_KEY'));
 // Local automated tests only (server environment, never a request): a higher per-visitor limit for long test runs.
 if (getenv('FLIGHTDECK_RATE_PER_MINUTE') !== false && ctype_digit((string) getenv('FLIGHTDECK_RATE_PER_MINUTE'))) {
