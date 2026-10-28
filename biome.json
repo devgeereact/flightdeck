@@ -1,0 +1,72 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "includes": [
+      "**/*.{ts,tsx,js,mjs,json,css}",
+      "!pnpm-lock.yaml",
+      "!!**/dist",
+      "!!**/.local-test",
+      "!!**/.local-state",
+      "!!**/.local-live",
+      "!!**/server",
+      "!!**/php/private/vendor"
+    ]
+  },
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "linter": {
+    "rules": {
+      "preset": "recommended",
+      "style": {
+        "noDescendingSpecificity": "off",
+        "noNonNullAssertion": "warn"
+      },
+      "complexity": {
+        "noImportantStyles": "warn"
+      },
+      "correctness": {
+        "useExhaustiveDependencies": "warn",
+        "noInnerDeclarations": "warn"
+      },
+      "suspicious": {
+        "noArrayIndexKey": "warn",
+        "useIterableCallbackReturn": "warn",
+        "noAssignInExpressions": "warn",
+        "noDuplicateProperties": "warn",
+        "noShorthandPropertyOverrides": "warn",
+        "noExplicitAny": "warn"
+      },
+      "a11y": {
+        "useButtonType": "warn",
+        "noRedundantRoles": "warn",
+        "useAriaPropsSupportedByRole": "warn",
+        "useSemanticElements": "warn",
+        "noAutofocus": "warn",
+        "useKeyWithClickEvents": "warn",
+        "useValidAnchor": "warn",
+        "noStaticElementInteractions": "warn",
+        "noNoninteractiveTabindex": "warn"
+      }
+    }
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single"
+    }
+  }
+}

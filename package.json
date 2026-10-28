@@ -10,7 +10,10 @@
     "test:php": "node scripts/with-local-test.mjs php php/tests/run.php",
     "test:ui": "node scripts/with-local-test.mjs node test/ui-smoke.mjs",
     "test:console": "node scripts/with-local-test.mjs node test/console-smoke.mjs",
-    "dev:live-account": "node scripts/local-live.mjs"
+    "dev:live-account": "node scripts/local-live.mjs",
+    "lint": "biome check --diagnostic-level=error .",
+    "format": "biome check --write .",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@clerk/react": "6.17.8",
@@ -22,6 +25,7 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.6.3",
     "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
