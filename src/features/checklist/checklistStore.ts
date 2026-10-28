@@ -1,5 +1,5 @@
 // Browser persistence for the checklist. localStorage is the source of truth so the list works offline (at the airport).
-import { sanitize, emptyData, type ChecklistData } from './checklistModel';
+import { type ChecklistData, emptyData, sanitize } from './checklistModel';
 
 const KEY = 'flightdeck-checklist';
 const OWNER = 'flightdeck-checklist-owner';

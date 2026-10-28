@@ -1,5 +1,5 @@
-import test from 'node:test';
 import assert from 'node:assert/strict';
+import test from 'node:test';
 import { smoothScrollAllowed } from '../src/shared/smoothScroll';
 import { nextTabIndex } from '../src/shared/tabKeys';
 

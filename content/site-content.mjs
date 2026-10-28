@@ -9,7 +9,7 @@ export const settings = () => ({
   footerNote: FOOTER_NOTE,
 });
 
-import { HEADER_LINKS, FOOTER_GROUPS, FOOTER_BLURB, FOOTER_NOTE } from '../src/siteNav.ts';
+import { FOOTER_BLURB, FOOTER_GROUPS, FOOTER_NOTE, HEADER_LINKS } from '../src/siteNav.ts';
 
 // The CMS keeps only label and href; appHref belongs to the app.
 const strip = (l) => ({ label: l.label, href: l.href });

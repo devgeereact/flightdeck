@@ -1,44 +1,45 @@
-import { useRef, useState, useEffect } from 'react';
-import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
 import {
-  Plane,
   ArrowUpRight,
-  Clock,
-  MapPin,
-  RefreshCw,
-  CloudSun,
-  Luggage,
-  Navigation,
-  Check,
-  Radio,
-  Info,
-  Globe,
-  Wind,
   Bookmark,
+  CalendarPlus,
+  Check,
+  Clock,
+  CloudSun,
   Compass,
+  Globe,
+  Info,
+  Luggage,
+  MapPin,
+  Navigation,
+  Plane,
+  Radio,
+  RefreshCw,
   Share2,
   Timer,
-  CalendarPlus,
+  Wind,
 } from 'lucide-react';
-import type { Airport, Flight, FlightResponse } from '../../types';
-import { destinations } from './destinations';
+import { useEffect, useRef, useState } from 'react';
 import { apiFetch } from '../../shared/api';
-import { summarise } from './summary';
+import { fromAny, withMotion } from '../../shared/motion';
+import { nextTabIndex } from '../../shared/tabKeys';
+import type { Airport, Flight, FlightResponse } from '../../types';
 import { countdown } from './countdown';
-import { flightIcs } from './ics';
-import { withMotion, fromAny } from '../../shared/motion';
+import { destinations } from './destinations';
 import {
-  time,
-  day,
   airlines,
-  regionName,
-  withHint,
-  weatherLabel,
+  day,
   directionText,
   journeySteps,
+  regionName,
+  time,
+  weatherLabel,
+  withHint,
 } from './flightFormat';
-import { nextTabIndex } from '../../shared/tabKeys';
+import { flightIcs } from './ics';
+import { summarise } from './summary';
+
 gsap.registerPlugin(useGSAP);
 
 type Props = {

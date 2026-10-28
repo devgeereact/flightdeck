@@ -1,9 +1,10 @@
 // Local-only production-account preview. Never deployed; no public listener or production API proxy.
+
+import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { parseEnv } from 'node:util';
-import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { parseEnv } from 'node:util';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const host = 'local.flightdeck.gakinz.com',

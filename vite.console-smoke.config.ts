@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
 import { fileURLToPath } from 'node:url';
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
 // Test-only: the console harness as one script jsdom can run (test/console-smoke.mjs). Output is gitignored.
 export default defineConfig({
   plugins: [react()],

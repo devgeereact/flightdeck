@@ -1,5 +1,5 @@
-import type { FlightResponse } from '../types';
 import { ukDate } from '../features/flight/flightFormat';
+import type { FlightResponse } from '../types';
 
 // Saved flights and the offline copy of recent results. Both live on this device; a signed-in user's saved list is also kept in
 // their Clerk profile (see auth.tsx, SavedSync).

@@ -1,13 +1,14 @@
 // End to end through the real PHP router: who may use the CMS, and what a publish really changes on the public site.
 // Runs against a throwaway private folder (a copy of php/private/src, empty var/) with a test signing key, so no real data, keys or
 // network are involved. Tokens are signed here and verified by the server exactly as Clerk tokens are.
-import test, { after, before } from 'node:test';
+
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
+import test, { after, before } from 'node:test';
 
 const root = path.resolve(import.meta.dirname, '..');
 const PORT = 3995;

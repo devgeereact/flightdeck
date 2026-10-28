@@ -1,6 +1,6 @@
-import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import test from 'node:test';
 import { JSDOM } from 'jsdom';
 
 const code = fs.readFileSync(new URL('../public/consent.js', import.meta.url), 'utf8');

@@ -1,9 +1,10 @@
 // Fixed loopback HTTPS proxy. If started by sudo, relinquishes root immediately after binding port 443.
 import fs from 'node:fs';
-import path from 'node:path';
-import https from 'node:https';
 import http from 'node:http';
+import https from 'node:https';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const host = 'local.flightdeck.gakinz.com';
 const elevated = process.getuid?.() === 0;

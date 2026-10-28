@@ -1,5 +1,5 @@
-import { useId, type ReactNode } from 'react';
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
+import { type ReactNode, useId } from 'react';
 
 // Form fields for the content editors. Every field shows the server's error for its path (for example "hero.title").
 export type Errors = Record<string, string>;

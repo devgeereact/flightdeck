@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
 import { Megaphone, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 type Announcement = {
   id: string;

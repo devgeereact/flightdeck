@@ -1,43 +1,44 @@
-import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
-import { createRoot } from 'react-dom/client';
-import {
-  Plane,
-  ArrowUpRight,
-  ArrowRight,
-  Search,
-  RefreshCw,
-  Navigation,
-  CalendarDays,
-  Info,
-  ChevronRight,
-  Bookmark,
-  Download,
-  AlertCircle,
-  ListChecks,
-  ShieldCheck,
-} from 'lucide-react';
-import type { Flight, FlightResponse } from './types';
-import { apiFetch, readableError } from './shared/api';
-import { track, ga, gaPageview } from './shared/track';
-import Feedback from './app/Feedback';
-import SavedFlights from './app/SavedFlightCollection';
-import AuthLoading from './app/AuthLoading';
-import AppBoundary from './app/AppBoundary';
-import SiteFooter from './SiteFooter';
-import Announcements from './app/Announcements';
-import InstallHelp from './app/InstallHelp';
-import { AuthBar, SavedSync, SignedOutCleanup, TokenBridge } from './app/auth';
-import { rememberResult, recallResult, type SavedItem } from './app/savedFlights';
-import FlightView from './features/flight/FlightView';
-import { time, ukDate } from './features/flight/flightFormat';
-import { smoothScrollAllowed } from './shared/smoothScroll';
 import { registerSW } from 'virtual:pwa-register';
 import Lenis from 'lenis';
+import {
+  AlertCircle,
+  ArrowRight,
+  ArrowUpRight,
+  Bookmark,
+  CalendarDays,
+  ChevronRight,
+  Download,
+  Info,
+  ListChecks,
+  Navigation,
+  Plane,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+} from 'lucide-react';
+import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { createRoot } from 'react-dom/client';
+import Announcements from './app/Announcements';
+import AppBoundary from './app/AppBoundary';
+import AuthLoading from './app/AuthLoading';
+import { AuthBar, SavedSync, SignedOutCleanup, TokenBridge } from './app/auth';
+import Feedback from './app/Feedback';
+import InstallHelp from './app/InstallHelp';
+import SavedFlights from './app/SavedFlightCollection';
+import { recallResult, rememberResult, type SavedItem } from './app/savedFlights';
+import FlightView from './features/flight/FlightView';
+import { time, ukDate } from './features/flight/flightFormat';
+import SiteFooter from './SiteFooter';
+import { apiFetch, readableError } from './shared/api';
+import { smoothScrollAllowed } from './shared/smoothScroll';
+import { ga, gaPageview, track } from './shared/track';
+import type { Flight, FlightResponse } from './types';
 import 'lenis/dist/lenis.css';
 import { ClerkProvider, useAuth } from '@clerk/react';
 import './styles/tokens.css';
 import './style.css';
 import './styles/workspace.css';
+
 const today = () => ukDate();
 const CLERK_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
 // A flight can be opened from a link: #/flight/BA59/2026-10-25

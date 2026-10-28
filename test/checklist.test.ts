@@ -1,7 +1,7 @@
-import test from 'node:test';
 import assert from 'node:assert/strict';
-import { TEMPLATE, TEMPLATE_ITEM_COUNT } from '../src/features/checklist/checklistTemplate.ts';
+import test from 'node:test';
 import * as M from '../src/features/checklist/checklistModel.ts';
+import { TEMPLATE, TEMPLATE_ITEM_COUNT } from '../src/features/checklist/checklistTemplate.ts';
 
 const T0 = 1_800_000_000_000;
 const start = () =>
@@ -203,7 +203,8 @@ test('isBlank: an untouched list is not worth syncing or keeping', () => {
 });
 
 // ---- account sync (two devices against a fake server with the same revision rules as the PHP API) ----
-import { syncOnce, type Api } from '../src/features/checklist/checklistSync.ts';
+import { type Api, syncOnce } from '../src/features/checklist/checklistSync.ts';
+
 function fakeServer() {
   const s = { rev: 0, data: null as unknown, puts: 0, conflicts: 0, failNext: 0 };
   const api: Api = {

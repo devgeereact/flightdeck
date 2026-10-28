@@ -1,5 +1,5 @@
-import test from 'node:test';
 import assert from 'node:assert/strict';
+import test from 'node:test';
 import { flightIcs } from '../src/features/flight/ics';
 
 const f: any = {
@@ -36,7 +36,7 @@ test('an estimate replaces the schedule; commas and semicolons are escaped', () 
     { ...f, estimatedOut: '2026-10-25T21:50:00.000Z', airline: 'Air, Test; Ltd' },
     'x',
   )!;
-  assert.ok(ics.includes('DTSTART:20261025T215000Z') && ics.includes('Air\\, Test\; Ltd'));
+  assert.ok(ics.includes('DTSTART:20261025T215000Z') && ics.includes('Air\\, Test; Ltd'));
 });
 
 test('no file when a time is missing, the flight is cancelled or only the usual route is known', () => {

@@ -1,6 +1,6 @@
-import test from 'node:test';
 import assert from 'node:assert/strict';
-import { duration, countdown } from '../src/features/flight/countdown';
+import test from 'node:test';
+import { countdown, duration } from '../src/features/flight/countdown';
 
 const base: any = {
   id: 'x',

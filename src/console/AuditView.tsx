@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
 import { AlertTriangle, History } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import { call, when } from './api';
 
 type Entry = { at: string; by: string; action: string };

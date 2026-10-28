@@ -1,5 +1,5 @@
 // Public website behaviour. Plain script, no dependencies; the pages work without it (the menu simply shows).
-(function () {
+(() => {
   var doc = document.documentElement;
   doc.classList.add('js');
 
@@ -18,12 +18,12 @@
   var btn = document.querySelector('.menu-btn'),
     nav = document.getElementById('site-nav');
   if (btn && nav) {
-    btn.addEventListener('click', function () {
+    btn.addEventListener('click', () => {
       var open = btn.getAttribute('aria-expanded') !== 'true';
       btn.setAttribute('aria-expanded', String(open));
       nav.classList.toggle('open', open);
     });
-    document.addEventListener('keydown', function (e) {
+    document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && btn.getAttribute('aria-expanded') === 'true') {
         btn.click();
         btn.focus();
@@ -31,12 +31,12 @@
     });
   }
 
-  document.addEventListener('click', function (e) {
+  document.addEventListener('click', (e) => {
     if (e.target.closest && e.target.closest('[data-print]')) window.print();
   });
 
   // A link to one answer (/help/#faq-account) opens it.
-  var openTarget = function () {
+  var openTarget = () => {
     var el =
       location.hash.length > 1
         ? document.getElementById(decodeURIComponent(location.hash.slice(1)))
@@ -53,7 +53,7 @@
       date = document.getElementById('lookup-date'),
       msg = document.getElementById('lookup-msg');
     var note = msg ? msg.innerHTML : '';
-    form.addEventListener('submit', function (e) {
+    form.addEventListener('submit', (e) => {
       e.preventDefault();
       var n = (num.value || '').toUpperCase().replace(/\s+/g, '');
       var d = date.value || '';
@@ -78,15 +78,15 @@
   // reveal of each home section both stand down under prefers-reduced-motion; the page is complete without either.
   var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
   var reveals = document.querySelectorAll('[data-reveal]');
-  var showAll = function () {
+  var showAll = () => {
     for (var r = 0; r < reveals.length; r++) reveals[r].classList.add('in');
   };
   if (reveals.length) {
     if (!('IntersectionObserver' in window) || (calm && calm.matches)) showAll();
     else {
       var seen = new IntersectionObserver(
-        function (entries) {
-          entries.forEach(function (en) {
+        (entries) => {
+          entries.forEach((en) => {
             if (en.isIntersecting) {
               en.target.classList.add('in');
               seen.unobserve(en.target);
@@ -101,13 +101,13 @@
   }
   if (window.Lenis && !(calm && calm.matches)) {
     var lenis = new window.Lenis({ lerp: 0.11, anchors: true });
-    var tick = function (t) {
+    var tick = (t) => {
       lenis.raf(t);
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
     if (calm && calm.addEventListener)
-      calm.addEventListener('change', function () {
+      calm.addEventListener('change', () => {
         if (calm.matches) {
           lenis.destroy();
           showAll();
@@ -115,7 +115,7 @@
       });
     // The mobile menu is a stacked panel; do not let the page scroll beneath it while it is open.
     if (btn)
-      btn.addEventListener('click', function () {
+      btn.addEventListener('click', () => {
         if (btn.getAttribute('aria-expanded') === 'true') lenis.stop();
         else lenis.start();
       });

@@ -1,5 +1,5 @@
-import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
 // Test-only build of the console harness (test/harness). Output is gitignored (.local-test/build).
 export default defineConfig({
   root: 'test/harness',

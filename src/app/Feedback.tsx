@@ -1,6 +1,6 @@
+import { Check, MessageSquare, Send, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { MessageSquare, X, Send, Check } from 'lucide-react';
-import { track, ga } from '../shared/track';
+import { ga, track } from '../shared/track';
 
 type Kind = 'feedback' | 'bug' | 'contact';
 const LABEL: Record<Kind, string> = {

@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
 import { fileURLToPath } from 'node:url';
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
 // Test-only build of the real app source as one script jsdom can run. Output is gitignored.
 export default defineConfig({
   plugins: [react()],

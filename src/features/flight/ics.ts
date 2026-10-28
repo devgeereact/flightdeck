@@ -8,7 +8,7 @@ const stamp = (iso: string) =>
     .replace(/\.\d{3}/, '');
 // RFC 5545 text: escape backslash, semicolon, comma and line breaks.
 const text = (s: string) =>
-  s.replace(/\\/g, '\\\\').replace(/;/g, '\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
+  s.replace(/\\/g, '\\\\').replace(/;/g, ';').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n');
 // Lines longer than 75 octets are folded with CRLF + space.
 const fold = (line: string) => {
   const out: string[] = [];

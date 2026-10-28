@@ -1,6 +1,7 @@
-import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import { defineConfig, loadEnv } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+
 // The Google Analytics Measurement ID is public by design. It reaches the page as <meta name="fd-ga-id">, which public/consent.js reads;
 // with no ID there is no banner and no Google request. Static public pages get the same value from scripts/build-public.mjs.
 const gaMeta = (mode: string) => ({

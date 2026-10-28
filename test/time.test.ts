@@ -1,10 +1,11 @@
 // Time correctness: every flight time is shown in the airport's own zone, across clock changes, whatever zone this machine is in.
 // Run the suite under another TZ too (e.g. TZ=America/Los_Angeles pnpm test): nothing here may depend on the device's zone.
-import test from 'node:test';
+
 import assert from 'node:assert/strict';
-import { time, day, ukDate, journeySteps } from '../src/features/flight/flightFormat.ts';
-import { summarise } from '../src/features/flight/summary.ts';
+import test from 'node:test';
 import { isPlainDate, sanitize } from '../src/features/checklist/checklistModel.ts';
+import { day, journeySteps, time, ukDate } from '../src/features/flight/flightFormat.ts';
+import { summarise } from '../src/features/flight/summary.ts';
 import type { Flight } from '../src/types.ts';
 
 const LHR = {

@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
 import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin';
 import {
   Activity,
@@ -21,14 +20,16 @@ import {
   Settings,
   Users,
 } from 'lucide-react';
-import { call, nf } from './api';
-import { withMotion, fromAny } from '../shared/motion';
-import { Analytics, Costs, Overview, SystemView, Usage, UsersView } from './Ops';
-import Inbox from './Inbox';
-import HealthView from './HealthView';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { fromAny, withMotion } from '../shared/motion';
 import AuditView from './AuditView';
+import { call, nf } from './api';
 import ContentSection, { type Section as ContentSectionId } from './content/ContentSection';
+import HealthView from './HealthView';
+import Inbox from './Inbox';
+import { Analytics, Costs, Overview, SystemView, Usage, UsersView } from './Ops';
 import '../styles/console.css';
+
 gsap.registerPlugin(useGSAP, DrawSVGPlugin);
 
 type Id =

@@ -1,5 +1,5 @@
 import { Plane } from 'lucide-react';
-import { FOOTER_GROUPS, FOOTER_BLURB, FOOTER_NOTE } from './siteNav';
+import { FOOTER_BLURB, FOOTER_GROUPS, FOOTER_NOTE } from './siteNav';
 import './siteFooter.css';
 
 // Same markup as the static public pages (build-public.mjs). `inApp`: inside the signed-in app the tracker and packing list point at the app's own screens.

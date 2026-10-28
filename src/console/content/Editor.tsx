@@ -1,4 +1,3 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AlertTriangle,
   ArrowLeft,
@@ -13,16 +12,17 @@ import {
   Undo2,
   X,
 } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError, call, when } from '../api';
+import type { Errors } from './fields';
 import {
   AnnouncementForm,
+  type Category,
   FaqForm,
   NavigationForm,
   PageForm,
   SettingsForm,
-  type Category,
 } from './forms';
-import type { Errors } from './fields';
 
 export type ContentType = 'page' | 'faq' | 'announcement' | 'navigation' | 'settings';
 type Rev = { name: string; action: string; at: string; by: string; hasData: boolean };

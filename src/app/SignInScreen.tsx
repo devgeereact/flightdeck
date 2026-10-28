@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
-import { Plane, ArrowLeft } from 'lucide-react';
-import { SignInButton, SignUpButton } from '@clerk/react';
 import { registerSW } from 'virtual:pwa-register';
-import { track, trackOnce, ga } from '../shared/track';
+import { SignInButton, SignUpButton } from '@clerk/react';
+import { ArrowLeft, Plane } from 'lucide-react';
+import { useEffect } from 'react';
 import SiteFooter from '../SiteFooter';
+import { ga, track, trackOnce } from '../shared/track';
 
 const FLIGHT_LINK = /^#\/flight\/([A-Z0-9]{3,8})\/(\d{4}-\d{2}-\d{2})$/;
 const dayLabel = (d: string) => {

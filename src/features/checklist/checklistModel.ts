@@ -3,6 +3,7 @@
 import { TEMPLATE, type TemplateSection } from './checklistTemplate';
 
 export type Flight = { number: string; date: string };
+
 // marks: item id -> timestamp of its last tick (positive) or untick (negative). Merging keeps the newest mark per ITEM, so ticks made on
 // two devices both survive. (A plain "newest trip copy wins" silently dropped one device's ticks.)
 import type { TripContext } from './tripContext';

@@ -1,5 +1,5 @@
 // Account sync for the checklist. localStorage stays the source of truth (it works offline); this only reconciles with the server copy.
-import { merge, sanitize, isBlank, type ChecklistData } from './checklistModel';
+import { type ChecklistData, isBlank, merge, sanitize } from './checklistModel';
 
 export type PutResult = { ok: true; rev: number } | { ok: false; rev: number; data: unknown };
 export type Api = {

@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
 import { AlertTriangle, ImagePlus } from 'lucide-react';
-import { call, ApiError, when } from '../api';
+import { useEffect, useState } from 'react';
+import { ApiError, call, when } from '../api';
 import {
   AreaField,
   Choice,
+  type Errors,
   LinesEditor,
   ListEditor,
   SelectField,
   TextField,
-  type Errors,
 } from './fields';
 
 // One form per content type. Each edits a plain object that is sent to the server as it is; the server validates it again.

@@ -1,11 +1,12 @@
 // The public website as PHP renders it (php/private/src/Site) from the CMS seed. Replaces the old static-build tests, with the same
 // guarantees: proper documents, nothing from third parties, safe links, honest legal text, the ads gate, one shared link list.
-import test from 'node:test';
+
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import { JSDOM } from 'jsdom';
-import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import test from 'node:test';
+import { JSDOM } from 'jsdom';
 
 const root = path.resolve(import.meta.dirname, '..');
 const seed = JSON.parse(

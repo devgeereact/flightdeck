@@ -1,16 +1,16 @@
-import test from 'node:test';
 import assert from 'node:assert/strict';
-import { suggest, RULE_IDS } from '../src/features/checklist/checklistRules.ts';
+import test from 'node:test';
+import * as M from '../src/features/checklist/checklistModel.ts';
+import { RULE_IDS, suggest } from '../src/features/checklist/checklistRules.ts';
+import { TEMPLATE } from '../src/features/checklist/checklistTemplate.ts';
 import {
   contextFromFlight,
   haversineKm,
   isRainy,
-  weatherStale,
   type TripContext,
+  weatherStale,
 } from '../src/features/checklist/tripContext.ts';
 import { summarise } from '../src/features/flight/summary.ts';
-import * as M from '../src/features/checklist/checklistModel.ts';
-import { TEMPLATE } from '../src/features/checklist/checklistTemplate.ts';
 
 const ctx = (o: Partial<TripContext> = {}): TripContext => ({
   dir: 'outbound',

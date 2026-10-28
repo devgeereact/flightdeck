@@ -1,10 +1,11 @@
 // Local UI smoke test: builds the real app, serves it with the PHP dev router and drives it in jsdom.
 // Run: pnpm test:ui   (local only: it uses your .env provider keys and may spend 2 AeroDataBox units)
-import { FOOTER_GROUPS } from '../src/siteNav.ts';
-import { JSDOM } from 'jsdom';
-import { spawn, execFileSync } from 'node:child_process';
+
+import { execFileSync, spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { JSDOM } from 'jsdom';
+import { FOOTER_GROUPS } from '../src/siteNav.ts';
 
 const root = path.resolve(import.meta.dirname, '..');
 const PORT = 3997,
@@ -618,7 +619,7 @@ try {
       });
     const k = await boot({ hash: '#/checklist' });
     await sleep(1500);
-    let d = k.w.document;
+    const d = k.w.document;
     check(
       'K1 checklist route shows the first-time screen, not the flight search',
       k.text().includes('Pack once. Reuse it every trip.') && !d.querySelector('.search-card'),

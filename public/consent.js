@@ -7,11 +7,10 @@
  * - Only a short whitelist of event names and parameters can be sent; no user id, no flight numbers, no query strings.
  * - The choice is remembered (and re-asked if VERSION changes). "Cookie settings" links (data-fd-cookie-settings) reopen it.
  */
-(function (factory) {
+((factory) => {
   if (typeof module !== 'undefined' && module.exports) module.exports = factory;
   else factory(window, document);
-})(function (win, doc) {
-  'use strict';
+})((win, doc) => {
   var KEY = 'fd-consent',
     VERSION = 1;
   var GA_ID = /^G-[A-Z0-9]{6,12}$/;
@@ -58,7 +57,7 @@
           body: JSON.stringify({ name: name }),
           keepalive: true,
         })
-        .catch(function () {});
+        .catch(() => {});
     } catch (e) {
       /* counting never breaks anything */
     }
@@ -182,10 +181,10 @@
           (cur.analytics ? 'accepted' : 'rejected') +
           '.</p>'
         : '');
-    el.querySelector('[data-fd="accept"]').addEventListener('click', function () {
+    el.querySelector('[data-fd="accept"]').addEventListener('click', () => {
       choose(true);
     });
-    el.querySelector('[data-fd="reject"]').addEventListener('click', function () {
+    el.querySelector('[data-fd="reject"]').addEventListener('click', () => {
       choose(false);
     });
     doc.body.appendChild(el);
@@ -198,7 +197,7 @@
     api.enabled = GA_ID.test(id);
     if (!api.enabled) return;
     state.id = id;
-    doc.addEventListener('click', function (e) {
+    doc.addEventListener('click', (e) => {
       var t = e.target && e.target.closest ? e.target.closest('[data-fd-cookie-settings]') : null;
       if (t) {
         e.preventDefault();

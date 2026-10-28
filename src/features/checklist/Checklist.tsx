@@ -1,34 +1,34 @@
-import { useEffect, useRef, useState } from 'react';
-import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
 import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  CheckCheck,
+  Eye,
+  EyeOff,
+  Lightbulb,
+  Link2,
+  ListChecks,
+  Pencil,
+  Plane,
   Plus,
   Printer,
   RotateCcw,
-  Pencil,
-  X,
   Trash2,
-  Plane,
-  Eye,
-  EyeOff,
-  Check,
-  CheckCheck,
-  ListChecks,
-  Link2,
-  Lightbulb,
-  ArrowLeft,
-  ArrowRight,
+  X,
 } from 'lucide-react';
-import * as M from './checklistModel';
-import { TEMPLATE } from './checklistTemplate';
-import { loadLocal, saveLocal, getOwner, setOwner, clearLocal } from './checklistStore';
-import { syncOnce, httpApi } from './checklistSync';
-import { suggest } from './checklistRules';
-import { contextFromFlight, weatherStale } from './tripContext';
-import { summarise } from '../flight/summary';
-import { withMotion, fromAny } from '../../shared/motion';
+import { useEffect, useRef, useState } from 'react';
 import { apiFetch } from '../../shared/api';
-import { track, ga } from '../../shared/track';
+import { fromAny, withMotion } from '../../shared/motion';
+import { ga, track } from '../../shared/track';
+import { summarise } from '../flight/summary';
+import * as M from './checklistModel';
+import { suggest } from './checklistRules';
+import { clearLocal, getOwner, loadLocal, saveLocal, setOwner } from './checklistStore';
+import { httpApi, syncOnce } from './checklistSync';
+import { TEMPLATE } from './checklistTemplate';
+import { contextFromFlight, weatherStale } from './tripContext';
 import './packingBoard.css';
 
 gsap.registerPlugin(useGSAP);

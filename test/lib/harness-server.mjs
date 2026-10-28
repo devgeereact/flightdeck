@@ -1,10 +1,11 @@
 // TEST ONLY: a throwaway Flightdeck server for console tests. Copies php/private/src into a temporary private folder (so no real
 // data, keys or .env are used), installs a test signing key as the Clerk key set, and starts the real PHP router.
+
+import { spawn } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
 
 const root = path.resolve(import.meta.dirname, '../..');
 const ISS = 'https://clerk.test.example';

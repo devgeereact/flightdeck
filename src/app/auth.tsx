@@ -1,11 +1,11 @@
-import { useEffect, useRef } from 'react';
 import { Show, SignInButton, SignUpButton, UserButton, useAuth, useUser } from '@clerk/react';
-import { setTokenGetter } from '../shared/api';
+import { useEffect, useRef } from 'react';
 import {
   getOwner as checklistOwner,
   clearLocal as clearChecklist,
 } from '../features/checklist/checklistStore';
-import { LAST_KEY, cleanSaved, sameItem, type SavedItem } from './savedFlights';
+import { setTokenGetter } from '../shared/api';
+import { cleanSaved, LAST_KEY, type SavedItem, sameItem } from './savedFlights';
 
 // Clerk glue for the app: hands the session token to API calls, shows the account controls, keeps saved flights in the user's
 // profile, and clears an account's data from a shared device after sign-out.

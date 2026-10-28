@@ -1,9 +1,10 @@
 // Owner console in a test browser (jsdom) against the real PHP API on a throwaway server: the CMS flows an owner uses, and the
 // refusal a non-owner sees. No Clerk account, real data or provider keys are involved. Run: pnpm test:console
-import { JSDOM } from 'jsdom';
+
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { JSDOM } from 'jsdom';
 import { startHarness } from './lib/harness-server.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');

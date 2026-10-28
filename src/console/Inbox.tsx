@@ -1,4 +1,3 @@
-import { useCallback, useEffect, useState } from 'react';
 import {
   AlertTriangle,
   CheckCircle2,
@@ -8,6 +7,7 @@ import {
   Send,
   StickyNote,
 } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import { call, when } from './api';
 
 type Enquiry = {
