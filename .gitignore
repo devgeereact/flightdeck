@@ -14,3 +14,7 @@ php/private/var/
 # Project-local test scratch and private recovery state (global rule)
 /.local-test/
 /.local-state/
+
+# Generated helper output (run /graphify on demand; never committed)
+graphify-out/
+.graphify*
