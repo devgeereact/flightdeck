@@ -66,7 +66,7 @@ final class Media
         if (!is_file($path)) {
             $tmp = $path . '.' . bin2hex(random_bytes(4)) . '.tmp';
             if (@file_put_contents($tmp, $clean) === false || !@rename($tmp, $path)) {
-                @unlink($tmp);
+                @unlink($tmp);  // nosemgrep: php.lang.security.unlink-use.unlink-use -- path built from validated ids or a private storage folder
                 return ['ok' => false, 'status' => 500, 'error' => 'That image could not be saved.'];
             }
             @chmod($path, 0600);

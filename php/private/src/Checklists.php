@@ -140,14 +140,14 @@ final class Checklists
             flock($lock, LOCK_EX);
         }
         $had = is_file($path);
-        @unlink($path);
+        @unlink($path);  // nosemgrep: php.lang.security.unlink-use.unlink-use -- path built from validated ids or a private storage folder
         foreach (glob($path . '.*.tmp') ?: [] as $t) {
-            @unlink($t);
+            @unlink($t);  // nosemgrep: php.lang.security.unlink-use.unlink-use -- path built from validated ids or a private storage folder
         }
         if ($lock !== false) {
             flock($lock, LOCK_UN);
             fclose($lock);
-            @unlink($path . '.lock');
+            @unlink($path . '.lock');  // nosemgrep: php.lang.security.unlink-use.unlink-use -- path built from validated ids or a private storage folder
         }
         return $had;
     }
@@ -185,7 +185,7 @@ final class Checklists
             }
             @chmod($tmp, 0600);
             if (!@rename($tmp, $path)) {
-                @unlink($tmp);
+                @unlink($tmp);  // nosemgrep: php.lang.security.unlink-use.unlink-use -- path built from validated ids or a private storage folder
                 throw new \RuntimeException('Checklist storage is not writable.');
             }
             return ['ok' => true, 'rev' => $next, 'data' => $doc];

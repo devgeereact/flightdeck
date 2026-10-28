@@ -55,9 +55,9 @@ try {
         header('Content-Type: ' . $f['type']);
         header('Cache-Control: public, max-age=31536000, immutable');
         header('X-Content-Type-Options: nosniff');
-        header('Content-Length: ' . filesize($f['path']));
+        header('Content-Length: ' . filesize($f['path']));  // nosemgrep: php.lang.security.injection.tainted-filename.tainted-filename -- path comes from server config or an already-authorised record, never from the request
         if ($method !== 'HEAD') {
-            readfile($f['path']);
+            readfile($f['path']);  // nosemgrep: php.lang.security.injection.tainted-filename.tainted-filename -- path comes from server config or an already-authorised record, never from the request
         }
         return;
     }

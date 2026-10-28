@@ -183,7 +183,7 @@ final class Metrics
             }
             $age = ($nowSec - $start) / 86400;
             if ($age > self::KEEP_DAYS) {
-                @unlink($f);
+                @unlink($f);  // nosemgrep: php.lang.security.unlink-use.unlink-use -- path built from validated ids or a private storage folder
             } elseif ($age > 2) {
                 $x = json_decode((string) @file_get_contents($f), true);
                 if (is_array($x) && isset($x['u']) && is_array($x['u'])) {

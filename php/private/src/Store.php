@@ -34,7 +34,7 @@ final class Store
         $d = $raw === false ? null : json_decode($raw, true);
         if (!is_array($d) || !isset($d['expires']) || $d['expires'] <= self::nowMs() || !array_key_exists('data', $d)) {
             if ($raw !== false) {
-                @unlink($this->path($name)); // expired or broken: remove it so the cache folder cannot grow forever
+                @unlink($this->path($name)); // expired or broken: remove it so the cache folder cannot grow forever  // nosemgrep: php.lang.security.unlink-use.unlink-use -- path built from validated ids or a private storage folder
             }
             return null;
         }
@@ -63,12 +63,12 @@ final class Store
         foreach (glob($this->dir . '/cache/*.json') ?: [] as $f) {
             $d = json_decode((string) @file_get_contents($f), true);
             if (!is_array($d) || !isset($d['expires']) || $d['expires'] <= $now) {
-                $removed += @unlink($f) ? 1 : 0;
+                $removed += @unlink($f) ? 1 : 0;  // nosemgrep: php.lang.security.unlink-use.unlink-use -- path built from validated ids or a private storage folder
             }
         }
         foreach (glob($this->dir . '/cache/*.tmp') ?: [] as $f) {
             if (@filemtime($f) < time() - 600) {
-                @unlink($f);
+                @unlink($f);  // nosemgrep: php.lang.security.unlink-use.unlink-use -- path built from validated ids or a private storage folder
             }
         }
         return $removed;
@@ -76,7 +76,7 @@ final class Store
 
     public function forget(string $name): void
     {
-        @unlink($this->path($name));
+        @unlink($this->path($name));  // nosemgrep: php.lang.security.unlink-use.unlink-use -- path built from validated ids or a private storage folder
     }
 
     /** Run $fn while holding an exclusive lock so only one request refreshes shared data. */
@@ -102,7 +102,7 @@ final class Store
             $cutoff = time() - 7200; // longer than the longest window used (one hour)
             foreach (glob($this->dir . '/rate/*.json') ?: [] as $f) {
                 if (@filemtime($f) < $cutoff) {
-                    @unlink($f);
+                    @unlink($f);  // nosemgrep: php.lang.security.unlink-use.unlink-use -- path built from validated ids or a private storage folder
                 }
             }
         }

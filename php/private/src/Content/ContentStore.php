@@ -193,7 +193,7 @@ final class ContentStore
         }
         @chmod($tmp, 0600);
         if (!@rename($tmp, $path)) {
-            @unlink($tmp);
+            @unlink($tmp);  // nosemgrep: php.lang.security.unlink-use.unlink-use -- path built from validated ids or a private storage folder
             throw new \RuntimeException('Content could not be written.');
         }
     }
@@ -300,7 +300,7 @@ final class ContentStore
             $item = $draft['data'];
             unset($item['unpublished']);
             $this->writePublished($this->withItem($this->published(), $type, $id, $item));
-            @unlink($this->dir . '/drafts/' . $type . '/' . $this->fileId($id) . '.json');
+            @unlink($this->dir . '/drafts/' . $type . '/' . $this->fileId($id) . '.json');  // nosemgrep: php.lang.security.unlink-use.unlink-use -- path built from validated ids or a private storage folder
             $rev = $this->revision($type, $id, 'publish', $item, $by);
             return ['ok' => true, 'status' => 200, 'revision' => $rev];
         });
@@ -337,7 +337,7 @@ final class ContentStore
                 return ['ok' => false, 'status' => 404, 'error' => 'There is no draft.'];
             }
             $this->revision($type, $id, 'discard', $this->draft($type, $id)['data'] ?? null, $by);
-            @unlink($f);
+            @unlink($f);  // nosemgrep: php.lang.security.unlink-use.unlink-use -- path built from validated ids or a private storage folder
             return ['ok' => true, 'status' => 200];
         });
     }
@@ -353,7 +353,7 @@ final class ContentStore
             if ($cur !== null) {
                 $this->writePublished($this->withItem($this->published(), $type, $id, null));
             }
-            @unlink($this->dir . '/drafts/' . $type . '/' . $this->fileId($id) . '.json');
+            @unlink($this->dir . '/drafts/' . $type . '/' . $this->fileId($id) . '.json');  // nosemgrep: php.lang.security.unlink-use.unlink-use -- path built from validated ids or a private storage folder
             $this->revision($type, $id, 'delete', $cur, $by);
             return ['ok' => true, 'status' => 200];
         });

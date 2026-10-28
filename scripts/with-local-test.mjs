@@ -9,6 +9,7 @@ const root = path.resolve(import.meta.dirname, '..');
 const tmp = path.join(root, '.local-test/tmp');
 fs.mkdirSync(tmp, { recursive: true });
 const [cmd, ...args] = process.argv.slice(2);
+// nosemgrep: javascript.lang.security.audit.spawn-shell-true.spawn-shell-true -- local test wrapper for package.json scripts
 const r = spawnSync(cmd, args, {
   cwd: root,
   stdio: 'inherit',

@@ -51,7 +51,7 @@ def upload(ftp, path):
 
 def fetch(base, path):
     request = urllib.request.Request(base + path, headers={'Cache-Control': 'no-cache', 'User-Agent': UA})
-    with urllib.request.urlopen(request, timeout=25, context=ssl.create_default_context()) as response:
+    with urllib.request.urlopen(request, timeout=25, context=ssl.create_default_context()) as response:  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected -- URL is checked to be the https site origin
         return response.status, response.headers.get('Content-Type', ''), response.read(65537)
 
 

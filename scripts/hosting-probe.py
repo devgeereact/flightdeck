@@ -60,7 +60,7 @@ def main():
             request = urllib.request.Request(values['PUBLIC_BASE_URL'].rstrip('/') + '/' + filename, headers={'Cache-Control': 'no-cache', 'User-Agent': 'Flightdeck-deploy-probe/1.0 (+https://github.com/gsakinz/flightdeck)'})
             for attempt in range(1, 4):
                 try:
-                    with urllib.request.urlopen(request, timeout=25, context=ssl.create_default_context()) as response:
+                    with urllib.request.urlopen(request, timeout=25, context=ssl.create_default_context()) as response:  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected -- URL is checked to be the https site origin
                         got = BEACON.sub(b'', response.read(65537), count=1)  # Cloudflare Web Analytics injects one script at the edge
                         info = (response.status, response.geturl() == request.full_url, len(got), len(body), response.headers.get('Content-Type'), response.headers.get('cf-mitigated'), response.headers.get('cf-cache-status'))
                         if response.status == 200 and info[1] and got == body:

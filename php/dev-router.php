@@ -21,7 +21,7 @@ $root = dirname(__DIR__);
 $serve = static function (string $file, string $type): bool {
     header('Content-Type: ' . $type);
     header('Cache-Control: no-cache');
-    readfile($file);
+    readfile($file);  // nosemgrep: php.lang.security.injection.tainted-filename.tainted-filename -- path comes from server config or an already-authorised record, never from the request
     return true;
 };
 // Public-site assets straight from source, so edits show on reload. The release build hashes them (scripts/build-public.mjs).
