@@ -1,10 +1,10 @@
 schema_version: 1
 name: Flightdeck
-last_reviewed: "2026-10-25"
+last_reviewed: "2026-10-28"
 status: live   # personal, free, non-commercial (owner, 25 Oct 2026)
 current:
   frontend: react-typescript-vite-pwa
-  backend: php-on-cpanel   # php/private/src behind public/api/index.php and public/site.php; server/ (Node) is an outdated reference
+  backend: php-on-cpanel   # php/private/src behind public/api/index.php and public/site.php; Node server archived (ADR-018)
   styling: plain-css-with-tokens   # src/styles/tokens.css
   database: none
   authentication: clerk   # production instance; API verifies tokens; owner = admin_user_ids in server config
@@ -19,10 +19,10 @@ target_preference:
   authentication_only_if_needed: clerk
   dns_https: cloudflare-full-strict
 release:
-  preferred_branch: production
+  preferred_branch: main   # manual release from main (28 Oct 2026); the production branch is no longer used
   selected_domain: flightdeck.gakinz.com
   document_root: /home/devgeereact/flightdeck.gakinz.com   # private: /home/devgeereact/flightdeck-private
-  workflow_created: probe-only   # .github/workflows/hosting-probe.yml (manual); no app release workflow yet
+  workflow_created: manual-release   # .github/workflows/release.yml: check-only by default, mode=release + RELEASE to publish
   auto_deploy_verified: false   # only the static probe is proven (run 40077621830); the full app release is not
 constraints:
   no_extra_paid_hosting_without_approval: true
