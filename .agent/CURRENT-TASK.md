@@ -1,5 +1,11 @@
 # Current task and handoff
 
+## 28 October 2026 — aligned with build-kit v4 (Status: DONE locally; CI pending first run)
+- Changed: Biome replaces the Prettier config (formatting-only commit in `.git-blame-ignore-revs`), `pnpm check` gate, gitleaks pre-commit hook, `ci.yml` (check, smoke tests, PHP syntax, secret scan), **release is manual from main** (check-only default, typed RELEASE), uptime every 6 h, Dependabot, `.node-version`, AGENTS.md entry point, project Claude permissions; graphify on demand only. Decisions in `docs/DECISIONS.md` (28 Oct).
+- Checks: `pnpm check` PASS (lint 0 errors, typecheck, 104 tests, PHP tests, build); `pnpm test:ui` and `pnpm test:console` PASS.
+- Note: the `production` branch is 6+ commits behind main; the next release (from main) will publish everything since 24 Oct. Run `check-only` first.
+- Next: lint warnings in slices (ROADMAP "Code-quality follow-ups"); add an external uptime monitor.
+
 Date: 24 October 2026.
 Approved by the user: OpenSky replaces FlightAware; target host flightdeck.gakinz.com; PHP backend ("pick the best one"). Still NOT approved/done: DNS/Cloudflare changes, cPanel access, git init, any deployment.
 
