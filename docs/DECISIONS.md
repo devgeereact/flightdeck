@@ -59,3 +59,13 @@ Decision (owner, 25 Oct 2026): `server/` and `php/tests/parity.mjs` move to `doc
 
 ## ADR-019: airport-signage design language; Lenis on the public pages (26 Oct 2026)
 Context: the owner asked for a full redesign with nothing that reads as generic AI styling. The first redesign pass still used repeated rounded cards, numbered feature tiles and a vague hero panel. Decision: keep the approved green, paper and lime identity and fonts, and change the language to hairline rules, 4 to 10px corners, flat tiles, tabular data and one dark "board" panel that shows how a result is built without any flight data (see docs/DESIGN.md). Copy follows plain-English rules; vague taglines are removed. Smooth scrolling (Lenis, already used in the app) is also used on the public pages, vendored from node_modules into the hashed public build so no third party is contacted, and never starts under prefers-reduced-motion. Consequences: `site.css` is a single layer; a test asserts the board carries no times; the 21st catalogue and the NerdWallet reference informed patterns only (no code or brand assets copied); Hyperframes was not needed. Rejected: a rendered hero video (weight, and a second source of truth for colours and timing), copying a 21st/shadcn component (Tailwind dependency in a PHP-rendered site).
+
+## 28 October 2026 — aligned with build-kit v4
+- **Releases are manual** (owner decision): `release.yml` runs only on demand from `main`, `check-only` by default, `mode=release` + typed `RELEASE` to publish. The `production` branch is no longer used for deploys. Upload steps unchanged (restricted-key rsync for private PHP, additive static upload, HTTPS verification).
+- **Uptime check every 6 hours** instead of hourly (Actions minutes). An external free monitor (e.g. UptimeRobot) is recommended for fast alerts.
+- **CI added** (`ci.yml`): `pnpm check` (lint, typecheck, tests, PHP tests, build), UI and console smoke tests, PHP syntax, gitleaks on every push.
+- **Biome replaces the Prettier config** (same style). Accessibility, hook-dependency and `any` rules start as warnings; see ROADMAP.
+- **Tests made formatting-independent**: source-text checks in `test/site.test.mjs` compare whitespace-insensitively; coverage unchanged (44 font sizes, 5 text tokens still checked). `seed.json` is generated and excluded from formatting.
+- **Dev ports stay** (Vite 5173, PHP 3001; live-account preview 443 → 3993), recorded in build-kit `PORTS.md`.
+- **No Composer dependencies**, so no Composer pin. Server PHP is 8.4 on this account (siterelay confirmed 8.4.27); confirm flightdeck's domain uses 8.4 in cPanel → MultiPHP Manager.
+- **graphify** is on demand (`/graphify`); its output and hooks are not part of the repository.
