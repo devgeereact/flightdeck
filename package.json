@@ -13,7 +13,9 @@
     "dev:live-account": "node scripts/local-live.mjs",
     "lint": "biome check --diagnostic-level=error .",
     "format": "biome check --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm test:php && pnpm build",
+    "prepare": "git rev-parse --git-dir >/dev/null 2>&1 && git config core.hooksPath .githooks || true"
   },
   "dependencies": {
     "@clerk/react": "6.17.8",
