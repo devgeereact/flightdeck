@@ -1,10 +1,10 @@
 name: Uptime check
 
-# Hourly check of the public site and API. If it fails, GitHub emails the repository owner. Read-only: it sends two GET requests and nothing else.
+# Check of the public site and API every 6 hours (was hourly; saves Actions minutes). An external monitor (e.g. UptimeRobot) is recommended for faster alerts. If it fails, GitHub emails the repository owner. Read-only: it sends two GET requests and nothing else.
 # Scheduled workflows only run from the default branch (main).
 on:
   schedule:
-    - cron: '17 * * * *'
+    - cron: '17 */6 * * *'
   workflow_dispatch:
 
 permissions: {}
