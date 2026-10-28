@@ -2,15 +2,23 @@
 // Rules for everything written here: describe only what the app really does; never state a legal right, entry rule or flight fact that
 // is not certain; link to the official source instead. Dated facts carry the review date from site.config.json.
 
-const who = (s) => (s.ownerName ? `${s.ownerName}, who runs Flightdeck` : 'the person who runs Flightdeck (the "site owner")');
-const reach = (s) => (s.contactEmail
-  ? `by email at <a href="mailto:${s.contactEmail}">${s.contactEmail}</a> or through our <a href="/contact/">contact form</a>`
-  : 'through our <a href="/contact/">contact form</a>');
+const who = (s) =>
+  s.ownerName
+    ? `${s.ownerName}, who runs Flightdeck`
+    : 'the person who runs Flightdeck (the "site owner")';
+const reach = (s) =>
+  s.contactEmail
+    ? `by email at <a href="mailto:${s.contactEmail}">${s.contactEmail}</a> or through our <a href="/contact/">contact form</a>`
+    : 'through our <a href="/contact/">contact form</a>';
 
 export const pages = (s) => [
   /* ------------------------------------------------------------------ legal */
   {
-    slug: 'privacy', kind: 'legal', title: 'Privacy policy', description: 'What Flightdeck collects, why, who it is shared with, how long it is kept, and your rights.',
+    slug: 'privacy',
+    kind: 'legal',
+    title: 'Privacy policy',
+    description:
+      'What Flightdeck collects, why, who it is shared with, how long it is kept, and your rights.',
     body: `
 <p>This policy explains what personal data Flightdeck handles and why. It was last reviewed on ${s.lastReviewed}. Flightdeck is run by ${who(s)}, who decides how your data is used (the "controller" under UK data protection law). You can reach us ${reach(s)}.</p>
 
@@ -66,7 +74,11 @@ export const pages = (s) => [
 <p>If we change what we do with your data we will update this page and its date. If we ever start showing advertising we will update this policy first and ask for your consent where the law requires it.</p>`,
   },
   {
-    slug: 'cookies', kind: 'legal', title: 'Cookies and similar technologies', description: 'The cookies and browser storage Flightdeck uses, which are essential, and how to change your analytics choice.',
+    slug: 'cookies',
+    kind: 'legal',
+    title: 'Cookies and similar technologies',
+    description:
+      'The cookies and browser storage Flightdeck uses, which are essential, and how to change your analytics choice.',
     body: `
 <p>This page lists what Flightdeck stores in your browser. Last reviewed ${s.lastReviewed}. Cookies and similar technologies are small pieces of information a site keeps on your device.</p>
 
@@ -100,7 +112,11 @@ export const pages = (s) => [
 <p>You can change your analytics choice at any time with <a href="#" data-fd-cookie-settings>Cookie settings</a>. You can also clear cookies and site data in your browser settings. Clearing essential data will sign you out.</p>`,
   },
   {
-    slug: 'terms', kind: 'legal', title: 'Terms of use', description: 'The terms for using Flightdeck: what it is for, what it cannot promise, and how accounts work.',
+    slug: 'terms',
+    kind: 'legal',
+    title: 'Terms of use',
+    description:
+      'The terms for using Flightdeck: what it is for, what it cannot promise, and how accounts work.',
     body: `
 <p>These terms apply when you use Flightdeck at ${s.url}. Last reviewed ${s.lastReviewed}. By using it you agree to them. If you do not agree, please do not use it.</p>
 
@@ -138,7 +154,10 @@ export const pages = (s) => [
 <p>We may update these terms; the date above shows the latest review. These terms are governed by the law of England and Wales, and the courts of England and Wales can deal with disputes, although if you live elsewhere in the UK you may also be able to use your local courts. Questions about these terms: contact us ${reach(s)}.</p>`,
   },
   {
-    slug: 'about', kind: 'legal', title: 'About Flightdeck', description: 'What Flightdeck is, where its data comes from, and how it avoids guessing.',
+    slug: 'about',
+    kind: 'legal',
+    title: 'About Flightdeck',
+    description: 'What Flightdeck is, where its data comes from, and how it avoids guessing.',
     body: `
 <p>Flightdeck helps you follow a flight and get ready for a trip. It answers the questions people ask at the airport and the night before: is it on time, which terminal, which gate, where is the plane, what should I pack.</p>
 
@@ -160,7 +179,10 @@ export const pages = (s) => [
 <p>Flightdeck is run by ${who(s)}. Feedback is welcome ${reach(s)}.</p>`,
   },
   {
-    slug: 'contact', kind: 'contact', title: 'Contact us', description: 'Send a question, a problem report or feedback about Flightdeck.',
+    slug: 'contact',
+    kind: 'contact',
+    title: 'Contact us',
+    description: 'Send a question, a problem report or feedback about Flightdeck.',
     body: `
 <p>${s.contactEmail ? `You can email <a href="mailto:${s.contactEmail}">${s.contactEmail}</a> or use` : 'Use'} the form below. We read every message. Please do not include passwords or payment details.</p>
 <form id="contact-form" class="pub-form" novalidate>
@@ -192,14 +214,28 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 
   /* ----------------------------------------------------------------- packing list (built from the app's template) */
   {
-    slug: 'travel-checklist', kind: 'checklist', title: 'Printable packing list', description: 'A free printable packing list: clothes, bathroom bag, accessories, documents, the night before and last minute. Tick it on paper or keep it in Flightdeck.',
+    slug: 'travel-checklist',
+    kind: 'checklist',
+    title: 'Printable packing list',
+    description:
+      'A free printable packing list: clothes, bathroom bag, accessories, documents, the night before and last minute. Tick it on paper or keep it in Flightdeck.',
     // body is produced by the build script from src/checklistTemplate.ts so the app and this page can never disagree
     body: null,
   },
 
   /* ------------------------------------------------------------------ guides */
   {
-    slug: 'guides/flight-status-explained', kind: 'guide', category: 'reading', takeaways: ["Scheduled is the plan, estimated is the current prediction, and actual is what happened.", "Leaving the gate and reaching the gate include taxiing, so they are longer than the time in the air.", "A delay can differ between departure and arrival, and times are in each airport's own time zone."], title: 'Flight status explained: scheduled, estimated, actual', description: 'What check-in, boarding, leaving the gate, take-off, landing and reaching the gate mean, why times change, and how to read a flight status without being misled.',
+    slug: 'guides/flight-status-explained',
+    kind: 'guide',
+    category: 'reading',
+    takeaways: [
+      'Scheduled is the plan, estimated is the current prediction, and actual is what happened.',
+      'Leaving the gate and reaching the gate include taxiing, so they are longer than the time in the air.',
+      "A delay can differ between departure and arrival, and times are in each airport's own time zone.",
+    ],
+    title: 'Flight status explained: scheduled, estimated, actual',
+    description:
+      'What check-in, boarding, leaving the gate, take-off, landing and reaching the gate mean, why times change, and how to read a flight status without being misled.',
     body: `
 <p>A flight status page can look like a jumble of times. They each mean something specific, and knowing which is which tells you what is really happening.</p>
 <h2>The three kinds of time</h2>
@@ -230,7 +266,17 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <p>Flightdeck marks every time as scheduled, estimated or actual. A step with no time shows as not reported rather than a guess, and anything Flightdeck works out itself, such as how far along the flight is, is marked as an estimate. <a href="/">Track a flight</a>.</p>`,
   },
   {
-    slug: 'guides/outbound-and-inbound-flights', kind: 'guide', category: 'reading', takeaways: ["Use the route, not the flight number, to tell outbound from inbound.", "Odd and even numbering is a habit some airlines follow, not a rule.", "Outbound: check documents, terminal and bag drop. Inbound: check the belt, onward travel and customs."], title: 'Outbound and inbound flights: how to tell the difference', description: 'How to tell whether a flight is leaving the UK or coming home, why flight numbers are only a hint, and what to check at each end.',
+    slug: 'guides/outbound-and-inbound-flights',
+    kind: 'guide',
+    category: 'reading',
+    takeaways: [
+      'Use the route, not the flight number, to tell outbound from inbound.',
+      'Odd and even numbering is a habit some airlines follow, not a rule.',
+      'Outbound: check documents, terminal and bag drop. Inbound: check the belt, onward travel and customs.',
+    ],
+    title: 'Outbound and inbound flights: how to tell the difference',
+    description:
+      'How to tell whether a flight is leaving the UK or coming home, why flight numbers are only a hint, and what to check at each end.',
     body: `
 <p>"Outbound" and "inbound" describe your journey relative to home. For a UK traveller, an outbound flight leaves the UK and an inbound flight arrives in it. The difference decides what you need to do and where you need to be.</p>
 <h2>How to tell for certain</h2>
@@ -252,7 +298,17 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <p>Flightdeck shows a clear outbound / inbound label on each flight and, when the provider reports it, the terminal, gate and baggage belt. <a href="/">Track a flight</a>.</p>`,
   },
   {
-    slug: 'guides/what-to-do-if-your-flight-is-delayed-or-cancelled', kind: 'guide', category: 'trouble', takeaways: ["Confirm the facts on the airport screens and the airline's app first.", "Contact the airline early, keep every receipt and note, and stay near the gate.", "For your rights, use official sources such as the CAA passenger advice."], title: 'What to do if your flight is delayed or cancelled', description: 'A calm packing list for the first hour of a delay or cancellation, and where to find your rights from official sources.',
+    slug: 'guides/what-to-do-if-your-flight-is-delayed-or-cancelled',
+    kind: 'guide',
+    category: 'trouble',
+    takeaways: [
+      "Confirm the facts on the airport screens and the airline's app first.",
+      'Contact the airline early, keep every receipt and note, and stay near the gate.',
+      'For your rights, use official sources such as the CAA passenger advice.',
+    ],
+    title: 'What to do if your flight is delayed or cancelled',
+    description:
+      'A calm packing list for the first hour of a delay or cancellation, and where to find your rights from official sources.',
     body: `
 <p>A delay or cancellation is stressful, and the first hour matters most. This is a practical order of things to do. For your legal rights, always use the official sources linked below, because the rules depend on where you are flying from and to, which airline operates the flight, the length of the delay and the reason for it.</p>
 <h2>In the first few minutes</h2>
@@ -278,7 +334,17 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <p>Let whoever is meeting you know the new time. Flightdeck can show a flight's estimated arrival when the provider has one, and your trip packing list stays available offline while you wait.</p>`,
   },
   {
-    slug: 'guides/pack-your-cabin-bag-for-a-long-flight', kind: 'guide', category: 'prepare', takeaways: ["Keep documents, phone, money and medicines on you, never in the hold.", "Pack a change of underwear and a wash kit in case your bag arrives late.", "Rules on liquids and batteries change, so check your airline and airport before you go."], title: 'Pack your cabin bag for a long flight', description: 'What to keep in the cabin bag on a long flight, what to put in the hold, and what to carry in your pocket.',
+    slug: 'guides/pack-your-cabin-bag-for-a-long-flight',
+    kind: 'guide',
+    category: 'prepare',
+    takeaways: [
+      'Keep documents, phone, money and medicines on you, never in the hold.',
+      'Pack a change of underwear and a wash kit in case your bag arrives late.',
+      'Rules on liquids and batteries change, so check your airline and airport before you go.',
+    ],
+    title: 'Pack your cabin bag for a long flight',
+    description:
+      'What to keep in the cabin bag on a long flight, what to put in the hold, and what to carry in your pocket.',
     body: `
 <p>On a long flight your cabin bag is the one thing you can reach. Pack it well and a long flight is much easier. Treat this as a starting point and change it to suit you. The <a href="/travel-checklist/">printable packing list</a> covers the rest of the trip.</p>
 <h2>Keep with you at all times</h2>
@@ -304,7 +370,17 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <p>Add what you always forget to your own packing list in Flightdeck and it will be there on every trip.</p>`,
   },
   {
-    slug: 'guides/baggage-reclaim-and-missing-bags', kind: 'guide', category: 'trouble', takeaways: ["The belt is often only known near landing, and it can change.", "If a bag does not arrive, report it before leaving the baggage hall and get a reference number.", "Report damage at the airport and photograph it, because deadlines can be short."], title: 'Baggage reclaim and what to do about a missing bag', description: 'How baggage reclaim works, why the belt is often not known until you land, and the steps to take if your bag does not arrive.',
+    slug: 'guides/baggage-reclaim-and-missing-bags',
+    kind: 'guide',
+    category: 'trouble',
+    takeaways: [
+      'The belt is often only known near landing, and it can change.',
+      'If a bag does not arrive, report it before leaving the baggage hall and get a reference number.',
+      'Report damage at the airport and photograph it, because deadlines can be short.',
+    ],
+    title: 'Baggage reclaim and what to do about a missing bag',
+    description:
+      'How baggage reclaim works, why the belt is often not known until you land, and the steps to take if your bag does not arrive.',
     body: `
 <p>After a long flight, the last obstacle is the baggage hall. Knowing how it works helps, and knowing what to do if your bag does not appear helps even more.</p>
 <h2>Which belt?</h2>
@@ -328,7 +404,17 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <p>If your bag is damaged, report it at the airport before you leave, and make a photo record. Airlines often have a short deadline for damage reports, so do not wait until you get home.</p>`,
   },
   {
-    slug: 'guides/flight-numbers-airline-codes-and-codeshares', kind: 'guide', category: 'reading', takeaways: ["A flight number is the airline code plus a number, and the date matters.", "IATA airport codes have three letters and ICAO codes have four.", "In a codeshare, check which airline actually operates the flight."], title: 'Flight numbers, airline codes and codeshares explained', description: 'How to read a flight number like BA117, what airport and airline codes stand for, and why one flight can carry several numbers.',
+    slug: 'guides/flight-numbers-airline-codes-and-codeshares',
+    kind: 'guide',
+    category: 'reading',
+    takeaways: [
+      'A flight number is the airline code plus a number, and the date matters.',
+      'IATA airport codes have three letters and ICAO codes have four.',
+      'In a codeshare, check which airline actually operates the flight.',
+    ],
+    title: 'Flight numbers, airline codes and codeshares explained',
+    description:
+      'How to read a flight number like BA117, what airport and airline codes stand for, and why one flight can carry several numbers.',
     body: `
 <p>A flight number looks simple, but it carries a few separate pieces of information, and one aircraft can be sold under more than one number. Knowing how it is built helps you search correctly and avoid turning up for the wrong flight.</p>
 <h2>How a flight number is built</h2>
@@ -362,7 +448,17 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <p>Flightdeck asks for the flight number and the date, and shows only what a source actually reports. It does not guess a flight from a partial match. <a href="/">Track a flight</a> to see it, or read <a href="/guides/flight-status-explained/">how to read the times</a> once you have it.</p>`,
   },
   {
-    slug: 'guides/departure-day-airport-timeline', kind: 'guide', category: 'prepare', takeaways: ["Follow your airline's advice on how early to arrive.", "Rules on liquids and electronics differ by airport, so check them shortly before you go.", "Watch the screens: gates are shown late and can change."], title: 'Departure day at the airport: a simple timeline', description: 'A calm step-by-step order for the day you fly, from checking your flight at home to the gate, with the checks worth doing at each stage.',
+    slug: 'guides/departure-day-airport-timeline',
+    kind: 'guide',
+    category: 'prepare',
+    takeaways: [
+      "Follow your airline's advice on how early to arrive.",
+      'Rules on liquids and electronics differ by airport, so check them shortly before you go.',
+      'Watch the screens: gates are shown late and can change.',
+    ],
+    title: 'Departure day at the airport: a simple timeline',
+    description:
+      'A calm step-by-step order for the day you fly, from checking your flight at home to the gate, with the checks worth doing at each stage.',
     body: `
 <p>Most travel stress comes from not knowing what comes next. This is a general order for a departure day. Airlines and airports differ, so treat it as a frame and use your own airline's instructions for anything specific.</p>
 <h2>Before you leave</h2>
@@ -395,7 +491,17 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <p>Passports, chargers, medication, house keys and a final check of the flight. The full list is on the <a href="/travel-checklist/">printable packing list</a>.</p>`,
   },
   {
-    slug: 'guides/how-to-read-an-airport-departure-board', kind: 'guide', category: 'reading', takeaways: ["Find your flight by flight number and time, not by destination alone.", "The status column tells you what to do next, and its wording varies by airport.", "Gates often appear late and can change, so stay where you can see a screen."], title: 'How to read an airport departure board', description: 'What each column on an airport departure screen means, what the common status messages ask you to do, and why your gate may not appear until late.',
+    slug: 'guides/how-to-read-an-airport-departure-board',
+    kind: 'guide',
+    category: 'reading',
+    takeaways: [
+      'Find your flight by flight number and time, not by destination alone.',
+      'The status column tells you what to do next, and its wording varies by airport.',
+      'Gates often appear late and can change, so stay where you can see a screen.',
+    ],
+    title: 'How to read an airport departure board',
+    description:
+      'What each column on an airport departure screen means, what the common status messages ask you to do, and why your gate may not appear until late.',
     body: `
 <p>The departure board is the airport's own record of what is happening, and on the day it is the most up to date source you have. It can look crowded, but every board carries much the same information, and once you know where to look it takes a few seconds to read.</p>
 <h2>The columns, left to right</h2>
@@ -429,7 +535,17 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <p>Before you leave home, <a href="/">Flightdeck</a> shows your flight's status, scheduled and estimated times and, when they are reported, the terminal and gate. At the airport, the board has the final word.</p>`,
   },
   {
-    slug: 'guides/connecting-flights-and-missed-connections', kind: 'guide', category: 'trouble', takeaways: ["Whether flights are on one booking or separate tickets changes who has to help you.", "Allow for transfer security, terminal changes and any transit visa rules.", "If you miss a connection, go to the airline's transfer desk and check the CAA for your rights."], title: 'Connecting flights and what to do if you miss one', description: 'How a flight connection works, why one booking and separate tickets are treated differently, and the steps to take if a delay makes you miss your onward flight.',
+    slug: 'guides/connecting-flights-and-missed-connections',
+    kind: 'guide',
+    category: 'trouble',
+    takeaways: [
+      'Whether flights are on one booking or separate tickets changes who has to help you.',
+      'Allow for transfer security, terminal changes and any transit visa rules.',
+      "If you miss a connection, go to the airline's transfer desk and check the CAA for your rights.",
+    ],
+    title: 'Connecting flights and what to do if you miss one',
+    description:
+      'How a flight connection works, why one booking and separate tickets are treated differently, and the steps to take if a delay makes you miss your onward flight.',
     body: `
 <p>A connection means changing aircraft at an airport on the way to where you are going. Most connections go smoothly, but a delay on the first flight can leave you short of time. Knowing how your journey was booked tells you who is responsible for getting you there.</p>
 <h2>One booking or separate tickets</h2>
@@ -460,7 +576,17 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <p>On the way, <a href="/">Flightdeck</a> can show each flight's status and estimated times, so you see early if the first leg is running late.</p>`,
   },
   {
-    slug: 'guides/cabin-bag-or-hold-bag', kind: 'guide', category: 'prepare', takeaways: ["Allowances depend on your airline and fare, so check your own booking.", "Medicines, valuables, documents and spare batteries belong in the cabin.", "Liquid and security rules differ by airport, so check before you pack."], title: 'Cabin bag or hold bag: what goes where', description: 'How to decide what goes in your cabin bag and what goes in the hold, what to check in your allowance, and the items that should always stay with you.',
+    slug: 'guides/cabin-bag-or-hold-bag',
+    kind: 'guide',
+    category: 'prepare',
+    takeaways: [
+      'Allowances depend on your airline and fare, so check your own booking.',
+      'Medicines, valuables, documents and spare batteries belong in the cabin.',
+      'Liquid and security rules differ by airport, so check before you pack.',
+    ],
+    title: 'Cabin bag or hold bag: what goes where',
+    description:
+      'How to decide what goes in your cabin bag and what goes in the hold, what to check in your allowance, and the items that should always stay with you.',
     body: `
 <p>Most trips involve two bags: one you carry on board and one that goes in the hold. Deciding what goes where is mostly common sense, but a few items have firm rules, and allowances differ more than many people expect.</p>
 <h2>Start with your own allowance</h2>
@@ -495,7 +621,17 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <p>For a long trip, the guide to <a href="/guides/pack-your-cabin-bag-for-a-long-flight/">packing your cabin bag for a long flight</a> goes further. The <a href="/travel-checklist/">printable packing list</a> covers the whole trip, and in <a href="/">Flightdeck</a> you can keep your own version for every journey. If a bag does not turn up at the other end, see <a href="/guides/baggage-reclaim-and-missing-bags/">baggage reclaim and missing bags</a>.</p>`,
   },
   {
-    slug: 'guides/what-flight-tracking-can-and-cannot-tell-you', kind: 'guide', category: 'reading', takeaways: ["Live position depends on the aircraft transmitting and a receiver being in range.", "Times and gates come from schedules and airline data, which can lag.", "For decisions on the day, the airline and the airport screens come first."], title: 'What flight tracking can and cannot tell you', description: 'Where flight tracking data comes from, why a plane can vanish from the map or a gate appear late, and which source to trust when they disagree.',
+    slug: 'guides/what-flight-tracking-can-and-cannot-tell-you',
+    kind: 'guide',
+    category: 'reading',
+    takeaways: [
+      'Live position depends on the aircraft transmitting and a receiver being in range.',
+      'Times and gates come from schedules and airline data, which can lag.',
+      'For decisions on the day, the airline and the airport screens come first.',
+    ],
+    title: 'What flight tracking can and cannot tell you',
+    description:
+      'Where flight tracking data comes from, why a plane can vanish from the map or a gate appear late, and which source to trust when they disagree.',
     body: `
 <p>Flight tracking apps, Flightdeck included, can tell you a lot about a flight. They are also built from several separate sources, each with its own gaps. Knowing where the information comes from helps you judge how far to rely on it.</p>
 <h2>Two kinds of information</h2>
@@ -521,15 +657,30 @@ if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset()
 <h2>What Flightdeck shows</h2>
 <p>Flightdeck shows a flight's status, its scheduled, estimated and actual times, and the terminal, gate and baggage belt when they are reported. When the aircraft is transmitting and within range of receivers, it shows its live position, using data from <a href="https://opensky-network.org/" rel="noopener">The OpenSky Network</a>. It also shows the weather at your destination and keeps a reusable packing list. When a detail is not reported, Flightdeck says so instead of guessing. <a href="/">Track a flight</a>, or see <a href="/about/">where the data comes from</a>.</p>`,
   },
-
 ];
 
 export const guideCategories = [
-  { id: 'reading', title: 'Understand your flight', blurb: 'Read times, numbers and directions the way the airline means them.' },
-  { id: 'prepare', title: 'Prepare and pack', blurb: 'Get ready before you leave, and know the order of the day.' },
-  { id: 'trouble', title: 'When things go wrong', blurb: 'Clear steps for delays, cancellations and bags that do not arrive.' },
+  {
+    id: 'reading',
+    title: 'Understand your flight',
+    blurb: 'Read times, numbers and directions the way the airline means them.',
+  },
+  {
+    id: 'prepare',
+    title: 'Prepare and pack',
+    blurb: 'Get ready before you leave, and know the order of the day.',
+  },
+  {
+    id: 'trouble',
+    title: 'When things go wrong',
+    blurb: 'Clear steps for delays, cancellations and bags that do not arrive.',
+  },
 ];
 
 export const guideIndex = {
-  slug: 'guides', kind: 'index', title: 'Travel guides', description: 'Plain, practical guides for the days around a flight: reading flight status, delays, packing and baggage.',
+  slug: 'guides',
+  kind: 'index',
+  title: 'Travel guides',
+  description:
+    'Plain, practical guides for the days around a flight: reading flight status, delays, packing and baggage.',
 };

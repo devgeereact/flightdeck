@@ -1,39 +1,97 @@
 /* Flightdeck design tokens. One source for the app, the owner console and the server-rendered public pages.
    Brand: deep green with a signal-lime accent on warm paper. Flight data (times, codes, gates) uses tabular figures.
    Change a value here, not in component CSS. Colour pairs used for text were measured at WCAG 2.2 AA or better. */
-:root{
- /* Surfaces */
- --fd-bg:#f5f4ee;--fd-surface:#fff;--fd-surface-raised:#fafaf6;--fd-tint:#edf1e6;--fd-tint-soft:#f4f7f1;
- /* Text */
- --fd-ink:#2d4b3d;--fd-heading:#173e34;--fd-muted:#5d6e64;--fd-muted-strong:#4d6455;--fd-on-brand:#fff;
- /* Brand */
- --fd-brand:#214e3e;--fd-brand-hover:#1a4033;--fd-brand-deep:#102f29;--fd-brand-deep-ink:#c3d2c3;
- --fd-accent:#d9eea4;--fd-accent-hover:#c6e083;--fd-accent-leaf:#81a356;
- /* Departure-board surface: one dark panel per page at most, used to show how a result is built */
- --fd-board:#0d2823;--fd-board-line:rgb(217 238 164 / 16%);--fd-board-ink:#e8f1e3;--fd-board-dim:#9fb8a8;
- /* Lines */
- --fd-line:#dde4d8;--fd-line-soft:#e1e6dc;--fd-line-strong:#cfdcd2;--fd-line-hover:#b9cdbd;
- /* Status (always paired with text, never colour alone) */
- --fd-danger:#a34b3a;--fd-danger-bg:#fbefec;--fd-danger-line:#ecd3cc;
- --fd-warn-ink:#766757;--fd-warn-bg:#fff0dd;--fd-warn-line:#ecd3b8;
- --fd-ok-ink:#3f6a3c;--fd-ok-bg:#e7efdf;
- --fd-info-bg:#eef2ea;
- /* Type */
- --fd-font-body:"DM Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
- --fd-font-head:Manrope,"DM Sans",system-ui,sans-serif;
- --fd-font-data:"DM Sans",system-ui,sans-serif; /* used with tabular figures: see .fd-data */
- --fd-text-xs:12.5px;--fd-text-sm:14px;--fd-text-md:16px;--fd-text-lg:18px;--fd-text-xl:21px;
- --fd-text-2xl:clamp(26px,3.2vw,32px);--fd-text-3xl:clamp(30px,4vw,40px);--fd-text-hero:clamp(38px,6vw,72px);
- --fd-leading:1.7;--fd-leading-tight:1.1;
- /* Space, size, shape */
- --fd-space-1:4px;--fd-space-2:8px;--fd-space-3:12px;--fd-space-4:16px;--fd-space-5:24px;--fd-space-6:32px;--fd-space-7:48px;--fd-space-8:72px;
- --fd-page-w:1280px;--fd-read-w:760px;--fd-gutter:clamp(16px,4vw,42px);
- --fd-radius-sm:4px;--fd-radius-md:6px;--fd-radius-lg:10px;--fd-radius-pill:999px;
- --fd-shadow-1:0 1px 0 rgb(16 47 41 / 6%);--fd-shadow-2:0 14px 34px -14px rgb(16 47 41 / 28%); /* separation is by hairlines; shadow-2 is for floating layers only */
- --fd-tap:44px;
- /* Motion */
- --fd-ease:cubic-bezier(.2,.7,.2,1);--fd-dur:.2s;
+:root {
+  /* Surfaces */
+  --fd-bg: #f5f4ee;
+  --fd-surface: #fff;
+  --fd-surface-raised: #fafaf6;
+  --fd-tint: #edf1e6;
+  --fd-tint-soft: #f4f7f1;
+  /* Text */
+  --fd-ink: #2d4b3d;
+  --fd-heading: #173e34;
+  --fd-muted: #5d6e64;
+  --fd-muted-strong: #4d6455;
+  --fd-on-brand: #fff;
+  /* Brand */
+  --fd-brand: #214e3e;
+  --fd-brand-hover: #1a4033;
+  --fd-brand-deep: #102f29;
+  --fd-brand-deep-ink: #c3d2c3;
+  --fd-accent: #d9eea4;
+  --fd-accent-hover: #c6e083;
+  --fd-accent-leaf: #81a356;
+  /* Departure-board surface: one dark panel per page at most, used to show how a result is built */
+  --fd-board: #0d2823;
+  --fd-board-line: rgb(217 238 164 / 16%);
+  --fd-board-ink: #e8f1e3;
+  --fd-board-dim: #9fb8a8;
+  /* Lines */
+  --fd-line: #dde4d8;
+  --fd-line-soft: #e1e6dc;
+  --fd-line-strong: #cfdcd2;
+  --fd-line-hover: #b9cdbd;
+  /* Status (always paired with text, never colour alone) */
+  --fd-danger: #a34b3a;
+  --fd-danger-bg: #fbefec;
+  --fd-danger-line: #ecd3cc;
+  --fd-warn-ink: #766757;
+  --fd-warn-bg: #fff0dd;
+  --fd-warn-line: #ecd3b8;
+  --fd-ok-ink: #3f6a3c;
+  --fd-ok-bg: #e7efdf;
+  --fd-info-bg: #eef2ea;
+  /* Type */
+  --fd-font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --fd-font-head: Manrope, "DM Sans", system-ui, sans-serif;
+  --fd-font-data: "DM Sans", system-ui, sans-serif; /* used with tabular figures: see .fd-data */
+  --fd-text-xs: 12.5px;
+  --fd-text-sm: 14px;
+  --fd-text-md: 16px;
+  --fd-text-lg: 18px;
+  --fd-text-xl: 21px;
+  --fd-text-2xl: clamp(26px, 3.2vw, 32px);
+  --fd-text-3xl: clamp(30px, 4vw, 40px);
+  --fd-text-hero: clamp(38px, 6vw, 72px);
+  --fd-leading: 1.7;
+  --fd-leading-tight: 1.1;
+  /* Space, size, shape */
+  --fd-space-1: 4px;
+  --fd-space-2: 8px;
+  --fd-space-3: 12px;
+  --fd-space-4: 16px;
+  --fd-space-5: 24px;
+  --fd-space-6: 32px;
+  --fd-space-7: 48px;
+  --fd-space-8: 72px;
+  --fd-page-w: 1280px;
+  --fd-read-w: 760px;
+  --fd-gutter: clamp(16px, 4vw, 42px);
+  --fd-radius-sm: 4px;
+  --fd-radius-md: 6px;
+  --fd-radius-lg: 10px;
+  --fd-radius-pill: 999px;
+  --fd-shadow-1: 0 1px 0 rgb(16 47 41 / 6%);
+  --fd-shadow-2: 0 14px 34px -14px rgb(16 47 41 / 28%); /* separation is by hairlines; shadow-2 is for floating layers only */
+  --fd-tap: 44px;
+  /* Motion */
+  --fd-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --fd-dur: 0.2s;
 }
-@media (prefers-reduced-motion:reduce){:root{--fd-dur:0s}}
-.fd-label{font:700 var(--fd-text-xs)/1.2 var(--fd-font-body);letter-spacing:.12em;text-transform:uppercase;color:var(--fd-muted-strong)}
-.fd-data{font-family:var(--fd-font-data);font-variant-numeric:tabular-nums lining-nums;letter-spacing:.01em}
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --fd-dur: 0s;
+  }
+}
+.fd-label {
+  font: 700 var(--fd-text-xs) / 1.2 var(--fd-font-body);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fd-muted-strong);
+}
+.fd-data {
+  font-family: var(--fd-font-data);
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: 0.01em;
+}

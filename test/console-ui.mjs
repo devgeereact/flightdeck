@@ -4,10 +4,20 @@
 import path from 'node:path';
 import { startHarness } from './lib/harness-server.mjs';
 
-const arg = (n, d) => { const i = process.argv.indexOf('--' + n); return i > 0 ? process.argv[i + 1] : d; };
+const arg = (n, d) => {
+  const i = process.argv.indexOf('--' + n);
+  return i > 0 ? process.argv[i + 1] : d;
+};
 const minutes = Number(arg('minutes', 20));
-const h = await startHarness({ port: Number(arg('port', 3994)), dist: path.resolve(import.meta.dirname, '../.local-test/build/console') });
-const stop = () => { h.stop(); process.exit(0); };
-process.on('SIGINT', stop); process.on('SIGTERM', stop);
+const h = await startHarness({
+  port: Number(arg('port', 3994)),
+  dist: path.resolve(import.meta.dirname, '../.local-test/build/console'),
+});
+const stop = () => {
+  h.stop();
+  process.exit(0);
+};
+process.on('SIGINT', stop);
+process.on('SIGTERM', stop);
 setTimeout(stop, minutes * 60000);
 console.log(`${h.base}/app/console.html?t=${h.token('user_owner', minutes)}`);

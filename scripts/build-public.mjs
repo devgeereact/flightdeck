@@ -10,17 +10,36 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const arg = (name, def) => { const i = process.argv.indexOf('--' + name); return i > 0 ? process.argv[i + 1] : def; };
+const arg = (name, def) => {
+  const i = process.argv.indexOf('--' + name);
+  return i > 0 ? process.argv[i + 1] : def;
+};
 const root = path.resolve(import.meta.dirname, '..');
 const dist = path.resolve(arg('dist', path.join(root, 'dist')));
 const read = (rel) => fs.readFileSync(path.join(root, rel), 'utf8');
 
 const rawGa = (process.env.VITE_GA_ID || '').trim();
 const gaId = /^G-[A-Z0-9]{6,12}$/.test(rawGa) ? rawGa : '';
-if (rawGa && !gaId) console.warn('[build-public] VITE_GA_ID is not a valid GA4 Measurement ID (expected G-XXXXXXXXXX); building without analytics.');
+if (rawGa && !gaId)
+  console.warn(
+    '[build-public] VITE_GA_ID is not a valid GA4 Measurement ID (expected G-XXXXXXXXXX); building without analytics.',
+  );
 
-const css = ['src/fonts.css', 'src/styles/tokens.css', 'src/siteFooter.css', 'src/features/checklist/packingBoard.css', 'src/styles/site.css']
-  .map((f) => read(f).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\n{2,}/g, '\n').trim()).join('\n') + '\n';
+const css =
+  [
+    'src/fonts.css',
+    'src/styles/tokens.css',
+    'src/siteFooter.css',
+    'src/features/checklist/packingBoard.css',
+    'src/styles/site.css',
+  ]
+    .map((f) =>
+      read(f)
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/\n{2,}/g, '\n')
+        .trim(),
+    )
+    .join('\n') + '\n';
 
 fs.mkdirSync(dist, { recursive: true });
 const written = [];
@@ -42,7 +61,12 @@ const build = {
   gaId,
 };
 fs.writeFileSync(path.join(dist, 'site-build.json'), JSON.stringify(build) + '\n');
-fs.writeFileSync(path.join(dist, 'robots.txt'), 'User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /app/\n\nSitemap: https://flightdeck.gakinz.com/sitemap.xml\n');
+fs.writeFileSync(
+  path.join(dist, 'robots.txt'),
+  'User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /app/\n\nSitemap: https://flightdeck.gakinz.com/sitemap.xml\n',
+);
 written.push('site-build.json', 'robots.txt');
 
-console.log(`[build-public] ${written.length} files written to ${path.relative(root, dist) || '.'} · GA ${gaId ? 'on (' + gaId + ')' : 'off'}`);
+console.log(
+  `[build-public] ${written.length} files written to ${path.relative(root, dist) || '.'} · GA ${gaId ? 'on (' + gaId + ')' : 'off'}`,
+);

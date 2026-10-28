@@ -4,7 +4,8 @@ import { TEMPLATE, TEMPLATE_ITEM_COUNT } from '../src/features/checklist/checkli
 import * as M from '../src/features/checklist/checklistModel.ts';
 
 const T0 = 1_800_000_000_000;
-const start = () => M.addTrip(M.emptyData(), 'Cape Town', { number: 'BA59', date: '2026-10-24' }, T0);
+const start = () =>
+  M.addTrip(M.emptyData(), 'Cape Town', { number: 'BA59', date: '2026-10-24' }, T0);
 
 test('template: transcribed from the paper form, unique stable ids, nothing empty', () => {
   assert.equal(TEMPLATE.length, 8);
@@ -12,8 +13,15 @@ test('template: transcribed from the paper form, unique stable ids, nothing empt
   const ids = TEMPLATE.flatMap((s) => s.items.map((i) => i.id));
   assert.equal(new Set(ids).size, ids.length);
   assert.ok(ids.every((id) => /^cl\.[a-z]+\.\d+$/.test(id)));
-  assert.ok(TEMPLATE.every((s) => s.items.every((i) => i.text.trim().length > 0 && i.text.length <= M.LIMITS.label)));
-  assert.deepEqual(TEMPLATE.map((s) => s.id), ['advance', 'clothes', 'bathroom', 'accessories', 'papers', 'work', 'night', 'last']);
+  assert.ok(
+    TEMPLATE.every((s) =>
+      s.items.every((i) => i.text.trim().length > 0 && i.text.length <= M.LIMITS.label),
+    ),
+  );
+  assert.deepEqual(
+    TEMPLATE.map((s) => s.id),
+    ['advance', 'clothes', 'bathroom', 'accessories', 'papers', 'work', 'night', 'last'],
+  );
   assert.ok(TEMPLATE.find((s) => s.id === 'papers')!.items.some((i) => i.text === 'Passport'));
 });
 
@@ -54,9 +62,17 @@ test('editing the list: add, rename, hide, restore; custom items delete outright
   assert.equal(M.addItem(d, 'papers', '   ', T0 + 3), d);
   const custom = d.tpl.added[0].id;
   d = M.tick(d, a, custom, true, T0 + 4);
-  assert.equal(M.view(d, a).find((s) => s.id === 'papers')!.items.at(-1)!.text, 'Travel pillow');
+  assert.equal(
+    M.view(d, a)
+      .find((s) => s.id === 'papers')!
+      .items.at(-1)!.text,
+    'Travel pillow',
+  );
   d = M.renameItem(d, 'cl.papers.2', 'Passport (valid 6 months)', T0 + 5);
-  assert.equal(M.view(d, a).find((s) => s.id === 'papers')!.items[1].text, 'Passport (valid 6 months)');
+  assert.equal(
+    M.view(d, a).find((s) => s.id === 'papers')!.items[1].text,
+    'Passport (valid 6 months)',
+  );
   d = M.removeItem(d, 'cl.clothes.4', T0 + 6);
   const clothes = M.view(d, a).find((s) => s.id === 'clothes')!;
   assert.equal(clothes.items.length, 24);
@@ -94,14 +110,40 @@ test('limits: trips, label length, total size', () => {
   d = M.addItem(d, 'last', 'x'.repeat(500), T0 + 99);
   assert.equal(d.tpl.added[0].text.length, M.LIMITS.label);
   assert.ok(M.fits(d));
-  const huge = { ...d, tpl: { ...d.tpl, renamed: Object.fromEntries(Array.from({ length: 3000 }, (_, i) => [`k${i}`, 'y'.repeat(60)])) } };
+  const huge = {
+    ...d,
+    tpl: {
+      ...d.tpl,
+      renamed: Object.fromEntries(
+        Array.from({ length: 3000 }, (_, i) => [`k${i}`, 'y'.repeat(60)]),
+      ),
+    },
+  };
   assert.equal(M.fits(huge), false);
 });
 
 test('sanitize: garbage in, safe data out; never throws', () => {
-  for (const bad of [null, undefined, 5, 'x', [], { trips: 'no' }, { tpl: 7 }, { trips: [{ id: 1 }] }]) assert.doesNotThrow(() => M.sanitize(bad));
-  const d = M.sanitize({ rev: -3, tpl: { hidden: ['a', 5, null], renamed: { a: '  ', b: 'ok' }, added: [{ id: 'z', sec: 'last', text: 'hi' }, { id: 1 }] },
-    trips: [{ id: 't', name: '', updatedAt: 'x', done: ['a', 'a', 7] }], active: 'missing' }); // old format: a plain list of ticked ids
+  for (const bad of [
+    null,
+    undefined,
+    5,
+    'x',
+    [],
+    { trips: 'no' },
+    { tpl: 7 },
+    { trips: [{ id: 1 }] },
+  ])
+    assert.doesNotThrow(() => M.sanitize(bad));
+  const d = M.sanitize({
+    rev: -3,
+    tpl: {
+      hidden: ['a', 5, null],
+      renamed: { a: '  ', b: 'ok' },
+      added: [{ id: 'z', sec: 'last', text: 'hi' }, { id: 1 }],
+    },
+    trips: [{ id: 't', name: '', updatedAt: 'x', done: ['a', 'a', 7] }],
+    active: 'missing',
+  }); // old format: a plain list of ticked ids
   assert.equal(d.rev, 0);
   assert.deepEqual(d.tpl.hidden, ['a']);
   assert.deepEqual(d.tpl.renamed, { b: 'ok' });
@@ -165,12 +207,26 @@ import { syncOnce, type Api } from '../src/features/checklist/checklistSync.ts';
 function fakeServer() {
   const s = { rev: 0, data: null as unknown, puts: 0, conflicts: 0, failNext: 0 };
   const api: Api = {
-    async get() { if (s.failNext) { s.failNext--; throw new Error('offline'); } return { rev: s.rev, data: s.data == null ? null : JSON.parse(JSON.stringify(s.data)) }; },
+    async get() {
+      if (s.failNext) {
+        s.failNext--;
+        throw new Error('offline');
+      }
+      return { rev: s.rev, data: s.data == null ? null : JSON.parse(JSON.stringify(s.data)) };
+    },
     async put(base, data) {
-      if (s.failNext) { s.failNext--; throw new Error('offline'); }
+      if (s.failNext) {
+        s.failNext--;
+        throw new Error('offline');
+      }
       s.puts++;
-      if (base !== s.rev) { s.conflicts++; return { ok: false, rev: s.rev, data: JSON.parse(JSON.stringify(s.data)) }; }
-      s.rev++; s.data = JSON.parse(JSON.stringify(data)); return { ok: true, rev: s.rev };
+      if (base !== s.rev) {
+        s.conflicts++;
+        return { ok: false, rev: s.rev, data: JSON.parse(JSON.stringify(s.data)) };
+      }
+      s.rev++;
+      s.data = JSON.parse(JSON.stringify(data));
+      return { ok: true, rev: s.rev };
     },
   };
   return { s, api };
@@ -217,13 +273,25 @@ test('sync: a conflict (someone saved in between) is merged and retried, not los
   let a = await syncOnce(start(), api);
   const id = a.trips[0].id;
   // Another device writes while we are mid-sync: bump the server behind our back after our pull.
-  const racing: Api = { ...api, async get() { const r = await api.get(); s.rev++; s.data = JSON.parse(JSON.stringify(M.tick(sanitizeCopy(s.data), id, 'cl.last.1', true, T0 + 900))); return r; } };
+  const racing: Api = {
+    ...api,
+    async get() {
+      const r = await api.get();
+      s.rev++;
+      s.data = JSON.parse(
+        JSON.stringify(M.tick(sanitizeCopy(s.data), id, 'cl.last.1', true, T0 + 900)),
+      );
+      return r;
+    },
+  };
   a = M.tick(a, id, 'cl.papers.2', true, T0 + 800);
   const out = await syncOnce(a, racing);
   assert.ok(s.conflicts >= 1);
   assert.deepEqual(M.doneIds(out.trips[0]).sort(), ['cl.last.1', 'cl.papers.2'].sort()); // both devices' ticks survive the conflict
 });
-function sanitizeCopy(x: unknown) { return M.sanitize(x); }
+function sanitizeCopy(x: unknown) {
+  return M.sanitize(x);
+}
 
 test('sync: offline failures reject cleanly and leave the local list untouched', async () => {
   const { s, api } = fakeServer();
@@ -249,17 +317,29 @@ test('sync: a trip deleted on one device is deleted on the other, and not resurr
   assert.equal(phone.trips.length, 0);
 });
 
-
 test('expanded template retains original item IDs and existing user customisations', () => {
-  const oldCounts = {advance:5, clothes:20, bathroom:8, accessories:24, papers:21, work:10, night:4, last:9};
+  const oldCounts = {
+    advance: 5,
+    clothes: 20,
+    bathroom: 8,
+    accessories: 24,
+    papers: 21,
+    work: 10,
+    night: 4,
+    last: 9,
+  };
   for (const sec of TEMPLATE) {
-    assert.equal(sec.items.length,oldCounts[sec.id]+5);
-    assert.equal(sec.items[oldCounts[sec.id]-1].id,`cl.${sec.id}.${oldCounts[sec.id]}`);
+    assert.equal(sec.items.length, oldCounts[sec.id] + 5);
+    assert.equal(sec.items[oldCounts[sec.id] - 1].id, `cl.${sec.id}.${oldCounts[sec.id]}`);
   }
-  let data=start();const trip=data.active!;
-  data=M.tick(data,trip,'cl.papers.2',true,T0+1);
-  data=M.renameItem(data,'cl.papers.2','My passport',T0+2);
-  const item=M.view(data,trip).flatMap(s=>s.items).find(i=>i.id==='cl.papers.2')!;
-  assert.equal(item.text,'My passport');assert.equal(item.done,true);
-  assert.equal(M.progress(M.view(data,trip)).total,141);
+  let data = start();
+  const trip = data.active!;
+  data = M.tick(data, trip, 'cl.papers.2', true, T0 + 1);
+  data = M.renameItem(data, 'cl.papers.2', 'My passport', T0 + 2);
+  const item = M.view(data, trip)
+    .flatMap((s) => s.items)
+    .find((i) => i.id === 'cl.papers.2')!;
+  assert.equal(item.text, 'My passport');
+  assert.equal(item.done, true);
+  assert.equal(M.progress(M.view(data, trip)).total, 141);
 });

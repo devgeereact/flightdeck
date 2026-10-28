@@ -2,7 +2,10 @@
 // Usage: NODE_URL=http://127.0.0.1:3999 PHP_URL=http://127.0.0.1:3998 node php/tests/parity.mjs
 const node = process.env.NODE_URL || 'http://127.0.0.1:3999';
 const php = process.env.PHP_URL || 'http://127.0.0.1:3998';
-const strip = (v) => JSON.parse(JSON.stringify(v, (k, x) => (k === 'fetchedAt' ? '<time>' : k === 'providers' ? undefined : x)));
+const strip = (v) =>
+  JSON.parse(
+    JSON.stringify(v, (k, x) => (k === 'fetchedAt' ? '<time>' : k === 'providers' ? undefined : x)),
+  );
 const cases = [
   '/api/config',
   '/api/flights?number=BA117&date=2026-10-23&mode=demo',
@@ -26,7 +29,13 @@ for (const c of cases) {
   const same = a.status === b.status && JSON.stringify(ja) === JSON.stringify(jb);
   if (!same) bad++;
   console.log(same ? 'SAME ' : 'DIFF ', a.status, b.status, c);
-  if (!same) console.log('  node:', JSON.stringify(ja).slice(0, 300), '\n  php: ', JSON.stringify(jb).slice(0, 300));
+  if (!same)
+    console.log(
+      '  node:',
+      JSON.stringify(ja).slice(0, 300),
+      '\n  php: ',
+      JSON.stringify(jb).slice(0, 300),
+    );
 }
 console.log(bad ? `\n${bad} differences` : '\nAll cases identical');
 process.exit(bad ? 1 : 0);

@@ -1,5 +1,99 @@
-export const destinations:Record<string,{greeting:string;intro:string;currency:string;language:string;tip:string;places:{name:string;kind:string;description:string;url:string}[]}>={
- JFK:{greeting:'Hello, New York.',intro:'Big-city energy. A thousand little discoveries. Your next chapter starts here.',currency:'US dollar · USD',language:'English',tip:'Plan time for immigration and the trip into the city. Check official airport transport information before choosing your route.',places:[{name:'Statue of Liberty',kind:'Iconic New York',description:'See the harbour’s most recognisable landmark. Plan your island visit with the National Park Service.',url:'https://www.nps.gov/stli/index.htm'},{name:'Staten Island Ferry',kind:'On the water',description:'A free ferry between Lower Manhattan and Staten Island, with a different perspective on the harbour.',url:'https://www.nyc.gov/html/dot/html/ferrybus/staten-island-ferry.shtml'},{name:'Find your New York',kind:'Explore more',description:'Explore neighbourhoods, arts, food and events through the city’s official tourism guide.',url:'https://www.nyctourism.com/'}]},
- DXB:{greeting:'Marhaba, Dubai.',intro:'Old-world waterways meet a skyline that looks toward tomorrow.',currency:'UAE dirham · AED',language:'Arabic',tip:'Check the forecast before planning outdoor activities. Use the official tourism guide for local customs and transport advice.',places:[{name:'Al Fahidi & Dubai Creek',kind:'Culture and heritage',description:'Explore the city’s historic side and its waterside neighbourhoods.',url:'https://www.visitdubai.com/en/places-to-visit'},{name:'Downtown Dubai',kind:'Skyline moments',description:'Discover the landmarks and experiences around the city’s famous skyline.',url:'https://www.visitdubai.com/en/places-to-visit'},{name:'Discover your Dubai',kind:'Explore more',description:'Find beaches, arts, family activities and desert experiences in the official guide.',url:'https://www.visitdubai.com/en/places-to-visit'}]},
- CDG:{greeting:'Bonjour, Paris.',intro:'Slow walks, great art, and something wonderful around the next corner.',currency:'Euro · EUR',language:'French',tip:'Check official transport information for your arrival terminal. Reserve popular attractions through their official websites.',places:[{name:'Art & museums',kind:'A little culture',description:'Find museums, exhibitions and collections in the official Paris visitor guide.',url:'https://parisjetaime.com/eng/'},{name:'Walk by the Seine',kind:'Take it slow',description:'Browse official walking routes and discover the city one neighbourhood at a time.',url:'https://parisjetaime.com/eng/'},{name:'A Paris of your own',kind:'Explore more',description:'Explore monuments, food, seasonal events and family activities.',url:'https://parisjetaime.com/eng/'}]}
+export const destinations: Record<
+  string,
+  {
+    greeting: string;
+    intro: string;
+    currency: string;
+    language: string;
+    tip: string;
+    places: { name: string; kind: string; description: string; url: string }[];
+  }
+> = {
+  JFK: {
+    greeting: 'Hello, New York.',
+    intro: 'Big-city energy. A thousand little discoveries. Your next chapter starts here.',
+    currency: 'US dollar · USD',
+    language: 'English',
+    tip: 'Plan time for immigration and the trip into the city. Check official airport transport information before choosing your route.',
+    places: [
+      {
+        name: 'Statue of Liberty',
+        kind: 'Iconic New York',
+        description:
+          'See the harbour’s most recognisable landmark. Plan your island visit with the National Park Service.',
+        url: 'https://www.nps.gov/stli/index.htm',
+      },
+      {
+        name: 'Staten Island Ferry',
+        kind: 'On the water',
+        description:
+          'A free ferry between Lower Manhattan and Staten Island, with a different perspective on the harbour.',
+        url: 'https://www.nyc.gov/html/dot/html/ferrybus/staten-island-ferry.shtml',
+      },
+      {
+        name: 'Find your New York',
+        kind: 'Explore more',
+        description:
+          'Explore neighbourhoods, arts, food and events through the city’s official tourism guide.',
+        url: 'https://www.nyctourism.com/',
+      },
+    ],
+  },
+  DXB: {
+    greeting: 'Marhaba, Dubai.',
+    intro: 'Old-world waterways meet a skyline that looks toward tomorrow.',
+    currency: 'UAE dirham · AED',
+    language: 'Arabic',
+    tip: 'Check the forecast before planning outdoor activities. Use the official tourism guide for local customs and transport advice.',
+    places: [
+      {
+        name: 'Al Fahidi & Dubai Creek',
+        kind: 'Culture and heritage',
+        description: 'Explore the city’s historic side and its waterside neighbourhoods.',
+        url: 'https://www.visitdubai.com/en/places-to-visit',
+      },
+      {
+        name: 'Downtown Dubai',
+        kind: 'Skyline moments',
+        description: 'Discover the landmarks and experiences around the city’s famous skyline.',
+        url: 'https://www.visitdubai.com/en/places-to-visit',
+      },
+      {
+        name: 'Discover your Dubai',
+        kind: 'Explore more',
+        description:
+          'Find beaches, arts, family activities and desert experiences in the official guide.',
+        url: 'https://www.visitdubai.com/en/places-to-visit',
+      },
+    ],
+  },
+  CDG: {
+    greeting: 'Bonjour, Paris.',
+    intro: 'Slow walks, great art, and something wonderful around the next corner.',
+    currency: 'Euro · EUR',
+    language: 'French',
+    tip: 'Check official transport information for your arrival terminal. Reserve popular attractions through their official websites.',
+    places: [
+      {
+        name: 'Art & museums',
+        kind: 'A little culture',
+        description:
+          'Find museums, exhibitions and collections in the official Paris visitor guide.',
+        url: 'https://parisjetaime.com/eng/',
+      },
+      {
+        name: 'Walk by the Seine',
+        kind: 'Take it slow',
+        description:
+          'Browse official walking routes and discover the city one neighbourhood at a time.',
+        url: 'https://parisjetaime.com/eng/',
+      },
+      {
+        name: 'A Paris of your own',
+        kind: 'Explore more',
+        description: 'Explore monuments, food, seasonal events and family activities.',
+        url: 'https://parisjetaime.com/eng/',
+      },
+    ],
+  },
 };

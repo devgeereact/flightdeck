@@ -2,10 +2,14 @@
 import { merge, sanitize, isBlank, type ChecklistData } from './checklistModel';
 
 export type PutResult = { ok: true; rev: number } | { ok: false; rev: number; data: unknown };
-export type Api = { get(): Promise<{ rev: number; data: unknown }>; put(baseRev: number, data: ChecklistData): Promise<PutResult> };
+export type Api = {
+  get(): Promise<{ rev: number; data: unknown }>;
+  put(baseRev: number, data: ChecklistData): Promise<PutResult>;
+};
 
 /** What actually matters when comparing two copies (ignores the revision and which trip happens to be open). */
-const core = (d: ChecklistData) => JSON.stringify({ v: d.v, tpl: d.tpl, trips: d.trips, gone: d.gone });
+const core = (d: ChecklistData) =>
+  JSON.stringify({ v: d.v, tpl: d.tpl, trips: d.trips, gone: d.gone });
 
 /**
  * Bring this device and the server into agreement: pull, merge, push if the server is behind, and if another device got there
@@ -25,11 +29,21 @@ export async function syncOnce(local: ChecklistData, api: Api): Promise<Checklis
     remoteDoc = r.data == null ? null : sanitize(r.data);
     merged = remoteDoc ? merge(merged, remoteDoc) : merged;
   }
-  throw new Error('Could not sync your checklist right now. It is safe on this device and will sync later.');
+  throw new Error(
+    'Could not sync your checklist right now. It is safe on this device and will sync later.',
+  );
 }
 
 export function httpApi(apiFetch: (url: string, init?: RequestInit) => Promise<Response>): Api {
-  const fail = async (r: Response) => { let m = ''; try { m = (await r.json()).error || ''; } catch { /* no body */ } return new Error(m || `Sync failed (${r.status})`); };
+  const fail = async (r: Response) => {
+    let m = '';
+    try {
+      m = (await r.json()).error || '';
+    } catch {
+      /* no body */
+    }
+    return new Error(m || `Sync failed (${r.status})`);
+  };
   return {
     async get() {
       const r = await apiFetch('/api/checklist');
@@ -38,8 +52,15 @@ export function httpApi(apiFetch: (url: string, init?: RequestInit) => Promise<R
       return { rev: Number(j.rev) || 0, data: j.data ?? null };
     },
     async put(baseRev, data) {
-      const r = await apiFetch('/api/checklist', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ baseRev, data }) });
-      if (r.status === 409) { const j = await r.json(); return { ok: false, rev: Number(j.rev) || 0, data: j.data ?? null }; }
+      const r = await apiFetch('/api/checklist', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ baseRev, data }),
+      });
+      if (r.status === 409) {
+        const j = await r.json();
+        return { ok: false, rev: Number(j.rev) || 0, data: j.data ?? null };
+      }
       if (!r.ok) throw await fail(r);
       return { ok: true, rev: Number((await r.json()).rev) || 0 };
     },
