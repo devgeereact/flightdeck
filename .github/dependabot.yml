@@ -5,6 +5,8 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    cooldown:
+      default-days: 7 # skip versions younger than a week
     open-pull-requests-limit: 3
     groups:
       dependencies:
@@ -14,6 +16,8 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    cooldown:
+      default-days: 7 # skip versions younger than a week
     groups:
       actions:
         patterns: ["*"]
