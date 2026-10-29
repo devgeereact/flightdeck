@@ -13,6 +13,11 @@ on:
 permissions:
   contents: read
 
+# A newer push to the same branch cancels the older run (saves Actions minutes).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   semgrep:
     if: github.actor != 'dependabot[bot]' # Dependabot pull requests get no secrets
