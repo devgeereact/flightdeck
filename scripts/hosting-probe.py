@@ -57,7 +57,7 @@ def main():
         try:
             ftp.storbinary('STOR ' + filename, io.BytesIO(body))
             uploaded = True
-            request = urllib.request.Request(values['PUBLIC_BASE_URL'].rstrip('/') + '/' + filename, headers={'Cache-Control': 'no-cache', 'User-Agent': 'Flightdeck-deploy-probe/1.0 (+https://github.com/gsakinz/flightdeck)'})
+            request = urllib.request.Request(values['PUBLIC_BASE_URL'].rstrip('/') + '/' + filename, headers={'Cache-Control': 'no-cache', 'User-Agent': 'Flightdeck-deploy-probe/1.0 (+https://github.com/devgeereact/flightdeck)'})
             for attempt in range(1, 4):
                 try:
                     with urllib.request.urlopen(request, timeout=25, context=ssl.create_default_context()) as response:  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected -- URL is checked to be the https site origin

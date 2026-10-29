@@ -9,7 +9,7 @@ current:
   database: none
   authentication: clerk   # production instance; API verifies tokens; owner = admin_user_ids in server config
   git_repository: true   # initialised 24 Oct 2026, branch main
-  github_remote: https://github.com/gsakinz/flightdeck   # private
+  github_remote: https://github.com/devgeereact/flightdeck   # private
   deployed: true   # staging/first release live at https://flightdeck.gakinz.com (24 Oct 2026), released through .github/workflows/release.yml (production branch); the old manual script is archived in docs/history/hosting-setup-2026-10-24/
 target_preference:
   frontend: static-react-pwa-on-cpanel

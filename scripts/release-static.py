@@ -15,7 +15,7 @@ from urllib.parse import urlsplit
 
 DIST = pathlib.Path('dist')
 LAST = ['workbox', 'registerSW.js', 'sw.js', 'manifest.webmanifest', 'site-build.json', 'site.php', '.htaccess']
-UA = 'Flightdeck-release/1.0 (+https://github.com/gsakinz/flightdeck)'
+UA = 'Flightdeck-release/1.0 (+https://github.com/devgeereact/flightdeck)'
 
 
 def order(path):

@@ -1,5 +1,8 @@
 # Current task and handoff
 
+## 29 October 2026 — repository moved
+- Now `devgeereact/flightdeck` (transferred from gsakinz; history, issues and secrets kept). Main is protected from force-push and deletion.
+
 ## 28 October 2026 — aligned with build-kit v4 (Status: DONE locally; CI pending first run)
 - Changed: Biome replaces the Prettier config (formatting-only commit in `.git-blame-ignore-revs`), `pnpm check` gate, gitleaks pre-commit hook, `ci.yml` (check, smoke tests, PHP syntax, secret scan), **release is manual from main** (check-only default, typed RELEASE), uptime every 6 h, Dependabot, `.node-version`, AGENTS.md entry point, project Claude permissions; graphify on demand only. Decisions in `docs/DECISIONS.md` (28 Oct).
 - Checks: `pnpm check` PASS (lint 0 errors, typecheck, 104 tests, PHP tests, build); `pnpm test:ui` and `pnpm test:console` PASS.
