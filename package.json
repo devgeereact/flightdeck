@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently -k \"php -S 127.0.0.1:3001 php/dev-router.php\" \"vite --host 127.0.0.1\"",
+    "release": "node scripts/release.mjs",
     "build": "tsc --noEmit && vite build && node scripts/build-public.mjs",
     "test": "node scripts/with-local-test.mjs tsx --test test/*.test.ts test/*.test.mjs",
     "test:php": "node scripts/with-local-test.mjs php php/tests/run.php",

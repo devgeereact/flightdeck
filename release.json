@@ -1,0 +1,42 @@
+{
+  "host": "cpanel",
+  "project": "flightdeck",
+  "url": "https://flightdeck.gakinz.com",
+  "checks": [
+    "pnpm test",
+    "pnpm test:php"
+  ],
+  "build": "VITE_CLERK_PUBLISHABLE_KEY=pk_live_Y2xlcmsuZmxpZ2h0ZGVjay5nYWtpbnouY29tJA VITE_GA_ID=G-HSD3D2J9PX pnpm build",
+  "parts": [
+    {
+      "from": "php/private/src",
+      "to": "flightdeck-private/src"
+    },
+    {
+      "from": "dist",
+      "to": "flightdeck.gakinz.com",
+      "allow": [
+        ".htaccess"
+      ],
+      "last": [
+        "registerSW.js",
+        "sw.js",
+        "manifest.webmanifest",
+        "site-build.json",
+        "site.php",
+        "index.html",
+        ".htaccess"
+      ]
+    }
+  ],
+  "smoke": [
+    {
+      "path": "/",
+      "status": 200
+    },
+    {
+      "path": "/app/",
+      "status": 200
+    }
+  ]
+}
