@@ -37,6 +37,10 @@
     {
       "path": "/app/",
       "status": 200
+    },
+    {
+      "path": "/api/config",
+      "status": 200
     }
   ]
 }

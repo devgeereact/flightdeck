@@ -1,0 +1,53 @@
+# Deploy on every push to main: the same `scripts/release.mjs --go` as on the Mac, over SSH (no FTP).
+# Checks and build run first; any failure stops before upload. A failed smoke test restores the
+# previous files automatically (snapshot in ~/backups/<project>/releases on the server).
+# Docs-only pushes do not deploy. A commit message with [skip ci] does not deploy.
+# Secrets (set by ~/Backups/scripts/setup-github-deploy.zsh): CPANEL_SSH_KEY, CPANEL_KNOWN_HOSTS.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["docs/**", "**/*.md", ".agent/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          coverage: none
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: SSH to cPanel
+        env:
+          CPANEL_SSH_KEY: ${{ secrets.CPANEL_SSH_KEY }}
+          CPANEL_KNOWN_HOSTS: ${{ secrets.CPANEL_KNOWN_HOSTS }}
+        run: |
+          test -n "$CPANEL_SSH_KEY" || { echo "CPANEL_SSH_KEY is not set: run setup-github-deploy.zsh"; exit 1; }
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$CPANEL_SSH_KEY" > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$CPANEL_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          printf 'Host cpanel\n  HostName premium17.web-hosting.com\n  Port 21098\n  User devgeereact\n  IdentityFile ~/.ssh/deploy_key\n  IdentitiesOnly yes\n  StrictHostKeyChecking yes\n' > ~/.ssh/config
+      - name: Release
+        run: node scripts/release.mjs --go
+      - name: Remove the key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

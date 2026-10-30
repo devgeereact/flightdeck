@@ -115,3 +115,4 @@ Follow-up 26 Oct 2026 (local): fixed the raw service-worker error text (src/shar
 
 ## 2026-10-30: docs tidy
 Docs tidy (owner rule: one source of truth): Markdown moved into docs/, audits and checklists merged into docs/AUDIT.md, exact duplicates removed, links updated. No code changed. Tasks stay in this file; every audit is added to `docs/AUDIT.md`.
+- 30 Oct 2026: push to `main` deploys over SSH (`deploy.yml`, `scripts/release.mjs`); `release.yml` and the FTPS script removed. Dry run: main is ahead of live (9 private PHP files, new front-end build), so the first deploy ships that.

@@ -10,7 +10,7 @@ current:
   authentication: clerk   # production instance; API verifies tokens; owner = admin_user_ids in server config
   git_repository: true   # initialised 24 Oct 2026, branch main
   github_remote: https://github.com/devgeereact/flightdeck   # private
-  deployed: true   # staging/first release live at https://flightdeck.gakinz.com (24 Oct 2026), released through .github/workflows/release.yml (production branch); the old manual script is archived in docs/history/hosting-setup-2026-10-24/
+  deployed: true   # staging/first release live at https://flightdeck.gakinz.com (24 Oct 2026), now released by .github/workflows/deploy.yml on push to main; the old manual script is archived in docs/history/hosting-setup-2026-10-24/
 target_preference:
   frontend: static-react-pwa-on-cpanel
   backend: php-on-cpanel
@@ -22,7 +22,7 @@ release:
   preferred_branch: main   # manual release from main (28 Oct 2026); the production branch is no longer used
   selected_domain: flightdeck.gakinz.com
   document_root: /home/devgeereact/flightdeck.gakinz.com   # private: /home/devgeereact/flightdeck-private
-  workflow_created: manual-release   # .github/workflows/release.yml: check-only by default, mode=release + RELEASE to publish
+  workflow_created: deploy-on-push   # .github/workflows/deploy.yml runs scripts/release.mjs --go over SSH (30 Oct 2026)
   auto_deploy_verified: false   # only the static probe is proven (run 40077621830); the full app release is not
 constraints:
   no_extra_paid_hosting_without_approval: true

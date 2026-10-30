@@ -69,3 +69,7 @@ Context: the owner asked for a full redesign with nothing that reads as generic 
 - **Dev ports stay** (Vite 5173, PHP 3001; live-account preview 443 → 3993), recorded in build-kit `PORTS.md`.
 - **No Composer dependencies**, so no Composer pin. Server PHP is 8.4 on this account (siterelay confirmed 8.4.27); confirm flightdeck's domain uses 8.4 in cPanel → MultiPHP Manager.
 - **graphify** is on demand (`/graphify`); its output and hooks are not part of the repository.
+
+## 30 October 2026: deploy on push to main, over SSH
+- Owner decision: every push to `main` updates the live site. `.github/workflows/deploy.yml` runs the kit's `scripts/release.mjs --go` (checks, build, checksum plan, snapshot, upload with entry files and `.htaccess` last, smoke checks, automatic restore). Supersedes "Releases are manual" (28 Oct).
+- No FTP: the static half no longer uses FTPS. The deploy key (`github-deploy-flightdeck`) is `restrict`ed but not forced to one command, because the release snapshots and restores files on the server. The older forced-command key `github-release-flightdeck-php` and the `RELEASE_SSH_*` and `FTP_*` secrets are no longer used and can be removed.
