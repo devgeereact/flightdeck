@@ -32,4 +32,4 @@ Root README/AGENTS/CLAUDE and .agent metadata stay at project root. Detailed can
 
 ## History
 
-The one-off hosting setup material of 24 October 2026 (readiness check, setup plan and prompt, manual staging script) is in [history/hosting-setup-2026-10-24/](history/hosting-setup-2026-10-24/); its current facts are in DEPLOYMENT.md. The archived Node reference server is in [history/node-reference-2026-10-25/](history/node-reference-2026-10-25/).
+The one-off hosting setup material of 24 October 2026 (readiness check, setup plan and prompt, manual staging script) is in [history/hosting-setup-2026-10-24/](history/hosting-setup-2026-10-24); its current facts are in DEPLOYMENT.md. The archived Node reference server is in [history/node-reference-2026-10-25/](history/node-reference-2026-10-25).

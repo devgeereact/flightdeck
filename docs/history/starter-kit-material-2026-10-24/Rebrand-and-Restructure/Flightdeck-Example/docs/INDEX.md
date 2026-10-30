@@ -7,7 +7,7 @@ Reviewed 24 October 2026. Current prototype and proposed cPanel/PHP target are d
 - [Architecture](ARCHITECTURE.md)
 - [Schema](SCHEMA.md)
 - [Api](API.md)
-- [Hooks](HOOKS.md)
+- [Hooks](../../../../../HOOKS.md)
 - [Testing](TESTING.md)
 - [Security](SECURITY.md)
 - [Project Memory](PROJECT-MEMORY.md)
@@ -21,8 +21,8 @@ Reviewed 24 October 2026. Current prototype and proposed cPanel/PHP target are d
 - [Integrations](INTEGRATIONS.md)
 - [Decisions](DECISIONS.md)
 - [Accessibility](ACCESSIBILITY.md)
-- [Rules](RULES.md)
-- [Repository Hygiene](REPOSITORY-HYGIENE.md)
+- [Rules](../../../../../RULES.md)
+- [Repository Hygiene](../../../../../REPOSITORY-HYGIENE.md)
 - [Verification](VERIFICATION.md)
 
 Root README/AGENTS/CLAUDE and .agent metadata stay at project root. Detailed canonical docs are here. Historical files under history/ are evidence, not current instructions. No duplicate live rules or real secrets are stored in docs.
