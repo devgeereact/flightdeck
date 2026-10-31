@@ -2,10 +2,7 @@
   "host": "cpanel",
   "project": "flightdeck",
   "url": "https://flightdeck.gakinz.com",
-  "checks": [
-    "pnpm test",
-    "pnpm test:php"
-  ],
+  "checks": ["pnpm test", "pnpm test:php"],
   "build": "VITE_CLERK_PUBLISHABLE_KEY=pk_live_Y2xlcmsuZmxpZ2h0ZGVjay5nYWtpbnouY29tJA VITE_GA_ID=G-HSD3D2J9PX pnpm build",
   "parts": [
     {
@@ -15,9 +12,7 @@
     {
       "from": "dist",
       "to": "flightdeck.gakinz.com",
-      "allow": [
-        ".htaccess"
-      ],
+      "allow": [".htaccess"],
       "last": [
         "registerSW.js",
         "sw.js",
