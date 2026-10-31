@@ -1,10 +1,12 @@
 import { registerSW } from 'virtual:pwa-register';
 import { SignIn } from '@clerk/react';
 import { Plane } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { Brand } from '../shared/Logo';
 import { trackOnce } from '../shared/track';
 
+// Read back (and cleared) by the app in main.tsx once signed in.
+const BACK_KEY = 'fd-signin-back';
 const FLIGHT_LINK = /^#\/flight\/([A-Z0-9]{3,8})\/(\d{4}-\d{2}-\d{2})$/;
 const dayLabel = (d: string) => {
   const t = new Date(d + 'T12:00:00Z');
@@ -40,14 +42,36 @@ export default function SignInScreen() {
       if (t) clearInterval(t);
     };
   }, []);
-  const m = location.hash.match(FLIGHT_LINK);
+  // The app link they arrived with (#/flight/…, #/checklist), kept for this tab: Clerk's later steps live at /app/<step>, drop
+  // the hash and can remount this screen. After sign-in they land back on it, so a flight link opens that flight.
+  const [arrived] = useState(() => {
+    try {
+      if (location.hash.startsWith('#/')) sessionStorage.setItem(BACK_KEY, location.hash);
+      return sessionStorage.getItem(BACK_KEY) || '';
+    } catch {
+      return location.hash;
+    }
+  });
+  const m = arrived.match(FLIGHT_LINK);
   const target = m
     ? `${m[1]} on ${dayLabel(m[2])}`
-    : location.hash.startsWith('#/checklist')
+    : arrived.startsWith('#/checklist')
       ? 'your packing list'
       : '';
-  // Where to land after signing in: this same address, captured once, so a flight link opens that flight.
-  const [back] = useState(() => (typeof window === 'undefined' ? '/app/' : window.location.href));
+  const back = `${typeof window === 'undefined' ? '' : location.origin}/app/${arrived}`;
+  // Clerk reads an app hash such as #/flight/BA59/… as one of its own routes and sends the visitor to its hosted page. So the
+  // hash leaves the address bar before the sign-in mounts; `back` (above) still holds it, and sign-in returns there.
+  const [ready, setReady] = useState(false);
+  useLayoutEffect(() => {
+    if (location.hash.startsWith('#/')) {
+      try {
+        history.replaceState(null, '', location.pathname + location.search);
+      } catch {
+        /* very old browsers: the hosted sign-in page still works */
+      }
+    }
+    setReady(true);
+  }, []);
   return (
     <div className="signin">
       <div className="si-photo">
@@ -84,14 +108,17 @@ export default function SignInScreen() {
             </div>
           )}
           <div className="si-step">
-            <SignIn
-              // Virtual routing keeps every sign-in step out of the address bar, so a flight link (#/flight/…) survives the
-              // whole flow. Clerk supports it (its modals use it) but types only path and hash for mounted components.
-              routing={'virtual' as 'hash'}
-              withSignUp
-              fallbackRedirectUrl={back}
-              signUpFallbackRedirectUrl={back}
-            />
+            {ready && (
+              <SignIn
+                // Path routing under /app: the steps (code, factor) are /app/<step>, which the host serves the app shell for.
+                // Hash routing would clash with the app's own #/ links; virtual routing sent flight links to Clerk's hosted page.
+                routing="path"
+                path="/app"
+                withSignUp
+                fallbackRedirectUrl={back}
+                signUpFallbackRedirectUrl={back}
+              />
+            )}
           </div>
           <div className="si-meta">
             <span>

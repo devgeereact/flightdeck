@@ -350,7 +350,22 @@ function Dashboard() {
     }
   };
   useEffect(() => {
-    const m = location.hash.match(FLIGHT_LINK);
+    // Arrived signed out from an app link: the sign-in screen kept it for this tab (Clerk's steps drop the hash). Open it now.
+    let h = location.hash;
+    try {
+      const kept = sessionStorage.getItem('fd-signin-back');
+      if (kept) {
+        sessionStorage.removeItem('fd-signin-back');
+        if (!h || h === '#') {
+          h = kept;
+          if (FLIGHT_LINK.test(kept)) history.replaceState(null, '', kept);
+          else location.hash = kept;
+        }
+      }
+    } catch {
+      /* storage blocked: nothing kept */
+    }
+    const m = h.match(FLIGHT_LINK);
     if (m) {
       setNumber(m[1]);
       setDate(m[2]);
