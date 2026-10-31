@@ -2130,3 +2130,9 @@ select.cs-input {
     grid-template-columns: 1fr;
   }
 }
+/* Two or more switch rows in one card (Site settings Visibility): space and a hairline between them */
+.cs-pb > .cs-swrow + .cs-swrow {
+  margin-top: 4px;
+  padding-top: 16px;
+  border-top: 1px solid var(--fd-line);
+}

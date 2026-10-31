@@ -17,7 +17,7 @@ Open it from the app: sign in at `/app/`, then **Owner console** in the menu (`/
 | Help and FAQ | Question, answer, section, order. Reorder with the up/down arrows in the list (saved as drafts, then **Publish changes**). The first four by order also show on the home page | `/help/`, home |
 | Announcements | One-line message, info or warning, website / app / both, optional start and end time, optional link | Top of the site and/or the app |
 | Menus | Website top menu (1-7 links) and footer groups (1-5 groups of 1-8 links) | Public website |
-| Site settings | Site name, tagline, owner name, public contact email, site-wide review date, footer text and note, link-preview image | Everywhere these appear, including the legal pages |
+| Site settings | Site name, tagline, owner name, public contact email, site-wide review date, footer text and note, link-preview image, GA4 Measurement ID (overrides the build-time ID), maintenance switch and message (public pages answer 503 "back soon"; app, console and API keep working) | Everywhere these appear, including the legal pages |
 | Enquiries and feedback | Read, reply by email, private note, resolve, archive | Owner only |
 | Operations | Overview, usage, costs and limits, provider health (last success and failure per provider, cache, allowance) | Owner only |
 | People | Users (Clerk), Google Analytics | Owner only |

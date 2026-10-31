@@ -629,6 +629,34 @@ export function SettingsForm({ data, set, errors }: F) {
         />
       </FormSection>
       <FormSection
+        title="Analytics"
+        sub="Google Analytics 4. It loads only after a visitor accepts analytics cookies."
+      >
+        <TextField
+          label="Measurement ID"
+          path="gaId"
+          errors={errors}
+          value={data.gaId || ''}
+          onChange={(v) => set(at(data, 'gaId', v.toUpperCase().trim()))}
+          max={20}
+          hint="Starts with G-. Leave empty to use the ID set when the site was built."
+        />
+      </FormSection>
+      <FormSection
+        title="Maintenance page"
+        sub="Shown on every public page while maintenance is switched on (Visibility, on the right)."
+      >
+        <TextField
+          label="Message"
+          path="maintenanceMessage"
+          errors={errors}
+          value={data.maintenanceMessage || ''}
+          onChange={(v) => set(at(data, 'maintenanceMessage', v))}
+          max={200}
+          hint="For example: Flightdeck is being updated. Back by 9am."
+        />
+      </FormSection>
+      <FormSection
         title="Link preview image"
         sub="Shown when someone shares a Flightdeck link. 1200 × 630 pixels works best."
       >

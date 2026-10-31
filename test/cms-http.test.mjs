@@ -537,3 +537,49 @@ test('FAQ move up / move down: one request saves the new order as drafts; publis
     'the public FAQ follows the new order',
   );
 });
+
+test('Site settings: maintenance switch shows a 503 "back soon" page on public pages only; a console Measurement ID reaches the pages', async () => {
+  const get = async () =>
+    (await api('GET', '/api/admin/content/settings/site', { auth: OWNER() })).json;
+  const save = async (data) => {
+    const cur = await get();
+    return api('PUT', '/api/admin/content/settings/site', {
+      auth: OWNER(),
+      body: {
+        baseRev: cur.draft?.rev ?? 0,
+        data: { ...(cur.draft?.data ?? cur.published), ...data },
+      },
+    });
+  };
+  const publish = () =>
+    api('POST', '/api/admin/content/settings/site', { auth: OWNER(), body: { action: 'publish' } });
+  const bad = await save({ gaId: 'UA-12345' });
+  assert.equal(bad.status, 422, 'an old-style or malformed ID is refused');
+  assert.ok(bad.json.errors.gaId);
+  assert.equal(
+    (await save({ gaId: 'g-test12345', maintenance: true, maintenanceMessage: 'Back by 9am.' }))
+      .status,
+    200,
+  );
+  await publish();
+  const home = await fetch(BASE + '/');
+  const html = await home.text();
+  assert.equal(home.status, 503, 'public pages answer 503 during maintenance');
+  assert.ok(
+    html.includes('Back soon') && html.includes('Back by 9am.') && html.includes('noindex'),
+  );
+  assert.ok(
+    html.includes('<meta name="fd-ga-id" content="G-TEST12345">'),
+    'the console ID is used, upper-cased',
+  );
+  assert.equal((await api('GET', '/api/site')).status, 200, 'the app API keeps working');
+  assert.equal(
+    (await api('GET', '/api/admin/content/page', { auth: OWNER() })).status,
+    200,
+    'the console keeps working',
+  );
+  assert.equal((await save({ maintenance: false, gaId: '' })).status, 200);
+  await publish();
+  const back = await fetch(BASE + '/help/');
+  assert.equal(back.status, 200, 'switching it off restores the site');
+});

@@ -48,6 +48,8 @@ const WHERE_SETTINGS: [string, string][] = [
   ['Privacy, cookies and terms', 'Who runs the site, last reviewed'],
   ['Every page footer', 'Description and note'],
   ['Shared links', 'Link preview image'],
+  ['Cookie banner and analytics', 'Measurement ID'],
+  ['Every public page, while on', 'Maintenance page'],
 ];
 
 /**
@@ -486,6 +488,20 @@ export default function Editor({
           {isSettings && (
             <Panel title="Visibility">
               <div className="cs-pb">
+                <div className="cs-swrow">
+                  <div>
+                    <b>Maintenance page</b>
+                    <small>
+                      Public pages show a short "back soon" page. The app and this console keep
+                      working. Takes effect when you publish.
+                    </small>
+                  </div>
+                  <Switch
+                    checked={!!data?.maintenance}
+                    label="Maintenance page"
+                    onChange={() => set({ ...data, maintenance: !data?.maintenance })}
+                  />
+                </div>
                 <div className="cs-swrow">
                   <div>
                     <b>Adverts</b>

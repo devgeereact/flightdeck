@@ -2,6 +2,10 @@
 
 Newest first. Dates are UK dates.
 
+## 31 October 2026 (later): maintenance switch and Analytics ID in Site settings
+- Site settings has a **Maintenance page** switch (Visibility card) and message: public pages answer 503 with a branded "back soon" page (noindex, Retry-After); the app, the owner console and the API keep working so the owner can switch it off.
+- Site settings has an **Analytics** section: a GA4 Measurement ID set here replaces the build-time ID on the public pages (validated as `G-XXXXXXXXXX`; analytics still loads only after cookie consent).
+
 ## 31 October 2026 (later): FAQ ordering, accessibility audit fixes, cleanup
 - Owner console: Help and FAQ questions can be moved up and down with arrows; one request saves the new order as drafts (`POST /api/admin/content/faq-order`), "Publish changes" puts it live.
 - Accessibility (axe-core WCAG 2.2 AA audit): text on blue panels is solid white (translucent white failed 4.5:1); selected-chip counts readable on blue (site and console); success green darkened to #137a38 (4.87:1); console charts are labelled groups so their keyboard crosshair is announced; wide console tables are focusable regions that keyboard users can scroll.

@@ -63,6 +63,16 @@ try {
     }
     $content = $store->published();
     $a = $assets($publicDir);
+    $set = $content['settings'] ?? [];
+    if (($set['gaId'] ?? '') !== '') { // a Measurement ID set in the console wins over the build-time one
+        $a['gaId'] = (string) $set['gaId'];
+    }
+    if (!empty($set['maintenance'])) { // public pages only: /app/, the console and /api/ are served elsewhere and keep working
+        header('Retry-After: 600');
+        header('Cache-Control: no-store');
+        $send(503, (new Site($content, $a, $config))->maintenance((string) ($set['maintenanceMessage'] ?? '')));
+        return;
+    }
     // Announcements have start and end times, so a cached copy is trusted for five minutes at most.
     $etag = substr(sha1($store->version() . '|' . json_encode($a) . '|' . $path . '|' . intdiv(time(), 300)), 0, 20);
     if (trim((string) ($_SERVER['HTTP_IF_NONE_MATCH'] ?? ''), '" ') === $etag) {

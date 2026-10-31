@@ -294,7 +294,15 @@ final class Validator
             'footerBlurb' => $this->line($in, 'footerBlurb', 0, 160, 'Footer text'),
             'footerNote' => $this->line($in, 'footerNote', 0, 200, 'Footer note'),
             'socialImage' => is_string($in['socialImage'] ?? null) ? trim($in['socialImage']) : '',
+            // Maintenance: public pages answer 503 with a "back soon" page; the app, the console and the API keep working.
+            'maintenance' => ($in['maintenance'] ?? false) === true,
+            'maintenanceMessage' => $this->line($in, 'maintenanceMessage', 0, 200, 'Maintenance message'),
+            // Google Analytics 4 Measurement ID for the public pages (public by design); empty = the build-time ID, if any.
+            'gaId' => strtoupper($this->line($in, 'gaId', 0, 20, 'Measurement ID')),
         ];
+        if ($s['gaId'] !== '' && !preg_match('/^G-[A-Z0-9]{6,12}$/D', $s['gaId'])) {
+            $this->err('gaId', 'A GA4 Measurement ID looks like G-XXXXXXXXXX.');
+        }
         if ($s['contactEmail'] !== '' && filter_var($s['contactEmail'], FILTER_VALIDATE_EMAIL) === false) {
             $this->err('contactEmail', 'Enter a valid email address.');
         }

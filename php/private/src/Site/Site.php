@@ -739,6 +739,15 @@ final class Site
         return $this->layout(['title' => $p['title'], 'description' => $p['description'], 'url' => $this->url(''), 'here' => '', 'main' => $main, 'noindex' => true]);
     }
 
+    /** Owner switched on maintenance in Site settings: a branded "back soon" page (503), with the app still reachable. */
+    public function maintenance(string $message): string
+    {
+        $text = trim($message) !== '' ? $message : 'Flightdeck is being updated. Please try again shortly.';
+        $p = ['kind' => 'page', 'title' => 'Back soon', 'description' => $text];
+        $main = '<div class="shell page">' . $this->head($p) . '<div class="panel sheet lost"><p>' . self::e($text) . '</p><p>Your saved flights and packing lists are safe. The <a href="/app/">app</a> may still work.</p></div></div>';
+        return $this->layout(['title' => 'Back soon', 'description' => $text, 'url' => $this->url(''), 'here' => '', 'main' => $main, 'noindex' => true]);
+    }
+
     public function unavailable(): string
     {
         $p = ['kind' => 'page', 'title' => 'Flightdeck is briefly unavailable', 'description' => 'Please try again in a few minutes.'];
