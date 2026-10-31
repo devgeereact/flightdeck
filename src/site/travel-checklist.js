@@ -85,6 +85,35 @@
   window.addEventListener('hashchange', () => {
     show((location.hash || '').slice(1), false);
   });
+  // Trip details from the home page's "Start a packing list" form (?trip=&date=&nights=) go on the screen and the printed copy.
+  var q = new URLSearchParams(location.search),
+    trip = (q.get('trip') || '').trim().slice(0, 60),
+    when = q.get('date') || '',
+    nights = Number(q.get('nights'));
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(when) || Number.isNaN(Date.parse(when))) when = '';
+  if (!(nights >= 1 && nights <= 30)) nights = 0;
+  if (trip || when) {
+    var label = when
+      ? new Date(when + 'T12:00:00').toLocaleDateString('en-GB', {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+      : '';
+    var tripEl = document.getElementById('packing-trip'),
+      dateEl = document.getElementById('packing-date'),
+      forEl = document.getElementById('packing-for');
+    if (tripEl && trip) tripEl.textContent = trip;
+    if (dateEl && label) dateEl.textContent = label;
+    if (forEl)
+      forEl.textContent =
+        'Packing for ' +
+        (trip || 'your trip') +
+        (label ? ', leaving ' + label : '') +
+        (nights ? ', ' + nights + (nights === 1 ? ' night' : ' nights') : '') +
+        '.';
+  }
   count();
   show(active, false);
 })();

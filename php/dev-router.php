@@ -34,6 +34,15 @@ if ($path === '/site.css') {
     }
     return true;
 }
+if ($path === '/motion.js') { // GSAP core + plugins, concatenated like scripts/build-public.mjs does
+    header('Content-Type: text/javascript');
+    header('Cache-Control: no-cache');
+    foreach (['gsap', 'ScrollTrigger', 'SplitText', 'MotionPathPlugin', 'DrawSVGPlugin'] as $f) {
+        readfile($root . '/node_modules/gsap/dist/' . $f . '.min.js');
+        echo "\n;\n";
+    }
+    return true;
+}
 $siteJs = ['/site.js' => 'src/site/site.js', '/lenis.js' => 'node_modules/lenis/dist/lenis.min.js', '/js/contact.js' => 'src/site/contact.js', '/js/travel-checklist.js' => 'src/site/travel-checklist.js'];
 if (isset($siteJs[$path])) {
     return $serve($root . '/' . $siteJs[$path], 'text/javascript');
@@ -48,7 +57,7 @@ if (!$localLive && !getenv('FLIGHTDECK_DIST') && is_dir($root . '/.local-live/di
     header('Location: https://local.flightdeck.gakinz.com' . ($_SERVER['REQUEST_URI'] ?? '/app/'), true, 302);
     return true;
 }
-$types = ['js' => 'text/javascript', 'css' => 'text/css', 'svg' => 'image/svg+xml', 'html' => 'text/html; charset=utf-8', 'png' => 'image/png', 'woff2' => 'font/woff2',
+$types = ['js' => 'text/javascript', 'css' => 'text/css', 'svg' => 'image/svg+xml', 'html' => 'text/html; charset=utf-8', 'png' => 'image/png', 'jpg' => 'image/jpeg', 'woff2' => 'font/woff2',
           'webmanifest' => 'application/manifest+json', 'json' => 'application/json', 'xml' => 'application/xml', 'txt' => 'text/plain; charset=utf-8'];
 // The app and Clerk's return paths get the app shell, like the real host.
 if (preg_match('#^/app(/|$)#', $path) || preg_match('#^/(sso-callback|sign-in|sign-up|v1|__clerk)(/|$)#', $path)) {

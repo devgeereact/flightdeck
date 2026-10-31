@@ -1,280 +1,122 @@
-/* ONE footer for the whole site: the app, and every static public page (build-public.mjs inlines this file).
-   A white band at the bottom of the page. Brand on the left, two equal menus on the right, a base line underneath. */
+/* ONE footer for the whole site: the app (SiteFooter.tsx) and every PHP-rendered public page (Site.php, same class names).
+   A white panel on the canvas, as in the approved prototype: brand and blurb, four equal link groups, a base line. */
 .sf {
   display: block;
-  background: #fff;
-  border-top: 1px solid #e1e6da;
-  color: #5d6e64;
-  font-family: var(--fd-font-body), system-ui, sans-serif;
-  font-size: 14px;
+  width: min(var(--sf-w, 1360px), 100% - var(--sf-gutter, clamp(12px, 2.4vw, 28px)) * 2);
+  margin: clamp(72px, 9vw, 120px) auto var(--sf-gutter, clamp(12px, 2.4vw, 28px));
+  color: var(--fd-muted);
+  font-family: var(--fd-font-body);
+  font-size: 15px;
 }
 .sf-in {
-  max-width: var(--sf-w, 1440px);
-  margin: 0 auto;
-  padding: 28px var(--sf-gutter, clamp(24px, 3.2vw, 64px)) 18px;
+  background: #fff;
+  border-radius: var(--fd-radius-lg);
+  box-shadow: var(--fd-shadow-1);
+  overflow: hidden;
 }
 .sf-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 32px 56px;
+  display: grid;
+  grid-template-columns: 1.4fr 4fr;
+  gap: 32px;
+  padding: 44px;
+}
+.sf-top > * {
+  min-width: 0;
 }
 .sf-brand {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-  font:
-    800 20px var(--fd-font-head),
-    system-ui,
-    sans-serif;
-  letter-spacing: -0.05em;
-  color: #133c35;
+  gap: 10px;
+  color: var(--fd-heading);
   text-decoration: none;
+  font: 700 20px / 1 var(--fd-font-head);
+  letter-spacing: -0.03em;
 }
-.sf-mark {
-  background: #173e34;
-  color: #d6eb9e;
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: var(--fd-radius-md);
-}
-.sf-dot {
-  color: #81a356;
+.sf-brand .fd-logo {
+  flex: none;
+  border-radius: 11px;
+  box-shadow: var(--fd-shadow-blue);
 }
 .sf-blurb {
-  margin: 10px 0 0;
-  max-width: 300px;
-  font-size: 13.5px;
-  line-height: 1.7;
+  margin: 14px 0 0;
+  max-width: 320px;
+  font-size: 15px;
+  line-height: 1.6;
 }
 .sf-cols {
   display: grid;
-  grid-template-columns: repeat(4, minmax(130px, 170px));
-  gap: 22px 24px;
-  text-align: right;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 32px;
 }
 .sf-col h2 {
-  margin: 0 0 6px;
-  font:
-    700 12.5px var(--fd-font-head),
-    system-ui,
-    sans-serif;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #566a5d;
+  margin: 0;
+  font: 600 14px / 1.4 var(--fd-font-body);
+  letter-spacing: 0;
+  color: var(--fd-heading);
 }
 .sf-col ul {
   list-style: none;
-  margin: 0;
+  margin: 14px 0 0;
   padding: 0;
   display: grid;
-  gap: 2px;
-  justify-items: end;
+  gap: 10px;
 }
 .sf-col li {
   margin: 0;
 }
 .sf-col a {
-  display: inline-block;
-  margin: 0 -10px 0 0;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font:
-    600 14px var(--fd-font-body),
-    system-ui,
-    sans-serif;
-  color: #4d5f55;
+  color: var(--fd-muted);
   text-decoration: none;
+  font-size: 15px;
 }
-.sf-col a:hover {
-  background: #edf2e8;
-  color: #244b38;
-}
+.sf-col a:hover,
 .sf-col a[aria-current="page"] {
-  color: #244b38;
-  background: #edf2e8;
+  color: var(--fd-link);
 }
 .sf-base {
-  margin-top: 18px;
-  padding-top: 14px;
-  border-top: 1px solid #e9eee4;
   display: flex;
   justify-content: space-between;
-  gap: 8px 24px;
+  gap: 8px 16px;
   flex-wrap: wrap;
-  font-size: 13px;
-  line-height: 1.6;
+  padding: 20px 44px;
+  border-top: 1px solid var(--fd-line);
+  font-size: 14px;
 }
 .sf-base p {
   margin: 0;
 }
-@media (max-width: 700px) {
-  .sf-top {
-    flex-direction: column;
-  }
-  .sf-cols {
-    width: 100%;
-    grid-template-columns: 1fr 1fr;
-    text-align: left;
-    gap: 22px 16px;
-  }
-  .sf-col ul {
-    justify-items: start;
-  }
-  .sf-col a {
-    margin: 0 0 0 -10px;
-  }
-  .sf-base {
-    flex-direction: column;
-  }
+.sf-base a {
+  color: var(--fd-link);
+  font-weight: 500;
+  text-decoration: none;
 }
-/* Touch screens: every footer link is at least 44px tall so it is easy to tap. */
-@media (pointer: coarse) {
-  .sf-col ul {
-    gap: 0;
-  }
-  .sf-col a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-  }
-}
-@media print {
-  .sf {
-    display: none;
-  }
-}
-@media (min-width: 701px) and (max-width: 1000px) {
-  .sf-cols {
-    grid-template-columns: repeat(2, minmax(150px, 200px));
-  }
-}
-
-/* A consistent closing section across public, account and workspace views. */
-.sf {
-  background: var(--fd-brand-deep);
-  color: var(--fd-brand-deep-ink);
-  border: 0;
-  margin-top: 0;
-}
-.sf-in {
-  padding-top: 52px;
-  padding-bottom: 24px;
-}
-.sf-top {
-  gap: 40px;
-}
-.sf-brand {
-  color: var(--fd-on-brand);
-  font-size: 24px;
-}
-.sf-brand:hover {
-  color: var(--fd-accent);
-}
-.sf-mark {
-  background: var(--fd-accent);
-  color: var(--fd-brand-deep);
-  width: 36px;
-  height: 36px;
-  border-radius: var(--fd-radius-md);
-}
-.sf-blurb {
-  margin-top: 18px;
-  font-size: 14px;
-  line-height: 1.85;
-  max-width: 280px;
-}
-.sf-cols {
-  gap: 24px;
-  text-align: left;
-  grid-template-columns: repeat(4, minmax(110px, 1fr));
-}
-.sf-col h2 {
-  color: var(--fd-accent);
-  font-size: 12.5px;
-  letter-spacing: 0.06em;
-  font-weight: 600;
-  margin-bottom: 16px;
-}
-.sf-col ul {
-  justify-items: start;
-  gap: 5px;
-}
-.sf-col a {
-  color: var(--fd-brand-deep-ink);
-  font-weight: 400;
-  font-size: 13px;
-  margin: 0 0 0 -10px;
-  line-height: 1.7;
-}
-.sf-col a:hover,
-.sf-col a[aria-current="page"] {
-  color: var(--fd-on-brand);
-  background: rgb(255 255 255 / 8%);
-}
-.sf-base {
-  margin-top: 38px;
-  padding-top: 22px;
-  border-color: rgb(255 255 255 / 18%);
-  font-size: 12.5px;
+.sf-base a:hover {
+  text-decoration: underline;
 }
 .sf :focus-visible {
-  outline: 2px solid var(--fd-accent);
-  outline-offset: 3px;
+  outline: 2px solid var(--fd-brand);
+  outline-offset: 2px;
 }
-.app .sf {
-  margin-top: 48px;
-  border-radius: var(--fd-radius-lg);
-}
-.app .sf-in {
-  padding: 32px;
-}
-.app .sf-top {
-  flex-direction: column;
-  gap: 28px;
-}
-.app .sf-cols {
-  width: 100%;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-.app .sf-blurb {
-  max-width: 500px;
-}
-.app .sf-base {
-  margin-top: 24px;
-}
-@media (max-width: 1000px) {
+@media (max-width: 1100px) {
   .sf-top {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
   .sf-cols {
-    width: 100%;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-  .sf-blurb {
-    max-width: 500px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-@media (max-width: 700px) {
-  .sf-in {
-    padding-top: 36px;
-  }
-  .sf-cols,
-  .app .sf-cols {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 28px 16px;
+@media (max-width: 760px) {
+  .sf-top {
+    padding: 28px;
   }
   .sf-base {
-    margin-top: 30px;
+    padding: 18px 28px;
   }
-  .app .sf-in {
-    padding: 26px 22px;
-  }
-  .app .sf {
-    margin-top: 32px;
-    border-radius: var(--fd-radius-lg);
+}
+@media (pointer: coarse) {
+  .sf-col a {
+    display: inline-block;
+    padding: 4px 0;
   }
 }
 @media print {
