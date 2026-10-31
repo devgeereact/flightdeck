@@ -12,7 +12,7 @@ const gaMeta = (mode: string) => ({
 // Dev: Vite serves the app (/app/) and its source; everything else (the public site, /api) goes to the PHP dev router, like production.
 const devOwnsPath = (req: { url?: string }) => {
   const u = req.url || '/';
-  return /^\/(app(\/|$|\?)|@|src\/|node_modules\/|__|virtual:|registerSW\.js|sw\.js|workbox-|manifest\.webmanifest|dev-sw)/.test(
+  return /^\/(app(\/|$|\?)|@|src\/|content\/[^/]+\.mjs|node_modules\/|__|virtual:|registerSW\.js|sw\.js|workbox-|manifest\.webmanifest|dev-sw)/.test(
     u,
   )
     ? u

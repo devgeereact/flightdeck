@@ -53,7 +53,21 @@ $previewPrivate = realpath($root . '/.local-live/private');
 $localLive = $previewPrivate !== false && realpath(getenv('FLIGHTDECK_PRIVATE') ?: '') === $previewPrivate;
 $dist = realpath(getenv('FLIGHTDECK_DIST') ?: $root . ($localLive ? '/.local-live/dist' : '/dist'));
 // App sign-in on the ordinary preview uses the already-configured HTTPS account preview.
-if (!$localLive && !getenv('FLIGHTDECK_DIST') && is_dir($root . '/.local-live/dist') && preg_match('#^/app(/|$)#', $path)) {
+// Only while that preview is actually running (its HTTPS proxy listens on 443): otherwise ordinary localhost would be sent to a
+// dead address, or to a stale build from the last time the preview ran. FLIGHTDECK_LIVE_PREVIEW=on|off overrides the probe.
+$livePreviewUp = static function (): bool {
+    $o = getenv('FLIGHTDECK_LIVE_PREVIEW');
+    if ($o === 'on' || $o === 'off') {
+        return $o === 'on';
+    }
+    $s = @fsockopen('127.0.0.1', 443, $errno, $errstr, 0.2);
+    if ($s) {
+        fclose($s);
+        return true;
+    }
+    return false;
+};
+if (!$localLive && !getenv('FLIGHTDECK_DIST') && is_dir($root . '/.local-live/dist') && preg_match('#^/app(/|$)#', $path) && $livePreviewUp()) {
     header('Location: https://local.flightdeck.gakinz.com' . ($_SERVER['REQUEST_URI'] ?? '/app/'), true, 302);
     return true;
 }

@@ -2148,10 +2148,10 @@ main#main {
     0 0 0 1px var(--fd-blue),
     0 0 0 4px var(--fd-blue-50) !important;
 }
-.si-step .cl-cardBox,
-.si-step .cl-card,
-.si-step .cl-main,
-.si-step .cl-form {
+.si-step .fd-clerk-cardbox,
+.si-step .fd-clerk-card,
+.si-step .fd-clerk-main,
+.si-step .fd-clerk-form {
   overflow: visible !important;
 }
 /* Clerk draws field borders as a faint shadow; give fields and code boxes the app's visible border until they take focus. */

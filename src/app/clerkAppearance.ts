@@ -23,6 +23,8 @@ export const clerkAppearance = {
     rootBox: 'fd-clerk-root',
     cardBox: 'fd-clerk-cardbox',
     card: 'fd-clerk-card',
+    main: 'fd-clerk-main',
+    form: 'fd-clerk-form',
     header: 'fd-clerk-header',
     headerTitle: 'fd-clerk-title',
     headerSubtitle: 'fd-clerk-subtitle',

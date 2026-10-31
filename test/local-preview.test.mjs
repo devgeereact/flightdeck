@@ -12,7 +12,7 @@ async function server(root, privateDir, dist) {
   await new Promise((resolve) => sock.listen(0, '127.0.0.1', resolve));
   const port = sock.address().port;
   await new Promise((resolve) => sock.close(resolve));
-  const env = { ...process.env, FLIGHTDECK_PRIVATE: privateDir };
+  const env = { ...process.env, FLIGHTDECK_PRIVATE: privateDir, FLIGHTDECK_LIVE_PREVIEW: 'on' };
   delete env.FLIGHTDECK_DIST;
   if (dist) env.FLIGHTDECK_DIST = dist;
   const child = spawn('php', ['-S', `127.0.0.1:${port}`, 'php/dev-router.php'], {
@@ -74,6 +74,49 @@ test('local preview routes keep production and development assets separate; harn
     assert.equal(await (await fetch(harness.base + '/app/')).text(), 'ISOLATED TEST BUILD');
   } finally {
     servers.forEach((s) => s.stop());
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('when the live-account preview is not running, localhost /app/ serves the normal build instead of redirecting', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'fd-local-off-'));
+  let child;
+  try {
+    for (const dir of ['php/private', 'public', 'dist/app', 'dist/assets', '.local-live/dist/app'])
+      fs.mkdirSync(path.join(root, dir), { recursive: true });
+    fs.copyFileSync(path.join(repo, 'php/dev-router.php'), path.join(root, 'php/dev-router.php'));
+    fs.copyFileSync(path.join(repo, 'public/.htaccess'), path.join(root, 'public/.htaccess'));
+    fs.writeFileSync(path.join(root, 'dist/app/index.html'), 'DEVELOPMENT BUILD');
+    fs.writeFileSync(path.join(root, 'dist/assets/marker.js'), 'DEVELOPMENT ASSET');
+    fs.writeFileSync(path.join(root, '.local-live/dist/app/index.html'), 'OLD LIVE ACCOUNT BUILD');
+    const sock = net.createServer();
+    await new Promise((resolve) => sock.listen(0, '127.0.0.1', resolve));
+    const port = sock.address().port;
+    await new Promise((resolve) => sock.close(resolve));
+    const env = {
+      ...process.env,
+      FLIGHTDECK_PRIVATE: path.join(root, 'php/private'),
+      FLIGHTDECK_LIVE_PREVIEW: 'off',
+    };
+    delete env.FLIGHTDECK_DIST;
+    child = spawn('php', ['-S', `127.0.0.1:${port}`, 'php/dev-router.php'], {
+      cwd: root,
+      env,
+      stdio: 'ignore',
+    });
+    const base = `http://127.0.0.1:${port}`;
+    for (let i = 0; i < 40; i++) {
+      try {
+        await fetch(base + '/assets/marker.js');
+        break;
+      } catch {}
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    const r = await fetch(base + '/app/', { redirect: 'manual' });
+    assert.equal(r.status, 200);
+    assert.equal(await r.text(), 'DEVELOPMENT BUILD');
+  } finally {
+    child?.kill();
     fs.rmSync(root, { recursive: true, force: true });
   }
 });
