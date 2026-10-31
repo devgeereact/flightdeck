@@ -135,7 +135,7 @@ final class ContentStore
         $add = function (string $id, ?array $pub) use (&$items, $type, $label): void {
             $d = $this->draft($type, $id);
             $src = $d['data'] ?? $pub ?? [];
-            $items[$id] = ['id' => $id, 'label' => $label($type, $src), 'kind' => $src['kind'] ?? null, 'category' => $src['category'] ?? null,
+            $items[$id] = ['id' => $id, 'label' => $label($type, $src), 'kind' => $src['kind'] ?? null, 'category' => $src['category'] ?? null, 'order' => $type === 'faq' ? (int) ($src['order'] ?? 0) : null,
                 'published' => $pub !== null, 'unpublished' => !empty($pub['unpublished']), 'hasDraft' => $d !== null, 'draftRev' => $d['rev'] ?? 0,
                 'updatedAt' => $d['updatedAt'] ?? null, 'required' => $type === 'page' && in_array($id, Validator::REQUIRED, true)];
         };
@@ -245,6 +245,41 @@ final class ContentStore
             $this->revision($type, $id, 'save', $item, $by);
             return ['ok' => true, 'status' => 200, 'draft' => $rec];
         });
+    }
+
+    /**
+     * Help and FAQ order from the console's move up / move down: $ids is every question in its new order. Each question whose
+     * order number changes gets a draft with order = position (1-based), so "Publish changes" puts the new order live and the
+     * history and audit trail record it. The list must name every question exactly once.
+     */
+    public function reorderFaqs(array $ids, string $by): array
+    {
+        $known = array_map(static function (array $x): string {
+            return (string) $x['id'];
+        }, $this->list('faq'));
+        $clean = array_values(array_filter($ids, 'is_string'));
+        $a = $clean;
+        $b = $known;
+        sort($a);
+        sort($b);
+        if (count($clean) !== count($ids) || $a !== $b || count(array_unique($clean)) !== count($clean)) {
+            return ['ok' => false, 'status' => 422, 'error' => 'The list of questions has changed. Reload and try again.'];
+        }
+        $changed = 0;
+        foreach ($clean as $k => $id) {
+            $draft = $this->draft('faq', $id);
+            $data = $draft['data'] ?? $this->current('faq', $id);
+            if (!is_array($data) || (int) ($data['order'] ?? 0) === $k + 1) {
+                continue;
+            }
+            $data['order'] = $k + 1;
+            $r = $this->save('faq', $id, $data, $by, (int) ($draft['rev'] ?? 0));
+            if (!$r['ok']) {
+                return $r;
+            }
+            $changed++;
+        }
+        return ['ok' => true, 'status' => 200, 'changed' => $changed];
     }
 
     /** Replace one item in a content snapshot (used by publish and by preview). */

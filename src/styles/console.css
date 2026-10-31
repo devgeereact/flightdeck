@@ -512,7 +512,14 @@ html.cs-open body {
   color: #fff;
 }
 .cs-chip-n {
-  opacity: 0.75;
+  color: var(--fd-muted);
+}
+.cs-chip[aria-pressed="true"] .cs-chip-n {
+  color: #fff; /* dimmed white on blue failed 4.5:1 */
+}
+.cs-tw:focus-visible {
+  outline: 2px solid var(--fd-blue);
+  outline-offset: 2px;
 }
 .cs-badge {
   display: inline-flex;

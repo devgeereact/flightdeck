@@ -1,4 +1,13 @@
-import { AlertTriangle, Pencil, Plus, Search, Send, Trash2 } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowDown,
+  ArrowUp,
+  Pencil,
+  Plus,
+  Search,
+  Send,
+  Trash2,
+} from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { call, when } from '../api';
 import {
@@ -24,6 +33,7 @@ type Item = {
   label: string;
   kind: string | null;
   category: string | null;
+  order?: number | null;
   published: boolean;
   unpublished: boolean;
   hasDraft: boolean;
@@ -220,7 +230,12 @@ function PageList({
               ))}
             </div>
           </div>
-          <div className="cs-tw">
+          <div
+            className="cs-tw"
+            tabIndex={0}
+            role="region"
+            aria-label="Table (scrolls sideways on small screens)"
+          >
             <table className="cs-table cs-list">
               <thead>
                 <tr>
@@ -395,8 +410,32 @@ function FaqList({ items, err, load, open, create }: ListProps) {
     [actErr, setActErr] = useState<unknown>(null);
   const root = useRef<HTMLDivElement>(null);
   useRise(root, [!!items]);
-  const list = items || [];
+  // Shown in the order the help page will use once published: draft order numbers first, then the current position.
+  const list = (items || [])
+    .map((x, k) => ({ x, k }))
+    .sort((a, b) => (a.x.order ?? 0) - (b.x.order ?? 0) || a.k - b.k)
+    .map((o) => o.x);
   const waiting = list.filter((i) => i.hasDraft && !i.unpublished);
+  // Move up / move down: one request saves the new order as drafts (only the questions whose position changes).
+  const move = async (n: number, d: -1 | 1) => {
+    const t = n + d;
+    if (t < 0 || t >= list.length) return;
+    const ids = list.map((i) => i.id);
+    [ids[n], ids[t]] = [ids[t], ids[n]];
+    setBusy(true);
+    setActErr(null);
+    try {
+      await call('/api/admin/content/faq-order', { method: 'POST', body: { ids } });
+      toast(
+        `Moved "${list[n].label}" ${d < 0 ? 'up' : 'down'}. Publish changes to update the help page.`,
+      );
+    } catch (e) {
+      setActErr(e);
+    } finally {
+      setBusy(false);
+      void load();
+    }
+  };
   const publishAll = async () => {
     setBusy(true);
     setActErr(null);
@@ -476,7 +515,12 @@ function FaqList({ items, err, load, open, create }: ListProps) {
           {list.length === 0 ? (
             <Empty>No questions yet. Add the first one.</Empty>
           ) : (
-            <div className="cs-tw">
+            <div
+              className="cs-tw"
+              tabIndex={0}
+              role="region"
+              aria-label="Table (scrolls sideways on small screens)"
+            >
               <table className="cs-table">
                 <thead>
                   <tr>
@@ -499,6 +543,24 @@ function FaqList({ items, err, load, open, create }: ListProps) {
                       </td>
                       <td>
                         <div className="cs-rowacts">
+                          <button
+                            type="button"
+                            className="cs-ib"
+                            aria-label={`Move "${i.label}" up`}
+                            disabled={busy || n === 0}
+                            onClick={() => void move(n, -1)}
+                          >
+                            <ArrowUp size={16} />
+                          </button>
+                          <button
+                            type="button"
+                            className="cs-ib"
+                            aria-label={`Move "${i.label}" down`}
+                            disabled={busy || n === list.length - 1}
+                            onClick={() => void move(n, 1)}
+                          >
+                            <ArrowDown size={16} />
+                          </button>
                           <button
                             type="button"
                             className="cs-ib"
@@ -526,7 +588,8 @@ function FaqList({ items, err, load, open, create }: ListProps) {
         </Panel>
       )}
       <p className="cs-label">
-        To change the order, open a question and set its Order number. Lower numbers show first.
+        Use the arrows to change the order. Moves are saved as drafts; Publish changes puts the new
+        order on the help page.
       </p>
       {confirm && (
         <Dialog
@@ -669,7 +732,12 @@ function AnnouncementList({ items, err, load, open, create }: ListProps) {
               No announcements. Add one for things like a provider outage or a new feature.
             </Empty>
           ) : (
-            <div className="cs-tw">
+            <div
+              className="cs-tw"
+              tabIndex={0}
+              role="region"
+              aria-label="Table (scrolls sideways on small screens)"
+            >
               <table className="cs-table">
                 <thead>
                   <tr>

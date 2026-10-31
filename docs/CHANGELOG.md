@@ -2,6 +2,12 @@
 
 Newest first. Dates are UK dates.
 
+## 31 October 2026 (later): FAQ ordering, accessibility audit fixes, cleanup
+- Owner console: Help and FAQ questions can be moved up and down with arrows; one request saves the new order as drafts (`POST /api/admin/content/faq-order`), "Publish changes" puts it live.
+- Accessibility (axe-core WCAG 2.2 AA audit): text on blue panels is solid white (translucent white failed 4.5:1); selected-chip counts readable on blue (site and console); success green darkened to #137a38 (4.87:1); console charts are labelled groups so their keyboard crosshair is announced; wide console tables are focusable regions that keyboard users can scroll.
+- Destination favourite hearts say they save on this device only.
+- Removed the unused DM Sans and Manrope font files (replaced by Inter; still in git history).
+
 ## 31 October 2026 (later): signed-in header and sign-in protection
 - Public pages know when you are already signed in: the header shows "My flights" instead of "Sign in" / "Open the app", the closing band says "Open my flights" and the lookup note no longer asks for an account. Read in the browser from Clerk's `__client_uat` cookie, falling back to a marker the app writes (`fd-signed-in`); pages stay cached and show the signed-out version without JavaScript.
 - Content-Security-Policy now allows Clerk's abuse and fraud protection hosts (`*.protect.clerk.com`), which production sign-in was refusing.

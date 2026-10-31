@@ -56,7 +56,7 @@
   --fd-warn-ink: #8a5300;
   --fd-warn-bg: #fff4db;
   --fd-warn-line: #f6dca0;
-  --fd-ok-ink: #15803d;
+  --fd-ok-ink: #137a38; /* 4.87:1 on --fd-ok-bg (was #15803d, 4.49:1 by axe) */
   --fd-ok-bg: #e8f6ec;
   --fd-info-bg: #eef4ff;
   /* Type */

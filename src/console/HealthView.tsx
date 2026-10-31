@@ -79,7 +79,12 @@ export default function HealthView() {
       ) : (
         <>
           <Panel aria-busy={busy}>
-            <div className="cs-tw">
+            <div
+              className="cs-tw"
+              tabIndex={0}
+              role="region"
+              aria-label="Table (scrolls sideways on small screens)"
+            >
               <table className="cs-table">
                 <thead>
                   <tr>

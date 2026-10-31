@@ -39,8 +39,9 @@ Public website paths (`/`, `/<slug>/`, `/guides/<slug>/`, `/sitemap.xml`, `/ads.
 
 | Method/route | Who | Input | Success | Errors |
 |---|---|---|---|---|
-| GET /api/site | anyone | none | `{announcements[] (app/both, in their time window), footer[], settings{siteName,footerBlurb,footerNote}}` | none |
-| GET /api/admin/content/{type} | owner | type: page, faq, announcement, navigation, settings | `{items[{id,label,kind,category,published,unpublished,hasDraft,draftRev,updatedAt,required}], categories, seed}` | 401, 403 |
+| GET /api/site | anyone | none | `{announcements[] (app/both, in their time window), faqs[{id,question,answer}] (published, help page order), footer[], settings{siteName,footerBlurb,footerNote}}` | none |
+| GET /api/admin/content/{type} | owner | type: page, faq, announcement, navigation, settings | `{items[{id,label,kind,category,order (faq only),published,unpublished,hasDraft,draftRev,updatedAt,required}], categories, seed}` | 401, 403 |
+| POST /api/admin/content/faq-order | owner | `{ids: [every faq id in the new order]}` | `{changed}`: questions whose position changed get a draft with `order` = position; publish to go live | 401, 403, 422 list does not name every question once |
 | GET /api/admin/content/{type}/{id} | owner | `?revision=<name>` for one old version | `{published, draft, revisions[], required}` / `{data}` | 404, 422 bad id |
 | PUT /api/admin/content/{type}/{id} | owner | `{baseRev:int, data}` | `{draft{rev,data,…}}` | 409 stale baseRev, 422 `{errors{field.path:message}}` |
 | POST /api/admin/content/{type}/{id} | owner | `{action: publish|unpublish|republish|discard|restore, revision?}` | `{ok, draft?}` | 404, 409 nothing to publish, 422 not allowed (required pages) |

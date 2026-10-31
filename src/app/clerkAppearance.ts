@@ -12,7 +12,7 @@ export const clerkAppearance = {
     colorBorder: '#d3d9e3',
     colorRing: '#1866ff',
     colorDanger: '#c0392b',
-    colorSuccess: '#15803d',
+    colorSuccess: '#137a38',
     borderRadius: '14px',
     fontFamily: 'Inter, system-ui, -apple-system, "Segoe UI", sans-serif',
     fontFamilyButtons: 'Inter, system-ui, -apple-system, "Segoe UI", sans-serif',

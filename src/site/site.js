@@ -343,7 +343,10 @@
       f.setAttribute('aria-pressed', String(on));
       if (window.gsap && motionOk())
         window.gsap.fromTo(f, { scale: 0.8 }, { scale: 1, duration: 0.4, ease: 'back.out(3)' });
-      var city = (f.getAttribute('aria-label') || '').replace(/^Save | to favourites$/g, '');
+      var city = (f.getAttribute('aria-label') || '').replace(
+        /^Save | to favourites on this device$/g,
+        '',
+      );
       toast(on ? city + ' saved to favourites on this device' : 'Removed from favourites');
     });
   });

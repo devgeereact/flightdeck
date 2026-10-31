@@ -428,7 +428,12 @@ export function Costs({ ov }: { ov: any }) {
           {lat.length === 0 ? (
             <Empty>No provider calls yet.</Empty>
           ) : (
-            <div className="cs-tw">
+            <div
+              className="cs-tw"
+              tabIndex={0}
+              role="region"
+              aria-label="Table (scrolls sideways on small screens)"
+            >
               <table className="cs-table">
                 <thead>
                   <tr>
@@ -538,7 +543,12 @@ export function UsersView({ users }: { users: any }) {
             Newest {nf.format(users.newest.length)} of {nf.format(users.total)} accounts
           </span>
         </div>
-        <div className="cs-tw">
+        <div
+          className="cs-tw"
+          tabIndex={0}
+          role="region"
+          aria-label="Table (scrolls sideways on small screens)"
+        >
           <table className="cs-table">
             <thead>
               <tr>

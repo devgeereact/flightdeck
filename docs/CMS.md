@@ -14,7 +14,7 @@ Open it from the app: sign in at `/app/`, then **Owner console** in the menu (`/
 |---|---|---|
 | Pages | Home (structured: hero, points, three steps, features, data columns, closing), how it works, coverage, help intro, about, contact intro, privacy, cookies, terms, accessibility, guides index intro, packing list intro, and any new pages | Public website |
 | Guides | Travel guides: title, description, section, key points, text, review date | `/guides/…` |
-| Help and FAQ | Question, answer, section, order. The first four by order also show on the home page | `/help/`, home |
+| Help and FAQ | Question, answer, section, order. Reorder with the up/down arrows in the list (saved as drafts, then **Publish changes**). The first four by order also show on the home page | `/help/`, home |
 | Announcements | One-line message, info or warning, website / app / both, optional start and end time, optional link | Top of the site and/or the app |
 | Menus | Website top menu (1-7 links) and footer groups (1-5 groups of 1-8 links) | Public website |
 | Site settings | Site name, tagline, owner name, public contact email, site-wide review date, footer text and note, link-preview image | Everywhere these appear, including the legal pages |
@@ -69,7 +69,7 @@ Until the first publish there is no `published.json`, and the site shows the bui
 
 ## API (owner only, under `/api/admin`)
 
-`GET content/<type>` · `GET|PUT|POST|DELETE content/<type>/<id>` (`PUT {baseRev, data}`, `POST {action: publish|unpublish|republish|discard|restore, revision?}`, `GET ?revision=<name>`) · `POST preview {type, id, data}` · `GET|POST media` (raw image body) · `GET health` · `GET audit` · `PATCH enquiries/<id> {status?, note?}` (status adds `resolved`). Types: `page`, `faq`, `announcement`, `navigation` (id `main`), `settings` (id `site`). Public: `GET /api/site` (app announcements, footer links, public settings only). Details in API.md.
+`GET content/<type>` · `POST content/faq-order {ids}` · `GET|PUT|POST|DELETE content/<type>/<id>` (`PUT {baseRev, data}`, `POST {action: publish|unpublish|republish|discard|restore, revision?}`, `GET ?revision=<name>`) · `POST preview {type, id, data}` · `GET|POST media` (raw image body) · `GET health` · `GET audit` · `PATCH enquiries/<id> {status?, note?}` (status adds `resolved`). Types: `page`, `faq`, `announcement`, `navigation` (id `main`), `settings` (id `site`). Public: `GET /api/site` (app announcements, published FAQ, footer links, public settings only). Details in API.md.
 
 ## Tests
 

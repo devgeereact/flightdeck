@@ -106,6 +106,7 @@ const CMS_ROUTES = [
   ['PUT', '/api/admin/content/page/about', { baseRev: 0, data: {} }],
   ['POST', '/api/admin/content/page/about', { action: 'publish' }],
   ['DELETE', '/api/admin/content/faq/free'],
+  ['POST', '/api/admin/content/faq-order', { ids: [] }],
   ['POST', '/api/admin/preview', { type: 'page', id: 'about', data: {} }],
   ['GET', '/api/admin/media'],
   ['GET', '/api/admin/health'],
@@ -503,4 +504,36 @@ test('operations: health and cache show real state only; media lists uploads and
   );
   assert.equal((await fetch(`${BASE}/media/${'0'.repeat(64)}.png`)).status, 404);
   assert.equal((await fetch(`${BASE}/media/../config.php`)).status, 404);
+});
+
+test('FAQ move up / move down: one request saves the new order as drafts; publishing puts it live', async () => {
+  const list = await api('GET', '/api/admin/content/faq', { auth: OWNER() });
+  const ids = list.json.items.map((i) => i.id);
+  assert.ok(ids.length >= 3);
+  const moved = [ids[1], ids[0], ...ids.slice(2)];
+  const bad = await api('POST', '/api/admin/content/faq-order', {
+    auth: OWNER(),
+    body: { ids: moved.slice(1) },
+  });
+  assert.equal(bad.status, 422, 'a list that leaves a question out is refused');
+  const r = await api('POST', '/api/admin/content/faq-order', {
+    auth: OWNER(),
+    body: { ids: moved },
+  });
+  assert.equal(r.status, 200);
+  assert.ok(r.json.changed >= 2, 'questions whose position changed got drafts');
+  const after = await api('GET', '/api/admin/content/faq', { auth: OWNER() });
+  const byId = Object.fromEntries(after.json.items.map((i) => [i.id, i]));
+  moved.forEach((id, k) => assert.equal(byId[id].order, k + 1, `${id} order`));
+  for (const i of after.json.items.filter((x) => x.hasDraft))
+    await api('POST', `/api/admin/content/faq/${i.id}`, {
+      auth: OWNER(),
+      body: { action: 'publish' },
+    });
+  const pub = await api('GET', '/api/site');
+  assert.deepEqual(
+    pub.json.faqs.map((f) => f.id).slice(0, 2),
+    moved.filter((id) => pub.json.faqs.some((f) => f.id === id)).slice(0, 2),
+    'the public FAQ follows the new order',
+  );
 });

@@ -666,7 +666,7 @@ final class Site
         foreach (self::DEST as $code => $d) {
             $id = 'dest-' . strtolower($code);
             $cards .= '<article class="dest"><img src="' . $d['img'] . '" alt="' . self::e($d['alt']) . '" loading="lazy" width="' . $d['w'] . '" height="' . $d['h'] . '"><button class="open" type="button" data-dialog="' . $id . '" aria-haspopup="dialog" aria-label="Open the ' . self::e($d['city']) . ' guide"></button>'
-                . '<button class="fav" type="button" data-fav="' . $code . '" aria-pressed="false" aria-label="Save ' . self::e($d['city']) . ' to favourites" hidden>' . self::ico('heart') . '</button>'
+                . '<button class="fav" type="button" data-fav="' . $code . '" aria-pressed="false" aria-label="Save ' . self::e($d['city']) . ' to favourites on this device" title="Saved on this device only" hidden>' . self::ico('heart') . '</button>'
                 . '<div class="body"><h3>' . self::e(rtrim($d['greeting'], '.')) . '</h3><div class="meta"><span>' . self::ico('pin', 'ico-sm') . $code . ' · ' . self::e($d['airport']) . '</span><span class="num">' . self::e(trim(explode('·', $d['currency'])[1] ?? '')) . '</span></div></div></article>';
             $places = implode('', array_map(static function (array $pl): string {
                 return '<li><a href="' . self::e($pl[3]) . '" target="_blank" rel="noopener"><b>' . self::e($pl[0]) . '</b><small>' . self::e($pl[1]) . '</small><small>' . self::e($pl[2]) . '</small>' . self::ico('external') . '</a></li>';

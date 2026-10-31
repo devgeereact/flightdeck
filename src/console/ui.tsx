@@ -398,7 +398,14 @@ function LineChart({
   return (
     <div className="cs-chart" ref={wrap}>
       {W != null && n > 0 && (
-        <svg ref={svg} viewBox={`0 0 ${w} ${H}`} width={w} height={H} role="img" aria-label={label}>
+        <svg
+          ref={svg}
+          viewBox={`0 0 ${w} ${H}`}
+          width={w}
+          height={H}
+          role="group"
+          aria-label={label}
+        >
           <defs>
             {series.map((s) => (
               <linearGradient key={s.tone} id={`${gid}g${s.tone}`} x1="0" y1="0" x2="0" y2="1">
@@ -577,7 +584,12 @@ export function ChartPanel({
       {dates.length === 0 ? (
         <Empty>No days in this range yet.</Empty>
       ) : table ? (
-        <div className="cs-tw">
+        <div
+          className="cs-tw"
+          tabIndex={0}
+          role="region"
+          aria-label="Table (scrolls sideways on small screens)"
+        >
           <table className="cs-table">
             <thead>
               <tr>
@@ -647,7 +659,12 @@ export function RankTable({
       {items.length === 0 ? (
         <Empty>{empty}</Empty>
       ) : (
-        <div className="cs-tw">
+        <div
+          className="cs-tw"
+          tabIndex={0}
+          role="region"
+          aria-label="Table (scrolls sideways on small screens)"
+        >
           <table className="cs-table">
             <thead>
               <tr>

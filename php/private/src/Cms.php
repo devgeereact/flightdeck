@@ -93,6 +93,20 @@ final class Cms
                 return;
             }
         }
+        if ($route === '/admin/content/faq-order' && $method === 'POST') {
+            $b = App::jsonBodyPublic(16384);
+            $ids = is_array($b) && is_array($b['ids'] ?? null) ? $b['ids'] : null;
+            if ($ids === null) {
+                Http::json(422, ['error' => 'Nothing to reorder.']);
+                return;
+            }
+            $r = $content->reorderFaqs($ids, substr(hash('sha256', $sub), 0, 10));
+            if ($r['ok'] && $r['changed'] > 0) {
+                Admin::audit($varDir, $sub, 'content faq order changed (' . $r['changed'] . ' questions)');
+            }
+            Http::json($r['status'], $r['ok'] ? ['changed' => $r['changed']] : ['error' => $r['error']]);
+            return;
+        }
         if ($route === '/admin/health' && $method === 'GET') {
             Http::json(200, ['providers' => Health::read($varDir), 'cache' => self::cacheState($varDir, $store), 'allowance' => Admin::allowance($store, $config)]);
             return;

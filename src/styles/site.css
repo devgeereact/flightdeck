@@ -1145,7 +1145,7 @@ section {
   font-size: 22px;
 }
 .fresh p.lead {
-  color: rgb(255 255 255 / 86%);
+  color: #fff; /* solid white: translucent white on blue fails 4.5:1 */
   margin-top: 8px;
   font-size: 15px;
 }
@@ -1174,7 +1174,7 @@ section {
 }
 .fresh dd {
   margin: 0;
-  color: rgb(255 255 255 / 90%);
+  color: #fff; /* solid white: translucent white on blue fails 4.5:1 */
   font-size: 15px;
 }
 .fresh svg.rings {
@@ -1640,7 +1640,11 @@ section {
 }
 .sec-tabs .chip .c {
   font-size: 13px;
-  opacity: 0.75;
+  color: var(--muted);
+}
+.sec-tabs .chip[aria-selected="true"] .c,
+.sec-tabs .chip[aria-pressed="true"] .c {
+  color: #fff; /* dimmed white on blue failed 4.5:1 */
 }
 .pk-panel {
   display: flex;
@@ -1885,7 +1889,7 @@ details[open] > .acc-btn .pm {
   letter-spacing: -0.035em;
 }
 .closing p {
-  color: rgb(255 255 255 / 88%);
+  color: #fff; /* solid white: translucent white on blue fails 4.5:1 */
   margin-top: 14px;
   max-width: 520px;
   font-size: 17px;
@@ -2242,7 +2246,7 @@ details[open] > .acc-btn .pm {
   margin-top: 16px;
 }
 .cards-fill span:not(.gtile) {
-  color: rgb(255 255 255 / 88%);
+  color: #fff; /* solid white: translucent white on blue fails 4.5:1 */
   font-size: 15px;
 }
 .cards .cards-fill .btn {

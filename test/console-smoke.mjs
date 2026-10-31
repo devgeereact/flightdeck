@@ -151,6 +151,37 @@ check(
     (await page('/help/')).includes('Is this question from the console test?'),
 );
 
+// ---------------------------------------------------------------- owner: FAQ order with move up / move down
+c = boot('user_owner', '#/admin/faqs');
+await c.until(() => c.d.querySelector('button[aria-label^="Move "][aria-label$=" down"]'));
+const rowLabels = () =>
+  [...c.d.querySelectorAll('.cs-table tbody .cs-t')].map((e) => e.textContent.trim());
+const before = rowLabels();
+c.click(c.d.querySelector('button[aria-label^="Move "][aria-label$=" down"]'));
+const swapped = await c.until(() => {
+  const now = rowLabels();
+  return now[0] === before[1] && now[1] === before[0];
+});
+await c.until(() => c.button('Publish changes') && !c.button('Publish changes').disabled);
+c.click(c.button('Publish changes'));
+await c.until(() =>
+  [...c.d.querySelectorAll('[role="alertdialog"] button')].find((b) =>
+    /^Publish/.test(b.textContent.trim()),
+  ),
+);
+c.click(
+  [...c.d.querySelectorAll('[role="alertdialog"] button')].find((b) =>
+    /^Publish/.test(b.textContent.trim()),
+  ),
+);
+await c.until(() => c.text().includes('Help and FAQ published'));
+const help = await page('/help/');
+check(
+  'C12b the arrows reorder the FAQ as drafts, and publishing puts the new order on the help page',
+  !!swapped && help.indexOf(before[1]) > -1 && help.indexOf(before[1]) < help.indexOf(before[0]),
+  JSON.stringify(rowLabels().slice(0, 2)),
+);
+
 // ---------------------------------------------------------------- owner: inbox
 c = boot('user_owner', '#/admin/inbox');
 await c.until(() => c.text().includes('TEST DATA'));
