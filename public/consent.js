@@ -155,10 +155,10 @@
     var st = doc.createElement('style');
     st.id = 'fd-consent-css';
     st.textContent =
-      '.fd-cc{position:fixed;left:16px;right:16px;bottom:16px;z-index:2147483000;max-width:640px;margin:0 auto;background:#fff;color:#2d4b3d;border:1px solid #102f29;border-radius:6px;padding:18px 20px;box-shadow:0 18px 50px #0f2a2335;font:14px/1.6 Inter,system-ui,sans-serif}' +
-      '.fd-cc h2{margin:0 0 6px;font:700 15px "Inter Tight",Inter,system-ui,sans-serif;color:#173e34}.fd-cc p{margin:0 0 14px;font-size:13px}.fd-cc a{color:#214e3e;text-decoration:underline}' +
-      '.fd-cc-row{display:flex;gap:10px;flex-wrap:wrap}.fd-cc button{flex:1 1 140px;border:1px solid #214e3e;background:#fff;color:#214e3e;border-radius:4px;padding:12px 16px;font:600 13px Inter,system-ui,sans-serif;cursor:pointer}' +
-      '.fd-cc button:focus-visible{outline:3px solid #92b678;outline-offset:2px}.fd-cc button:hover{background:#f1f6ee}.fd-cc-now{font-size:11px;color:#5d6e64;margin:10px 0 0}@media print{.fd-cc{display:none}}';
+      '.fd-cc{position:fixed;left:16px;right:16px;bottom:16px;z-index:2147483000;max-width:600px;margin:0 auto;background:#fff;color:#2f3644;border:0;border-radius:20px;padding:22px 24px;box-shadow:0 24px 48px -16px rgb(20 23 31/26%),0 0 0 1px rgb(20 23 31/6%);font:15px/1.6 Inter,system-ui,sans-serif}' +
+      '.fd-cc h2{margin:0 0 6px;font:600 18px/1.3 "Inter Tight",Inter,system-ui,sans-serif;letter-spacing:-.01em;color:#14171f}.fd-cc p{margin:0 0 16px;font-size:14px;color:#5e6675}.fd-cc a{color:#1458e0;text-decoration:underline;text-underline-offset:2px}' +
+      '.fd-cc-row{display:flex;gap:10px;flex-wrap:wrap}.fd-cc button{flex:1 1 160px;min-height:44px;border:1px solid #d3d9e3;background:#fff;color:#14171f;border-radius:999px;padding:0 20px;font:600 15px Inter,system-ui,sans-serif;cursor:pointer;transition:background .2s,border-color .2s}' +
+      '.fd-cc button:focus-visible{outline:2px solid #1866ff;outline-offset:2px}.fd-cc button:hover{background:#f6f8fb;border-color:#9aa2b1}.fd-cc-now{font-size:13px;color:#5e6675;margin:12px 0 0}@media print{.fd-cc{display:none}}';
     doc.head.appendChild(st);
   }
 

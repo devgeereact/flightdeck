@@ -1,4 +1,4 @@
-// Contact form on /contact/: posts JSON to our own API (same-site only, ADR-013). Honeypot and fill time are checked by the server.
+// Contact form on /contact/ and in the home page's message dialog: posts JSON to our own API (same-site only, ADR-013). Honeypot and fill time are checked by the server.
 (() => {
   var f = document.getElementById('contact-form'),
     m = document.getElementById('contact-msg'),
@@ -21,7 +21,7 @@
       m.textContent = 'Please write your message and add a valid email address.';
       return;
     }
-    f.querySelector('button').disabled = true;
+    f.querySelector('button[type=submit]').disabled = true;
     fetch('/api/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -38,7 +38,7 @@
         m.textContent = err.message || 'Your message could not be sent. Please try again.';
       })
       .then(() => {
-        f.querySelector('button').disabled = false;
+        f.querySelector('button[type=submit]').disabled = false;
       });
   });
 })();

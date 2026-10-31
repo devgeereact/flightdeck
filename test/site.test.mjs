@@ -100,8 +100,13 @@ test('public pages request nothing from third parties: the only scripts are our 
     '/js/travel-checklist-test.js',
   ];
   for (const [p, h] of docs()) {
-    for (const m of h.matchAll(/<(?:script|img|iframe|source|video|audio)\b[^>]*\bsrc="([^"]+)"/g))
+    for (const m of h.matchAll(/<(?:script|iframe|source|video|audio)\b[^>]*\bsrc="([^"]+)"/g))
       assert.ok(ours.includes(m[1]), `${p}: ${m[1]}`);
+    // Photos are our own files, served from /img/ on this site.
+    for (const m of h.matchAll(/<img\b[^>]*\bsrc="([^"]+)"/g)) {
+      assert.match(m[1], /^\/img\/[a-z0-9-]+\.jpg$/, `${p}: ${m[1]}`);
+      assert.ok(fs.existsSync(path.join(root, 'public', m[1])), `${p}: ${m[1]} is missing`);
+    }
     for (const m of h.matchAll(/<link\b[^>]*\bhref="([^"]+)"/g))
       assert.ok(m[1].startsWith('/') || m[1].startsWith(base.siteUrl), `${p}: ${m[1]}`);
     assert.ok(
@@ -140,10 +145,10 @@ test('outbound links are explicit and safe (noopener); every internal link point
         );
         continue;
       }
-      if (hash && hash[1] === '/help/') {
+      if (hash && site[hash[1]]) {
         assert.ok(
-          page('/help/').includes(`id="${hash[2]}"`),
-          `${p}: ${href} has no target on the help page`,
+          page(hash[1]).includes(`id="${hash[2]}"`),
+          `${p}: ${href} has no target on ${hash[1]}`,
         );
         continue;
       }
@@ -380,8 +385,9 @@ test('one shared link list: the same footer on every page, header links match th
       p + ' header',
     );
     assert.ok(
-      head.includes('<a class="btn btn-primary" href="/app/">Open the app</a>'),
-      p + ' header action',
+      head.includes('<a class="btn btn-white btn-sm" href="/app/">Open the app</a>') &&
+        head.includes('<a class="btn btn-glass btn-sm" href="/app/">Sign in</a>'),
+      p + ' header actions',
     );
   }
   assert.ok(page('/travel-checklist/').includes('href="/travel-checklist/" aria-current="page"'));
@@ -502,43 +508,120 @@ test('home: lookup form hands off to the app, no synthetic flight is presented, 
     h.includes('id="lookup"') &&
       h.includes('action="/app/"') &&
       h.includes('name="number"') &&
-      h.includes('type="date"'),
+      /<select name="date" id="lookup-date">(<option value="\d{4}-\d{2}-\d{2}"( selected)?>[^<]+<\/option>){15}<\/select>/.test(
+        h,
+      ),
+    'flight number and a departure date from yesterday to 13 days ahead',
   );
+  const at = h.indexOf('class="panel board"');
+  const board = h.slice(at, h.indexOf('</aside>', at));
   assert.ok(
-    h.includes('Every detail names its source.') && h.includes('class="missing">Not reported yet'),
+    h.includes('Every detail on the page says where it came from.') &&
+      board.includes('missing">Not reported yet'),
     'the board shows how a result is built and what a missing detail looks like',
   );
-  assert.ok(
-    !/class="board"[\s\S]*\d{1,2}:\d{2}/.test(
-      h.slice(h.indexOf('class="board"'), h.indexOf('</aside>', h.indexOf('class="board"'))),
-    ),
-    'the board carries no times',
-  );
+  assert.ok(!/\d{1,2}:\d{2}/.test(board), 'the board carries no times');
+  assert.ok(!/\d+(\.\d+)?°|\d+ ?(ft|kt|km\/h|mph)\b/i.test(board), 'the board carries no position');
   assert.ok(!h.includes('A calmer journey.'), 'the old vague headline is gone');
+  const js = fs.readFileSync(path.join(root, 'src/site/site.js'), 'utf8');
   assert.ok(
-    h.includes('data-reveal') &&
-      fs
-        .readFileSync(path.join(root, 'src/site/site.js'), 'utf8')
-        .includes('prefers-reduced-motion: reduce'),
+    js.includes("gsap.matchMedia().add('(prefers-reduced-motion: no-preference)'") &&
+      js.includes("matchMedia('(prefers-reduced-motion: reduce)')"),
     'motion stands down for reduced motion',
   );
   assert.ok(!h.includes('08:41') && !h.includes('En route'));
   for (const must of [
-    'every 10 minutes',
-    'every 2 minutes',
+    '10<small>min</small>',
+    '2<small>min</small>',
     'yesterday to three days ahead',
-    'monthly allowance',
+    'Flights you can save to your account',
   ])
     assert.ok(h.includes(must), must);
+  assert.ok(page('/coverage/').includes('monthly allowance'), 'limits are published on /coverage/');
   assert.ok(
     !/live tracking of every|real-time for all|guaranteed|testimonial|\d[\d,]* users/i.test(h),
     'no invented claims',
   );
-  const js = fs.readFileSync(path.join(root, 'src/site/site.js'), 'utf8');
   assert.ok(
     js.includes("'/app/#/flight/' + n + '/' + d") && /\(flight\|checklist\|saved/.test(js),
     'lookup hand-off and old-link forwarding',
   );
+});
+
+test('home follows the approved prototype: sections in order, real data behind every card, credits published', () => {
+  const h = page('/');
+  const order = [
+    'class="hero"',
+    'class="search-wrap"',
+    'class="sources"',
+    'id="result"',
+    'id="guides"',
+    'id="how"',
+    'id="packing"',
+    'id="faq"',
+    'class="closing"',
+  ].map((m) => h.indexOf(m));
+  assert.ok(
+    order.every((i) => i > 0),
+    'every section is present',
+  );
+  assert.deepEqual(
+    [...order].sort((a, b) => a - b),
+    order,
+    'sections follow the prototype order',
+  );
+  // Destinations: three photo cards, each opening a native dialog with the app's official links.
+  assert.equal((h.match(/<article class="dest">/g) || []).length, 3);
+  for (const code of ['jfk', 'dxb', 'cdg']) {
+    assert.ok(
+      h.includes(`data-dialog="dest-${code}"`) &&
+        h.includes(`<dialog class="dialog" id="dest-${code}"`),
+      code,
+    );
+    const from = h.indexOf(`<dialog class="dialog" id="dest-${code}"`);
+    const dlg = h.slice(from, h.indexOf('</dialog>', from));
+    assert.equal((dlg.match(/rel="noopener"/g) || []).length, 3, `${code}: three official links`);
+  }
+  // Guide topics: three real guides per topic, linking to the guide pages; without JS each pill opens the guide index.
+  for (const cat of seed.guideCategories) {
+    assert.ok(
+      h.includes(`href="/guides/#cat-${cat.id}" class="chip" data-tab="spot-${cat.id}"`),
+      cat.id,
+    );
+    const from = h.indexOf(`id="spot-${cat.id}"`);
+    const panel = h.slice(from, h.indexOf('</div>', from));
+    const links = [...panel.matchAll(/<a class="guide" href="\/([^"]+)\/"/g)].map((m) => m[1]);
+    assert.equal(links.length, 3, cat.id);
+    for (const l of links) assert.equal(seed.pages[l]?.category, cat.id, l);
+  }
+  // Packing teaser: the real template, with the same item keys as the full list (ticks carry over).
+  const total = TEMPLATE.reduce((n, s) => n + s.items.length, 0);
+  assert.ok(h.includes(`One list, ${total} things,`));
+  assert.equal((h.match(/<input class="tick" type="checkbox" data-k="list-/g) || []).length, total);
+  assert.ok(
+    page('/travel-checklist/').includes('data-k="list-days-in-advance-0"') &&
+      h.includes('data-k="list-days-in-advance-0"'),
+  );
+  // The contact dialog is the real form, posting through contact.js.
+  assert.ok(
+    h.includes('<dialog class="dialog" id="contact-dlg"') &&
+      h.includes('id="contact-form"') &&
+      h.includes('/js/contact-test.js'),
+  );
+  // Photo credits: in the footer on every page, and on the About page.
+  for (const [p, d] of docs())
+    assert.ok(d.includes('href="/about/#photo-credits"') && d.includes('Harry Knight'), p);
+  const about = page('/about/');
+  for (const who of [
+    'Harry Knight',
+    'Sergey Svechnikov',
+    'Rob Bye',
+    'Percival Kestreltail',
+    'Norlando Pobre',
+    'Nicolas Halftermeyer',
+  ])
+    assert.ok(about.includes(who), who);
+  assert.ok(about.includes('id="photo-credits"'));
 });
 
 test('announcements show only inside their time window and never carry markup', () => {
@@ -634,5 +717,50 @@ test('public packing needs no account: ticks persist, all sections open, checked
     JSON.parse(w.localStorage.getItem('flightdeck-public-packing'))['list-papers-and-documents-1'],
     1,
   );
+  dom.window.close();
+});
+
+test('JSON-LD cannot be closed early by CMS text (a name with </script> stays inside the data block)', () => {
+  const r = render(['/guides/flight-status-explained/'], {
+    settings: { ownerName: 'Sam </script><img src=x>' },
+  })['/guides/flight-status-explained/'].html;
+  const blocks = [...r.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(
+    (m) => m[1],
+  );
+  assert.ok(blocks.length >= 2 && blocks.every((b) => !b.includes('<')), 'no raw < inside JSON-LD');
+  assert.equal(JSON.parse(blocks[0]).author.name, 'Sam </script><img src=x>');
+  assert.ok(!r.includes('<img src=x>'));
+});
+
+test('home packing teaser and the full list share ticks; the lookup hands the flight to the app', () => {
+  const dom = new JSDOM(page('/'), { url: 'https://flightdeck.test/', runScripts: 'outside-only' });
+  const w = dom.window,
+    d = w.document;
+  w.localStorage.setItem(
+    'flightdeck-public-packing',
+    JSON.stringify({ 'list-days-in-advance-0': 1 }),
+  );
+  w.eval(fs.readFileSync(path.join(root, 'src/site/site.js'), 'utf8'));
+  assert.ok(
+    d.querySelector('[data-k="list-days-in-advance-0"]').checked,
+    'a tick from the full list shows here',
+  );
+  assert.match(d.getElementById('packedCount').textContent, /^1 of \d+ packed$/);
+  d.querySelector('[data-k="list-days-in-advance-1"]').click();
+  assert.equal(
+    JSON.parse(w.localStorage.getItem('flightdeck-public-packing'))['list-days-in-advance-1'],
+    1,
+  );
+  // Tabs become real tabs; the second section's panel opens in place.
+  const tab = d.querySelectorAll('[data-tabs="pack"] [data-tab]')[1];
+  tab.click();
+  assert.equal(tab.getAttribute('aria-selected'), 'true');
+  assert.ok(!d.getElementById(tab.getAttribute('data-tab')).hidden);
+  // A bad flight number is refused with a message; the date select offers the visitor's own days.
+  const num = d.getElementById('lookup-number');
+  num.value = 'hello world';
+  d.getElementById('lookup').dispatchEvent(new w.Event('submit', { cancelable: true }));
+  assert.ok(!d.getElementById('fnErr').hidden && num.getAttribute('aria-invalid') === 'true');
+  assert.equal(d.getElementById('lookup-date').options.length, 15);
   dom.window.close();
 });
