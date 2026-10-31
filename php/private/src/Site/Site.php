@@ -173,7 +173,7 @@ final class Site
         return '<!doctype html>
 <html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>' . self::e($fullTitle) . '</title>
-<meta name="description" content="' . self::e($o['description']) . '">' . $robots . '<link rel="canonical" href="' . self::e($url) . '"><meta name="theme-color" content="#133c35">
+<meta name="description" content="' . self::e($o['description']) . '">' . $robots . '<link rel="canonical" href="' . self::e($url) . '"><meta name="theme-color" content="#1866ff">
 <meta property="og:title" content="' . self::e($title) . '"><meta property="og:description" content="' . self::e($o['description']) . '"><meta property="og:type" content="' . (($o['ogType'] ?? '') === 'article' ? 'article' : 'website') . '"><meta property="og:url" content="' . self::e($url) . '"><meta property="og:site_name" content="' . $site . '"><meta property="og:image" content="' . self::e($img) . '"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="' . self::e($img) . '">
 <meta name="fd-ga-id" content="' . self::e($this->assets['gaId'] ?? '') . '">
 <link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/manifest.webmanifest">

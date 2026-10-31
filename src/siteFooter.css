@@ -5,7 +5,7 @@
   background: #fff;
   border-top: 1px solid #e1e6da;
   color: #5d6e64;
-  font-family: "DM Sans", system-ui, sans-serif;
+  font-family: var(--fd-font-body), system-ui, sans-serif;
   font-size: 14px;
 }
 .sf-in {
@@ -24,7 +24,7 @@
   align-items: center;
   gap: 9px;
   font:
-    800 20px Manrope,
+    800 20px var(--fd-font-head),
     system-ui,
     sans-serif;
   letter-spacing: -0.05em;
@@ -58,7 +58,7 @@
 .sf-col h2 {
   margin: 0 0 6px;
   font:
-    700 12.5px Manrope,
+    700 12.5px var(--fd-font-head),
     system-ui,
     sans-serif;
   letter-spacing: 0.14em;
@@ -82,7 +82,7 @@
   padding: 4px 10px;
   border-radius: 4px;
   font:
-    600 14px "DM Sans",
+    600 14px var(--fd-font-body),
     system-ui,
     sans-serif;
   color: #4d5f55;

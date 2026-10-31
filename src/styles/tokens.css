@@ -1,61 +1,79 @@
 /* Flightdeck design tokens. One source for the app, the owner console and the server-rendered public pages.
-   Brand: deep green with a signal-lime accent on warm paper. Flight data (times, codes, gates) uses tabular figures.
-   Change a value here, not in component CSS. Colour pairs used for text were measured at WCAG 2.2 AA or better. */
+   Brand (31 Oct 2026, ADR-020): sky blue #1866ff on cool white, ink near-black, amber as a fill only, Inter / Inter Tight.
+   Change a value here, not in component CSS. Text pairs are measured: blue on white 4.79:1, ink on amber 10.2:1,
+   blue-600 on the canvas 6.0:1, muted on white 5.78:1. Blue text never sits on the grey canvas (4.23:1): use --fd-link. */
 :root {
+  /* Palette */
+  --fd-blue: #1866ff;
+  --fd-blue-600: #1458e0;
+  --fd-blue-700: #0f4fd1;
+  --fd-blue-50: #eef4ff;
+  --fd-blue-100: #dde8ff;
+  --fd-amber: #ffb618;
+  --fd-amber-50: #fff4db;
+  --fd-amber-ink: #8a5300;
+  --fd-violet: #8818ff;
+  --fd-violet-50: #f3e8ff;
+  --fd-violet-ink: #6a0fd1;
+  --fd-series-2: #d97706; /* second chart series: passed the colour-blind check against blue; violet did not */
+
   /* Surfaces */
-  --fd-bg: #f5f4ee;
+  --fd-bg: #eef1f6;
   --fd-surface: #fff;
-  --fd-surface-raised: #fafaf6;
-  --fd-tint: #edf1e6;
-  --fd-tint-soft: #f4f7f1;
+  --fd-surface-raised: #f6f8fb;
+  --fd-tint: #eef4ff;
+  --fd-tint-soft: #f6f8fb;
   /* Text */
-  --fd-ink: #2d4b3d;
-  --fd-heading: #173e34;
-  --fd-muted: #5d6e64;
-  --fd-muted-strong: #4d6455;
+  --fd-ink: #2f3644;
+  --fd-heading: #14171f;
+  --fd-muted: #5e6675;
+  --fd-muted-strong: #4a5262;
+  --fd-faint: #9aa2b1; /* decoration and placeholders only, never body text */
   --fd-on-brand: #fff;
-  /* Brand */
-  --fd-brand: #214e3e;
-  --fd-brand-hover: #1a4033;
-  --fd-brand-deep: #102f29;
-  --fd-brand-deep-ink: #c3d2c3;
-  --fd-accent: #d9eea4;
-  --fd-accent-hover: #c6e083;
-  --fd-accent-leaf: #81a356;
-  /* Departure-board surface: one dark panel per page at most, used to show how a result is built */
-  --fd-board: #0d2823;
-  --fd-board-line: rgb(217 238 164 / 16%);
-  --fd-board-ink: #e8f1e3;
-  --fd-board-dim: #9fb8a8;
+  --fd-link: #1458e0;
+  /* Brand (names kept from the earlier identity so component CSS keeps working) */
+  --fd-brand: #1866ff;
+  --fd-brand-hover: #1458e0;
+  --fd-brand-deep: #14171f;
+  --fd-brand-deep-ink: #c3cad6;
+  --fd-accent: #ffb618;
+  --fd-accent-hover: #f0a800;
+  --fd-accent-leaf: #1866ff;
+  /* Dark panel: one per page at most */
+  --fd-board: #14171f;
+  --fd-board-line: rgb(255 255 255 / 12%);
+  --fd-board-ink: #f2f4f8;
+  --fd-board-dim: #aab3c2;
   /* Lines */
-  --fd-line: #dde4d8;
-  --fd-line-soft: #e1e6dc;
-  --fd-line-strong: #cfdcd2;
-  --fd-line-hover: #b9cdbd;
+  --fd-line: #e3e7ee;
+  --fd-line-soft: #ebeef3;
+  --fd-line-strong: #d3d9e3;
+  --fd-line-hover: #b8c2d1;
   /* Status (always paired with text, never colour alone) */
-  --fd-danger: #a34b3a;
-  --fd-danger-bg: #fbefec;
-  --fd-danger-line: #ecd3cc;
-  --fd-warn-ink: #766757;
-  --fd-warn-bg: #fff0dd;
-  --fd-warn-line: #ecd3b8;
-  --fd-ok-ink: #3f6a3c;
-  --fd-ok-bg: #e7efdf;
-  --fd-info-bg: #eef2ea;
+  --fd-danger: #c0392b;
+  --fd-danger-bg: #fdecea;
+  --fd-danger-line: #f5cdc8;
+  --fd-warn-ink: #8a5300;
+  --fd-warn-bg: #fff4db;
+  --fd-warn-line: #f6dca0;
+  --fd-ok-ink: #15803d;
+  --fd-ok-bg: #e8f6ec;
+  --fd-info-bg: #eef4ff;
   /* Type */
-  --fd-font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --fd-font-head: Manrope, "DM Sans", system-ui, sans-serif;
-  --fd-font-data: "DM Sans", system-ui, sans-serif; /* used with tabular figures: see .fd-data */
+  --fd-font-body: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --fd-font-head: "Inter Tight", Inter, system-ui, -apple-system, sans-serif;
+  --fd-font-data: Inter, system-ui, sans-serif; /* used with tabular figures: see .fd-data */
   --fd-text-xs: 12.5px;
   --fd-text-sm: 14px;
   --fd-text-md: 16px;
   --fd-text-lg: 18px;
   --fd-text-xl: 21px;
-  --fd-text-2xl: clamp(26px, 3.2vw, 32px);
-  --fd-text-3xl: clamp(30px, 4vw, 40px);
-  --fd-text-hero: clamp(38px, 6vw, 72px);
-  --fd-leading: 1.7;
-  --fd-leading-tight: 1.1;
+  --fd-text-2xl: clamp(26px, 3.2vw, 34px);
+  --fd-text-3xl: clamp(30px, 4vw, 46px);
+  --fd-text-hero: clamp(42px, 6.4vw, 84px);
+  --fd-leading: 1.6;
+  --fd-leading-tight: 1.05;
+  --fd-track-tight: -0.03em;
   /* Space, size, shape */
   --fd-space-1: 4px;
   --fd-space-2: 8px;
@@ -65,19 +83,25 @@
   --fd-space-6: 32px;
   --fd-space-7: 48px;
   --fd-space-8: 72px;
-  --fd-page-w: 1280px;
+  --fd-space-9: 120px;
+  --fd-page-w: 1360px;
   --fd-read-w: 760px;
-  --fd-gutter: clamp(16px, 4vw, 42px);
-  --fd-radius-sm: 4px;
-  --fd-radius-md: 6px;
-  --fd-radius-lg: 10px;
+  --fd-gutter: clamp(12px, 2.4vw, 28px);
+  --fd-radius-sm: 10px;
+  --fd-radius-md: 14px;
+  --fd-radius-lg: 20px;
+  --fd-radius-xl: 28px;
   --fd-radius-pill: 999px;
-  --fd-shadow-1: 0 1px 0 rgb(16 47 41 / 6%);
-  --fd-shadow-2: 0 14px 34px -14px rgb(16 47 41 / 28%); /* separation is by hairlines; shadow-2 is for floating layers only */
+  --fd-shadow-1: 0 1px 2px rgb(20 23 31 / 6%);
+  --fd-shadow-2: 0 1px 3px rgb(20 23 31 / 8%), 0 1px 2px rgb(20 23 31 / 4%);
+  --fd-shadow-3: 0 10px 28px -12px rgb(20 23 31 / 18%), 0 2px 6px rgb(20 23 31 / 4%);
+  --fd-shadow-4: 0 24px 48px -16px rgb(20 23 31 / 26%);
+  --fd-shadow-blue: 0 12px 24px -12px rgb(24 102 255 / 70%);
   --fd-tap: 44px;
   /* Motion */
-  --fd-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
-  --fd-dur: 0.2s;
+  --fd-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --fd-dur: 0.22s;
+  color-scheme: light;
 }
 @media (prefers-reduced-motion: reduce) {
   :root {
@@ -85,13 +109,32 @@
   }
 }
 .fd-label {
-  font: 700 var(--fd-text-xs) / 1.2 var(--fd-font-body);
-  letter-spacing: 0.12em;
+  font: 600 var(--fd-text-xs) / 1.2 var(--fd-font-body);
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--fd-muted-strong);
 }
 .fd-data {
   font-family: var(--fd-font-data);
   font-variant-numeric: tabular-nums lining-nums;
-  letter-spacing: 0.01em;
+  font-feature-settings: "tnum", "cv11";
+}
+/* Brand lock-up shared by the app, console and sign-in (the PHP site uses the same class names) */
+.fd-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--fd-heading);
+  text-decoration: none;
+  font: 700 20px / 1 var(--fd-font-head);
+  letter-spacing: var(--fd-track-tight);
+}
+.fd-brand .fd-logo {
+  flex: none;
+  border-radius: 11px;
+  box-shadow: var(--fd-shadow-blue);
+}
+.fd-brand.on-dark,
+.fd-brand.on-photo {
+  color: #fff;
 }

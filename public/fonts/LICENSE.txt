@@ -1,1 +1,1 @@
-DM Sans (c) The DM Sans Project Authors and Manrope (c) The Manrope Project Authors are licensed under the SIL Open Font License, Version 1.1 (https://openfontlicense.org). Files are the variable-font builds served by Google Fonts, hosted here unmodified.
+Inter and Inter Tight (c) The Inter Project Authors are licensed under the SIL Open Font License, Version 1.1 (https://openfontlicense.org). Files are the variable-font builds served by Google Fonts, hosted here unmodified. DM Sans and Manrope files are no longer referenced (replaced 31 Oct 2026).

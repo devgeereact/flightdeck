@@ -35,12 +35,12 @@ export default defineConfig(({ mode }) => ({
         id: '/',
         start_url: '/app/',
         scope: '/',
-        name: 'Flightdeck — Your journey, in view',
+        name: 'Flightdeck: your journey, in view',
         short_name: 'Flightdeck',
         description:
           'Track a flight, check the weather at your destination and keep a packing list you can reuse.',
-        theme_color: '#133c35',
-        background_color: '#f6f7f4',
+        theme_color: '#1866ff',
+        background_color: '#eef1f6',
         display: 'standalone',
         icons: [
           { src: '/icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },

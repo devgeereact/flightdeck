@@ -1,6 +1,6 @@
 @import "./fonts.css";
 :root {
-  font-family: "DM Sans", sans-serif;
+  font-family: var(--fd-font-body), sans-serif;
   color: #233c35;
   background: var(--fd-bg);
   font-synthesis: none;
@@ -50,7 +50,7 @@ p {
 h1,
 h2,
 h3 {
-  font-family: Manrope, sans-serif;
+  font-family: var(--fd-font-head), sans-serif;
 }
 .app {
   display: flex;
@@ -70,7 +70,7 @@ h3 {
 .brand {
   display: flex;
   align-items: center;
-  font-family: Manrope, sans-serif;
+  font-family: var(--fd-font-head), sans-serif;
   font-size: 25px;
   font-weight: 800;
   letter-spacing: -1.3px;
@@ -533,7 +533,7 @@ h1 {
 }
 .route-map text {
   font:
-    12.5px "DM Sans",
+    12.5px var(--fd-font-body),
     sans-serif;
   fill: #47614e;
   font-weight: 700;
@@ -655,7 +655,7 @@ h1 {
 }
 .baggage > strong {
   display: block;
-  font-family: Manrope, sans-serif;
+  font-family: var(--fd-font-head), sans-serif;
   font-size: 25px;
   letter-spacing: -1px;
   margin: 8px 0;
@@ -1246,7 +1246,7 @@ h1 {
 }
 .ck-name {
   font:
-    700 22px Manrope,
+    700 22px var(--fd-font-head),
     sans-serif;
   letter-spacing: -0.5px;
   color: var(--fd-heading);
@@ -1302,7 +1302,7 @@ h1 {
 }
 .ck-ring-text {
   font:
-    700 14px Manrope,
+    700 14px var(--fd-font-head),
     sans-serif;
   fill: var(--fd-heading);
 }
@@ -1316,7 +1316,7 @@ h1 {
 }
 .ck-sec-title {
   font:
-    700 14px Manrope,
+    700 14px var(--fd-font-head),
     sans-serif;
   color: var(--fd-heading);
 }
@@ -1796,7 +1796,7 @@ h1 {
 }
 .ad-kpi strong {
   font:
-    700 28px Manrope,
+    700 28px var(--fd-font-head),
     sans-serif;
   letter-spacing: -1px;
   color: var(--fd-heading);
@@ -1839,7 +1839,7 @@ h1 {
 }
 .ad-ax {
   font:
-    12.5px "DM Sans",
+    12.5px var(--fd-font-body),
     sans-serif;
   fill: #8a998c;
 }
@@ -2273,7 +2273,7 @@ h1 {
   background: var(--fd-heading);
   color: var(--fd-accent);
   font:
-    800 13px Manrope,
+    800 13px var(--fd-font-head),
     system-ui,
     sans-serif;
   flex-shrink: 0;
@@ -2286,7 +2286,7 @@ h1 {
 }
 .user-name {
   font:
-    600 13px "DM Sans",
+    600 13px var(--fd-font-body),
     system-ui,
     sans-serif;
   color: var(--fd-ink);
@@ -2336,7 +2336,7 @@ h1 {
 .ad-reply-form textarea {
   width: 100%;
   font:
-    14px / 1.6 "DM Sans",
+    14px / 1.6 var(--fd-font-body),
     system-ui,
     sans-serif;
   border: 1px solid var(--fd-line-strong);
@@ -2374,7 +2374,7 @@ h1 {
 .ad-tabs button {
   padding: 10px 14px;
   font:
-    600 12.5px "DM Sans",
+    600 12.5px var(--fd-font-body),
     system-ui,
     sans-serif;
   color: var(--fd-muted);
@@ -2478,7 +2478,7 @@ h1 {
   padding: 11px 14px;
   border-radius: 8px 8px 0 0;
   font:
-    600 13px "DM Sans",
+    600 13px var(--fd-font-body),
     system-ui,
     sans-serif;
   color: var(--fd-muted);
@@ -2544,7 +2544,7 @@ h1 {
 .fv .timeline-row > span:last-child {
   margin-left: 0;
   font:
-    700 18px Manrope,
+    700 18px var(--fd-font-head),
     system-ui,
     sans-serif;
   color: var(--fd-brand-deep);
@@ -2867,7 +2867,7 @@ main > .sf {
   border-radius: var(--fd-radius-sm);
   padding: 4px 12px;
   font:
-    600 13px "DM Sans",
+    600 13px var(--fd-font-body),
     system-ui,
     sans-serif;
 }
@@ -2910,7 +2910,7 @@ main > .sf {
 }
 .step-day {
   font:
-    600 12.5px "DM Sans",
+    600 12.5px var(--fd-font-body),
     system-ui,
     sans-serif;
   color: var(--fd-muted);
@@ -2958,7 +2958,7 @@ main:focus-visible {
   padding: 10px 16px;
   border-radius: 8px;
   font:
-    600 14px "DM Sans",
+    600 14px var(--fd-font-body),
     system-ui,
     sans-serif;
   box-shadow: 0 6px 20px #0f2a2330;
@@ -3020,7 +3020,7 @@ main:focus-visible {
   border: 1px solid transparent;
   border-radius: 8px;
   font:
-    600 14px / 1.2 "DM Sans",
+    600 14px / 1.2 var(--fd-font-body),
     system-ui,
     sans-serif;
   text-decoration: none;
@@ -3159,7 +3159,7 @@ main:focus-visible {
     background: #fff;
     color: #4d5f55;
     font:
-      600 14px "DM Sans",
+      600 14px var(--fd-font-body),
       system-ui,
       sans-serif;
     white-space: nowrap;
@@ -3287,7 +3287,7 @@ main {
   gap: 8px;
   min-height: 32px;
   font:
-    700 14px Manrope,
+    700 14px var(--fd-font-head),
     system-ui,
     sans-serif;
   color: var(--fd-heading);
@@ -3511,7 +3511,7 @@ main {
   align-items: center;
   gap: 9px;
   font:
-    800 23px Manrope,
+    800 23px var(--fd-font-head),
     sans-serif;
   letter-spacing: -0.05em;
   color: var(--fd-brand-deep);
@@ -3560,7 +3560,7 @@ main {
 }
 .signin-card h1 {
   font:
-    800 clamp(24px, 3vw, 30px) / 1.15 Manrope,
+    800 clamp(24px, 3vw, 30px) / 1.15 var(--fd-font-head),
     sans-serif;
   letter-spacing: -0.03em;
   color: var(--fd-brand-deep);

@@ -771,7 +771,7 @@ createRoot(document.getElementById('root')!).render(
             variables: {
               colorPrimary: '#214e3e',
               borderRadius: '8px',
-              fontFamily: 'DM Sans, sans-serif',
+              fontFamily: 'Inter, sans-serif',
             },
           }}
         >

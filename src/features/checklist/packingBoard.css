@@ -29,7 +29,7 @@
   padding: 10px;
   color: #4d5f55;
   font:
-    600 13.5px "DM Sans",
+    600 13.5px var(--fd-font-body),
     system-ui,
     sans-serif;
 }
@@ -83,7 +83,7 @@
   background: #173e34;
   color: #d6eb9e;
   font:
-    800 13px Manrope,
+    800 13px var(--fd-font-head),
     system-ui,
     sans-serif;
   flex-shrink: 0;
@@ -107,7 +107,7 @@
 }
 .ck-sec-title {
   font:
-    700 20px / 1.3 Manrope,
+    700 20px / 1.3 var(--fd-font-head),
     system-ui,
     sans-serif;
   letter-spacing: -0.02em;
@@ -125,7 +125,7 @@
   border-radius: var(--fd-radius-sm);
   padding: 4px 12px;
   font:
-    600 12.5px "DM Sans",
+    600 12.5px var(--fd-font-body),
     system-ui,
     sans-serif;
   color: #5d6e64;
@@ -262,7 +262,7 @@
   width: 100%;
   cursor: pointer;
   font:
-    14.5px / 1.35 "DM Sans",
+    14.5px / 1.35 var(--fd-font-body),
     system-ui,
     sans-serif;
   color: #2d4b3d;
@@ -319,7 +319,7 @@
   padding: 8px 12px;
   border-radius: 6px;
   font:
-    600 13px "DM Sans",
+    600 13px var(--fd-font-body),
     system-ui,
     sans-serif;
   cursor: pointer;
