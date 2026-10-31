@@ -117,3 +117,27 @@ Follow-up 26 Oct 2026 (local): fixed the raw service-worker error text (src/shar
 Docs tidy (owner rule: one source of truth): Markdown moved into docs/, audits and checklists merged into docs/AUDIT.md, exact duplicates removed, links updated. No code changed. Tasks stay in this file; every audit is added to `docs/AUDIT.md`.
 - 30 Oct 2026: push to `main` deploys over SSH (`deploy.yml`, `scripts/release.mjs`); `release.yml` and the FTPS script removed. Dry run: main is ahead of live (9 private PHP files, new front-end build), so the first deploy ships that.
 - 30 Oct 2026: first Actions SSH deploy released `a7d37d4` (20261030T191903Z): 9 private PHP files and the new front-end build; 13 files snapshotted; smoke 3/3. Undo: `pnpm release --rollback --go`.
+
+## Redesign prototype, 31 October 2026 (artifact only; no repo code changed, nothing committed, pushed or deployed)
+
+Owner asked for a high-end redesign planned from three references (FlyScope-style travel dashboard, an Oripio palette card: #1866FF / #FFFFFF / #FFB618 / #8818FF / #000000 with Inter, and a goflight-style photo hero with an overlapping search card), using ui-refactor, ui-ux-pro-max and GSAP, and built first as working artifacts.
+
+Built: one private artifact, "Flightdeck Redesign" (https://claude.ai/artifact/3Z9QxDzKCa8tMuT9DCD47T), three linked pages sharing fd.css / fd.js / data.js:
+- index.html: website. Photo hero, overlapping tabbed search card (Track a flight / Start a packing list), data sources row, result anatomy (no fabricated flight record), freshness panel, features, "Before you fly" (Destinations: JFK, DXB, CDG from destinations.ts; 3 guide categories, 3 cards each), how it works, public packing list (141 items, A4 preview), FAQ, contact form into the console inbox, CMS-driven nav, footer and announcement bar.
+- app.html: sign-in (Google, email code, wrong-code state), tracker, flight result (example flights BA117, EK2, BA304, all labelled "Example data"; times in UTC converted with real zone rules), not-found and usual-route states, save/share/calendar, 5 detail tabs, saved flights (Flip on remove, undo), packing room (trips, sections, tick, rename, hide, own items, suggestions, reset), help, feedback, install, account.
+- console.html: owner gate and non-owner denied state; Pages and Guides (filters, editor, autosaved draft, preview, publish, hide, history and restore); the home hero and closing band publish to the website; FAQ, announcements, menus, inbox (notes, resolve), overview, usage, costs and limits, provider health, users, GA, site settings, system, audit log.
+Source files: the session scratchpad `fd/` folder (not in the repo).
+
+Design decisions: brand moves from green to blue #1866FF with Inter / Inter Tight. This supersedes the 26 Oct "colours unchanged" rule (ADR-019) and needs an ADR when implemented. Amber is a fill only (10.2:1 with ink). Blue text only on white (4.79:1); on the grey canvas use #1458E0 (6.0:1). Chart pair blue + #D97706 passed the dataviz CVD validator; blue + violet failed (deutan ΔE 1.4), so violet is for badges only. Photos: 3 CC0 (Unsplash via Wikimedia Commons), plus CC BY-SA 3.0, CC BY 2.0 and CC BY-SA 3.0 city photos. Credits are listed in the site footer and must ship with them.
+
+Checks: headless Chrome shell screenshots at 1440 and 390 of the site, sign-in, tracker, flight, packing, console overview, editor and inbox. Final run: no page errors and no sideways overflow. One review pass fixed grid overflow on phones, packing panel height, badge letter-spacing, a duplicate top-bar logo, an empty gap in the next-flight panel and the flight-number field height. NOT TESTED: real phone, Safari/Firefox, screen reader, the artifact viewer itself (cross-page links rely on relative paths).
+
+Found on the way: the live home page search description is 185 characters, against the 155 guideline.
+
+Next: owner reviews the artifact and gives feedback. Then plan the implementation in slices: tokens, then public site PHP templates, then app, then console. Record a new ADR for the blue rebrand, and update docs/DESIGN.md and CHANGELOG at implementation time.
+
+## 31 October 2026: blue redesign built and released (owner: "I approve this design… build it to live… create our own logo")
+- Built on branch `redesign-blue`, merged to `main`: foundation (tokens, Inter fonts, own logo and icons, photos), public website, signed-in app, owner console, then the owner's follow-up fixes (sticky header, branded A4 packing list, aligned guide cards, footer "© Gakinz", credits on About only, longer footer description). Decision: ADR-020. Design: docs/DESIGN.md. Changes: docs/CHANGELOG.md. Checks: docs/AUDIT.md (31 Oct).
+- Checks: `pnpm check` PASS (107/107), `pnpm test:ui` PASS, `pnpm test:console` PASS; visual review at 1440/900/390; A4 print one page.
+- Open for the owner: the footer description and any other settings may be overridden by a published CMS snapshot on the server (edit in console Site settings if the live footer still shows the old text); Google sign-in and the console with the production account to be checked live; a real phone, Safari/Firefox and a screen reader are not tested.
+- Product choices made: destination "favourite" hearts kept (local-only, as in the prototype); console FAQ reorder buttons not built (order is a per-question field and the API rate limit would make reordering several saves); no maintenance switch or GA ID in console settings (the server keeps neither).

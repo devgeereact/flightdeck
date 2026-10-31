@@ -31,3 +31,6 @@ Owner decisions: audience personal and free (non-commercial, not promoted); evol
 
 ## Decision 26 Oct 2026
 Design language is airport signage and printed timetables (hairlines, small radii, one dark board panel, tabular data); brand colours and fonts unchanged; Lenis on public pages and the app, never under reduced motion; no fabricated flight data anywhere in marketing visuals; third-party design references (NerdWallet, 21st) inform structure only. See docs/DESIGN.md and ADR-019.
+
+## Decision 31 Oct 2026
+Owner approved the blue redesign prototype and asked for our own logo, every gap fixed, local testing of every part, then live. Brand: blue #1866ff, ink, amber fill, Inter / Inter Tight, own mark (runway, take-off arc, amber destination dot). Photography allowed from openly licensed sources with public credits. No fabricated flight data anywhere still holds. See ADR-020 and docs/DESIGN.md.
