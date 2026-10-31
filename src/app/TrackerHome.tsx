@@ -371,7 +371,7 @@ export default function TrackerHome(props: Props) {
               onChange={(e) => setDate(e.target.value)}
             />
           </label>
-          <div className="field">
+          <div className="field qp-field">
             <span className="field-label" id="qp">
               Quick pick
             </span>

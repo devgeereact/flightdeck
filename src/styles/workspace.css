@@ -326,6 +326,12 @@ main#main {
   max-width: 1480px;
   width: 100%;
   flex: 1;
+  margin-inline: auto; /* centred in the main column, so large and ultra-wide screens keep balanced margins */
+}
+@media (min-width: 2200px) {
+  .view {
+    max-width: 1680px;
+  }
 }
 .view > section,
 .tracker,
@@ -1947,9 +1953,14 @@ main#main {
 /* The shared footer (SiteFooter, styled in siteFooter.css) inside the app: lined up with the view's content column (left-aligned,
    same 32px gutters and 1480px cap) instead of centred, a smaller gap above it, and clear of the phone tab bar. */
 .app .sf {
-  width: auto;
+  width: calc(100% - 64px);
   max-width: calc(1480px - 64px);
-  margin: 16px 32px 32px;
+  margin: 16px auto 32px;
+}
+@media (min-width: 2200px) {
+  .app .sf {
+    max-width: calc(1680px - 64px);
+  }
 }
 .app .view {
   padding-bottom: 40px;
@@ -2239,6 +2250,9 @@ main#main {
   }
   .lookup-grid {
     grid-template-columns: 1fr 1fr;
+  }
+  .lookup-grid .qp-field {
+    grid-column: 1 / -1; /* no empty cell beside Quick pick, and its chips stay on one line */
   }
   .lookup-grid .btn {
     grid-column: 1 / -1;

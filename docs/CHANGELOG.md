@@ -2,6 +2,11 @@
 
 Newest first. Dates are UK dates.
 
+## 31 October 2026 (later): responsive touch-ups and the design presentation
+- App: the content column is centred on large and ultra-wide screens (1480px, 1680px above 2200px) instead of sitting flush left, and the footer follows it; on tablets the lookup card's Quick pick spans the full row (no empty cell, chips on one line).
+- Website: the page column widens to 1600px above 2200px.
+- Design presentation artifact "Flightdeck Design System and Screens": complete design system (colour with contrast, type, icons, tokens, 8-point spacing, components, patterns) beside 60+ real product screens in browser and tablet frames at 834/1280/1920/2560, exported as six 8K boards (7680×4320). Screens use labelled sample data.
+
 ## 31 October 2026 (later): "Too many requests" fixed
 - The API rate limit is now split per visitor: flight and weather look-ups keep the strict configured limit (`rate_per_minute`, default 30), other app requests (site content, account, packing-list sync, events) get at least 120 a minute, owner-console requests at least 240. One shared 30/minute bucket used to trip during normal use of the packing list or the console.
 - The packing list syncs after a 2.5-second pause in ticking instead of 0.9 seconds.

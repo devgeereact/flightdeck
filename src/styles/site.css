@@ -38,6 +38,11 @@
   --shell: 1360px;
   --gut: clamp(12px, 2.4vw, 28px);
 }
+@media (min-width: 2200px) {
+  :root {
+    --shell: 1600px; /* ultra-wide: a wider column instead of very wide side margins */
+  }
+}
 
 /* ------------------------------------------------------------------ base */
 *,
