@@ -14,6 +14,7 @@
  *   6. Smoke: each "smoke" URL must answer its status. Any failure restores the snapshot automatically.
  *
  * Options: --go, --skip-checks, --rollback (restore the newest snapshot), --list (show snapshots),
+ *   --verify (steps 2 and the upload guard only, on uncommitted work, before you commit or push; never contacts the host),
  *   --config=FILE (another settings file, e.g. release.coming-soon.json for the coming-soon page).
  * host "local" runs everything against $HOME on this computer (used by the kit's own test).
  */
@@ -23,9 +24,11 @@ import path from 'node:path';
 
 const root = process.cwd();
 const argv = process.argv.slice(2);
-const known = new Set(['--go', '--skip-checks', '--rollback', '--list']);
+const known = new Set(['--go', '--skip-checks', '--rollback', '--list', '--verify']);
 for (const a of argv) if (!known.has(a) && !a.startsWith('--config=')) fail(`unknown option ${a}. Options: ${[...known].join(', ')}, --config=FILE`);
 const go = argv.includes('--go');
+const verify = argv.includes('--verify');
+if (verify && (go || argv.includes('--rollback') || argv.includes('--list') || argv.includes('--skip-checks'))) fail('--verify runs the checks and build only; use it on its own.');
 const KEEP = 3;
 const PROTECT = ['config.php', '.htaccess', '.user.ini', 'php.ini', '.env', '.env.*', '*.sql', '*.sql.gz', '*.pem', '*.key', 'error_log', '.well-known/', '.DS_Store'];
 const LAST = ['index.html', 'sw.js', 'manifest.webmanifest'];
@@ -144,15 +147,24 @@ if (argv.includes('--rollback')) {
 }
 
 // ---- 1. Preflight ----
+let short = 'working tree';
+let head = '';
+let before = '';
+if (verify) {
+  step('Verify (local only: checks, build and the upload guard; nothing is sent)');
+  before = run('git', ['status', '--porcelain']).out;
+  console.log(`  ${run('git', ['rev-parse', '--abbrev-ref', 'HEAD']).out}${before ? ', with uncommitted changes' : ', clean'}`);
+} else {
 step('Preflight');
 const branch = run('git', ['rev-parse', '--abbrev-ref', 'HEAD']).out;
 if (branch !== (cfg.branch ?? 'main')) fail(`on branch ${branch}; release from ${cfg.branch ?? 'main'}.`);
 if (run('git', ['status', '--porcelain']).out) fail('the working tree has uncommitted changes.');
 run('git', ['fetch', '-q', 'origin', branch]);
-const head = run('git', ['rev-parse', 'HEAD']).out;
+head = run('git', ['rev-parse', 'HEAD']).out;
 if (head !== run('git', ['rev-parse', `origin/${branch}`]).out) fail(`${branch} is not equal to origin/${branch} (pull or push first).`);
-const short = head.slice(0, 7);
+short = head.slice(0, 7);
 console.log(`  ${branch} at ${short}, clean, pushed`);
+}
 
 // ---- 2. Checks and build ----
 if (argv.includes('--skip-checks')) console.log('\n  WARNING: checks skipped (--skip-checks).');
@@ -165,7 +177,7 @@ if (cfg.build) {
   step(cfg.build);
   run(cfg.build, [], { inherit: true, shell: true });
 }
-if (run('git', ['status', '--porcelain']).out) fail('checks or build changed tracked files; commit or discard them first.');
+if (run('git', ['status', '--porcelain']).out !== before) fail('checks or build changed tracked files; commit or discard them first.');
 
 for (const part of cfg.parts) {
   const src = path.join(root, part.from);
@@ -181,10 +193,19 @@ for (const part of cfg.parts) {
       if (skipped.has(f)) continue;
       if (statSync(f).isDirectory()) walk(f);
       else if (banned.test(n)) bad.push(path.relative(root, f));
+      else if (n === 'config.php' && d !== src && !(part.allow ?? []).includes('config.php')) skippedCode.push(path.relative(root, f));
     }
   };
+  const skippedCode = [];
   walk(src);
   if (bad.length) fail(`${part.from} holds files that must never be uploaded: ${bad.join(', ')}`);
+  // A file named config.php is never sent (it protects the server's settings). At a part's top level that is the
+  // settings slot; deeper down it is code that would silently go missing, so the release stops.
+  if (skippedCode.length) fail(`${part.from} holds a file named config.php, which a release never uploads: ${skippedCode.join(', ')}. Rename it (e.g. settings.php), or exclude it if it is a local-only file.`);
+}
+if (verify) {
+  console.log('\nVerified: the checks and build pass and every file can be uploaded. Nothing was sent. Commit and push to deploy.');
+  process.exit(0);
 }
 
 // ---- 3. Plan ----
