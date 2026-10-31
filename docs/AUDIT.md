@@ -2,6 +2,11 @@
 
 Newest first. Each entry says what was checked, how, and what was not.
 
+## 31 October 2026: post-release check of the live site
+- Live pages 200 (home, guides, help, packing list, about, /app/, icons, photos, /api/site); new footer text and "© Gakinz" served; home, guides and sign-in screenshotted on production; packing list prints as one A4 page from production.
+- Found and fixed: production CSP refused Clerk's protection script (`cdn.protect.clerk.com/bootstrap.js`). Added `*.protect.clerk.com` to script-src and frame-src and `*.protect.clerk.com:*` to connect-src per Clerk's CSP guide; after redeploy the live sign-in loads with no refused requests.
+- Signed-in header: checked four states locally (Clerk cookie signed in, cookie signed out with a stale marker, marker only, nothing): only a real session shows "My flights".
+
 ## 31 October 2026: release review of the blue redesign (functional, visual, accessibility basics)
 - **Gate:** `pnpm check` PASS (lint 0 errors, typecheck, 107/107 unit and page tests, PHP suite all passed, production build). `pnpm test:ui` all checks passed. `pnpm test:console` all checks passed.
 - **Visual (headless Chrome shell 156, local build on 127.0.0.1):** home at 1440 and 390 compared side by side with the approved prototype; inner pages (guides, a guide, how it works, coverage, help, about, contact, packing list) after scrolling through; sticky header over the hero, white sheets, the dark panel and the canvas; phone menu opened while the header is stuck; app tracker, flight tabs, saved, packing, help and sign-in at 1440/900/390 (test fixtures clearly labelled); console screens at 1440/1024/390. No horizontal overflow and no page errors in the final runs.

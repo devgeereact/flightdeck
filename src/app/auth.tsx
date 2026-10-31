@@ -175,6 +175,10 @@ export function SavedSync({
     if (!isLoaded) return;
     setSignedIn(!!isSignedIn);
     setUserId(user?.id ?? null);
+    // Tells the public pages (same origin, cached HTML) whether to show "My flights" instead of "Sign in".
+    try {
+      localStorage.setItem('fd-signed-in', isSignedIn ? '1' : '0');
+    } catch {}
     // Signed out (including after the page reload that signing out causes) while this device still holds an account's list: wipe it, so the next person on a shared device does not see it.
     if (!isSignedIn || !user) {
       hydrated.current = null;

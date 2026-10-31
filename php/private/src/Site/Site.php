@@ -40,6 +40,7 @@ final class Site
         'plus' => '<path d="M5 12h14"/><path d="M12 5v14"/>',
         'book' => '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
         'alert' => '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+        'user' => '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
         'mail' => '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
         'menu' => '<path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/>',
         'share' => '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98"/><path d="m15.41 6.51-6.82 3.98"/>',
@@ -270,7 +271,7 @@ final class Site
         // without JavaScript it simply stays open under the bar.
         $header = '<header class="site-top"><div class="shell"><div class="topbar">' . $this->brand('on-photo')
             . '<nav class="site-nav" id="site-nav" aria-label="Main"><div class="sheet-top">' . $this->brand() . '<button class="icon-btn" type="button" data-menu-close aria-label="Close menu">' . self::ico('x') . '</button></div><div class="topnav">' . $nav . '</div>'
-            . '<div class="end"><a class="btn btn-glass btn-sm" href="/app/">Sign in</a><a class="btn btn-white btn-sm" href="/app/">Open the app</a></div></nav>'
+            . '<div class="end"><a class="btn btn-glass btn-sm" data-auth="out" href="/app/">Sign in</a><a class="btn btn-white btn-sm" data-auth="out" href="/app/">Open the app</a><a class="btn btn-white btn-sm signed-chip" data-auth="in" href="/app/" hidden><span class="signed-dot" aria-hidden="true">' . self::ico('user', 'ico-sm') . '</span>My flights<span class="sr-only"> (you are signed in)</span></a></div></nav>'
             . '<button class="icon-btn menu-btn" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">' . self::ico('menu') . '</button></div></div></header>';
         return '<!doctype html>
 <html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -590,7 +591,7 @@ final class Site
             . '<div class="field"><label for="lookup-date">Departure date</label><select name="date" id="lookup-date">' . $opts . '</select>' . self::ico('down', 'caret') . '</div>'
             . '<div class="field"><span class="label" id="quickLbl">Quick pick</span><div class="daychips" role="group" aria-labelledby="quickLbl"><button type="button" data-off="-1" aria-pressed="false">Yesterday</button><button type="button" data-off="0" aria-pressed="true">Today</button><button type="button" data-off="1" aria-pressed="false">Tomorrow</button></div></div>'
             . '<button class="btn btn-primary" type="submit">' . self::ico('search') . 'Search</button></div>'
-            . '<p class="search-note">' . self::ico('info', 'ico-sm') . '<span><span id="dateNote">Full schedule, gate and belt for departures from yesterday to three days ahead. Other dates show the usual route.</span> <span id="lookup-msg" role="status" aria-live="polite">Free account needed. <a href="/help/#faq-account">Why?</a></span></span></p></form>'
+            . '<p class="search-note">' . self::ico('info', 'ico-sm') . '<span><span id="dateNote">Full schedule, gate and belt for departures from yesterday to three days ahead. Other dates show the usual route.</span> <span id="lookup-msg" role="status" aria-live="polite"><span data-auth="out">Free account needed. <a href="/help/#faq-account">Why?</a></span><span data-auth="in" hidden>You are signed in, so results open straight in your account.</span></span></span></p></form>'
             . '<form class="lookup" id="packstart" action="/travel-checklist/" method="get" data-panel="packstart" hidden><div class="search-grid packing">'
             . '<div class="field"><label for="trip">Trip name</label><input id="trip" name="trip" placeholder="New York in November" maxlength="60" autocomplete="off"></div>'
             . '<div class="field"><label for="leave">Leaving</label><input id="leave" name="date" type="date"></div>'
@@ -641,7 +642,7 @@ final class Site
             . '<div class="panel acc" id="acc">' . $this->faqList(array_slice($faqsAll, 0, 6), false, true) . '</div></div></section>' : '';
 
         $final = $p['final'] ?? ['title' => '', 'text' => ''];
-        $closing = '<section class="sec" aria-labelledby="closeH"><div class="closing"><div><h2 id="closeH">' . self::e($final['title']) . '</h2><p>' . $this->inl((string) $final['text']) . '</p><div class="actions"><a class="btn btn-white btn-lg" href="/app/">Create a free account</a><a class="btn btn-glass btn-lg" href="#packing">Use the packing list</a></div></div>' . self::routeArt() . '</div></section>';
+        $closing = '<section class="sec" aria-labelledby="closeH"><div class="closing"><div><h2 id="closeH">' . self::e($final['title']) . '</h2><p>' . $this->inl((string) $final['text']) . '</p><div class="actions"><a class="btn btn-white btn-lg" data-auth="out" href="/app/">Create a free account</a><a class="btn btn-white btn-lg" data-auth="in" href="/app/" hidden>Open my flights</a><a class="btn btn-glass btn-lg" href="#packing">Use the packing list</a></div></div>' . self::routeArt() . '</div></section>';
 
         $dialog = '<dialog class="dialog" id="contact-dlg" aria-labelledby="contactH"><div class="dialog-head"><div><h2 id="contactH">Send a message</h2><p class="label">It goes to the Flightdeck inbox, and we reply by email.</p></div><button class="icon-btn" type="button" data-close aria-label="Close">' . self::ico('x') . '</button></div>' . $this->contactForm(true) . '</dialog>';
 

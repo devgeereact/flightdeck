@@ -779,6 +779,26 @@ section {
   gap: 8px;
   align-items: center;
 }
+[data-auth][hidden] {
+  display: none !important;
+}
+.signed-chip {
+  gap: 8px;
+  padding-left: 6px;
+}
+.signed-chip .signed-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  background: var(--blue);
+  color: #fff;
+}
+.site-top.stuck .signed-chip .signed-dot {
+  background: #fff;
+  color: var(--blue);
+}
 .sheet-top {
   display: none;
 }

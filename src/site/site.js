@@ -20,6 +20,32 @@
   var $ = (s, r) => (r || document).querySelector(s);
   var $$ = (s, r) => [].slice.call((r || document).querySelectorAll(s));
 
+  // Signed in already? The public pages are cached HTML, so the header is fixed at "Sign in". Clerk's __client_uat cookie
+  // (a timestamp, 0 when signed out) is the truth when present; otherwise the app's own marker (localStorage fd-signed-in,
+  // written whenever its Clerk state settles). Signed-in visitors see "My flights" instead of sign-in prompts.
+  var signedIn = (() => {
+    var vals = [];
+    document.cookie.replace(/(?:^|;\s*)__client_uat(?:_[A-Za-z0-9-]+)?=(\d+)/g, (m, v) => {
+      vals.push(Number(v));
+      return m;
+    });
+    if (vals.length) return vals.some((v) => v > 0);
+    try {
+      return localStorage.getItem('fd-signed-in') === '1';
+    } catch (e) {
+      return false;
+    }
+  })();
+  if (signedIn) {
+    doc.classList.add('signed-in');
+    $$('[data-auth="out"]').forEach((e) => {
+      e.hidden = true;
+    });
+    $$('[data-auth="in"]').forEach((e) => {
+      e.hidden = false;
+    });
+  }
+
   // Sticky header: over the photo band it stays as it is; once the visitor scrolls past it, it becomes a frosted white bar
   // with dark text (.stuck) so it can be read on any background. Without JavaScript it simply scrolls with the page.
   var topEl = $('.site-top');

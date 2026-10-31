@@ -385,8 +385,10 @@ test('one shared link list: the same footer on every page, header links match th
       p + ' header',
     );
     assert.ok(
-      head.includes('<a class="btn btn-white btn-sm" href="/app/">Open the app</a>') &&
-        head.includes('<a class="btn btn-glass btn-sm" href="/app/">Sign in</a>'),
+      head.includes(
+        '<a class="btn btn-white btn-sm" data-auth="out" href="/app/">Open the app</a>',
+      ) &&
+        head.includes('<a class="btn btn-glass btn-sm" data-auth="out" href="/app/">Sign in</a>'),
       p + ' header actions',
     );
   }
@@ -608,6 +610,11 @@ test('home follows the approved prototype: sections in order, real data behind e
       h.includes('id="contact-form"') &&
       h.includes('/js/contact-test.js'),
   );
+  // Signed-in visitors: site.js swaps the sign-in prompts for "My flights" (hidden until then, so no-JS shows sign in).
+  for (const [p, d] of docs()) {
+    assert.ok(d.includes('data-auth="out" href="/app/">Sign in</a>'), p);
+    assert.ok(/data-auth="in" href="\/app\/" hidden>/.test(d), `${p} has a hidden signed-in link`);
+  }
   // Footer: © Gakinz linking to gakinz.com on every page; photo credits live on the About page only.
   for (const [p, d] of docs()) {
     assert.ok(d.includes('<a href="https://gakinz.com" rel="noopener">Gakinz</a>'), p);

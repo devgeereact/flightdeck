@@ -2,6 +2,10 @@
 
 Newest first. Dates are UK dates.
 
+## 31 October 2026 (later): signed-in header and sign-in protection
+- Public pages know when you are already signed in: the header shows "My flights" instead of "Sign in" / "Open the app", the closing band says "Open my flights" and the lookup note no longer asks for an account. Read in the browser from Clerk's `__client_uat` cookie, falling back to a marker the app writes (`fd-signed-in`); pages stay cached and show the signed-out version without JavaScript.
+- Content-Security-Policy now allows Clerk's abuse and fraud protection hosts (`*.protect.clerk.com`), which production sign-in was refusing.
+
 ## 31 October 2026: blue redesign and our own logo
 - New identity (ADR-020): sky blue, ink and amber on a cool canvas, Inter / Inter Tight self-hosted, our own mark (runway line, take-off arc, amber destination dot) in the favicon, PWA icons, social image and every header.
 - Public website rebuilt to the approved prototype: photo hero with an overlapping tabbed search, result anatomy and freshness panels, "Before you fly" destinations and guides, how it works, packing teaser, questions, closing band. Every inner page restyled to match.
