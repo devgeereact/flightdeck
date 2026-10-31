@@ -1,9 +1,9 @@
 import { registerSW } from 'virtual:pwa-register';
-import { SignInButton, SignUpButton } from '@clerk/react';
-import { ArrowLeft, Plane } from 'lucide-react';
-import { useEffect } from 'react';
-import SiteFooter from '../SiteFooter';
-import { ga, track, trackOnce } from '../shared/track';
+import { SignIn } from '@clerk/react';
+import { Plane } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Brand } from '../shared/Logo';
+import { trackOnce } from '../shared/track';
 
 const FLIGHT_LINK = /^#\/flight\/([A-Z0-9]{3,8})\/(\d{4}-\d{2}-\d{2})$/;
 const dayLabel = (d: string) => {
@@ -13,8 +13,9 @@ const dayLabel = (d: string) => {
     : t.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
 };
 
-// What a signed-out visitor sees at /app/. The public website (/) explains the product; this screen only asks them to sign in,
-// and says which flight they are about to open when they arrived from a link. After sign-in the same address opens that flight.
+// What a signed-out visitor sees at /app/: a photo panel and Clerk's own sign-in, drawn with Flightdeck's tokens (clerkAppearance).
+// The same steps create a free account (withSignUp). When they arrived from a flight link, it says which flight opens next; after
+// sign-in the same address opens it.
 export default function SignInScreen() {
   useEffect(() => {
     trackOnce('landing_view');
@@ -45,70 +46,66 @@ export default function SignInScreen() {
     : location.hash.startsWith('#/checklist')
       ? 'your packing list'
       : '';
+  // Where to land after signing in: this same address, captured once, so a flight link opens that flight.
+  const [back] = useState(() => (typeof window === 'undefined' ? '/app/' : window.location.href));
   return (
-    <div className="signin-page">
-      <header className="signin-top">
-        <a className="brand" href="/">
-          <span className="brand-mark">
-            <Plane size={22} />
-          </span>
-          <span>
-            flightdeck<span className="brand-dot">.</span>
-          </span>
-        </a>
-        <a className="btn btn-secondary" href="/">
-          <ArrowLeft size={16} />
-          Home
-        </a>
-      </header>
-      <main id="main" className="signin-main">
-        <div className="signin-story">
-          <p className="workspace-eyebrow">FREE ACCOUNT</p>
-          <h2>Your flights and packing list, on every device.</h2>
-          <p>
-            Each flight look-up uses a limited allowance from our data providers, so look-ups need a
-            free account.
-          </p>
-          <ul className="signin-points">
-            <li>Keep up to 12 saved flights</li>
-            <li>Tick off your packing list on your phone, with one list per trip</li>
-            <li>The guides and the printable packing list stay open to everyone</li>
-          </ul>
-          <a href="/coverage/">How the data works →</a>
-        </div>
-        <section className="signin-card" aria-labelledby="signin-h">
-          <span className="signin-mark" aria-hidden="true">
-            <Plane size={26} />
-          </span>
-          <h1 id="signin-h">{target ? `Sign in to see ${target}` : 'Sign in to Flightdeck'}</h1>
-          <p>
-            Sign in to look up flights and open your saved flights and packing lists. New here?
-            Create a free account.
-          </p>
-          <div className="signin-actions">
-            <SignInButton mode="modal">
-              <button className="btn btn-primary btn-lg">Sign in</button>
-            </SignInButton>
-            <SignUpButton mode="modal">
-              <button
-                className="btn btn-secondary btn-lg"
-                onClick={() => {
-                  track('cta_click');
-                  ga('cta_click', { source: 'app_signin' });
-                }}
-              >
-                Create free account
-              </button>
-            </SignUpButton>
+    <div className="signin">
+      <div className="si-photo">
+        <img
+          src="/img/sunset-wing.jpg"
+          alt="An aircraft wing above the clouds at sunset"
+          width="1500"
+          height="942"
+        />
+        <Brand href="/" className="on-photo" />
+        <h1>Your flights and packing list, on every device.</h1>
+        <ul>
+          <li>
+            <b className="fd-data">12</b>saved flights on your account
+          </li>
+          <li>
+            <b>1 list</b>for every trip, linked to its flight
+          </li>
+          <li>
+            <b>Free</b>no adverts and nothing to buy
+          </li>
+        </ul>
+      </div>
+      <main id="main" className="si-form">
+        <div className="si-card">
+          <h2 id="signin-h">Sign in to Flightdeck</h2>
+          <p>New here? The same steps create your free account.</p>
+          {target && (
+            <div className="pending">
+              <Plane size={20} aria-hidden="true" />
+              <span>
+                Sign in to see <b>{target}</b>. We will take you straight there.
+              </span>
+            </div>
+          )}
+          <div className="si-step">
+            <SignIn
+              // Virtual routing keeps every sign-in step out of the address bar, so a flight link (#/flight/…) survives the
+              // whole flow. Clerk supports it (its modals use it) but types only path and hash for mounted components.
+              routing={'virtual' as 'hash'}
+              withSignUp
+              fallbackRedirectUrl={back}
+              signUpFallbackRedirectUrl={back}
+            />
           </div>
-          <p className="signin-note">
-            No account needed for the <a href="/guides/">travel guides</a> or the{' '}
-            <a href="/travel-checklist/">printable packing list</a>. See{' '}
-            <a href="/how-it-works/">how Flightdeck works</a>.
-          </p>
-        </section>
+          <div className="si-meta">
+            <span>
+              By continuing you agree to the <a href="/terms/">terms</a> and{' '}
+              <a href="/privacy/">privacy policy</a>.
+            </span>
+            <span>
+              No account is needed for the <a href="/guides/">travel guides</a> or the{' '}
+              <a href="/travel-checklist/">printable packing list</a>.
+            </span>
+            <a href="/">Back to the website</a>
+          </div>
+        </div>
       </main>
-      <SiteFooter />
     </div>
   );
 }

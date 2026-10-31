@@ -2,34 +2,36 @@ import { registerSW } from 'virtual:pwa-register';
 import Lenis from 'lenis';
 import {
   AlertCircle,
-  ArrowRight,
-  ArrowUpRight,
+  ArrowLeft,
   Bookmark,
-  CalendarDays,
-  ChevronRight,
-  Download,
+  CircleHelp,
   Info,
+  LayoutGrid,
   ListChecks,
-  Navigation,
-  Plane,
+  MessageCircle,
   RefreshCw,
   Search,
   ShieldCheck,
+  Smartphone,
 } from 'lucide-react';
 import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import Announcements from './app/Announcements';
 import AppBoundary from './app/AppBoundary';
 import AuthLoading from './app/AuthLoading';
-import { AuthBar, SavedSync, SignedOutCleanup, TokenBridge } from './app/auth';
-import Feedback from './app/Feedback';
+import { AuthBar, SavedSync, SignedOutCleanup, SignOutItem, TokenBridge } from './app/auth';
+import { clerkAppearance } from './app/clerkAppearance';
+import Feedback, { openFeedback } from './app/Feedback';
+import HelpView from './app/HelpView';
 import InstallHelp from './app/InstallHelp';
 import SavedFlights from './app/SavedFlightCollection';
 import { recallResult, rememberResult, type SavedItem } from './app/savedFlights';
+import TrackerHome from './app/TrackerHome';
 import FlightView from './features/flight/FlightView';
 import { time, ukDate } from './features/flight/flightFormat';
 import SiteFooter from './SiteFooter';
 import { apiFetch, readableError } from './shared/api';
+import { Brand } from './shared/Logo';
 import { smoothScrollAllowed } from './shared/smoothScroll';
 import { ga, gaPageview, track } from './shared/track';
 import type { Flight, FlightResponse } from './types';
@@ -44,7 +46,7 @@ const CLERK_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefin
 // A flight can be opened from a link: #/flight/BA59/2026-10-25
 const FLIGHT_LINK = /^#\/flight\/([A-Z0-9]{3,8})\/(\d{4}-\d{2}-\d{2})$/;
 const localZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
-const ROUTES = ['overview', 'saved', 'checklist', 'admin'];
+const ROUTES = ['overview', 'saved', 'checklist', 'help', 'admin'];
 // The owner console has its own sections under #/admin/<section>/..., so only the first part picks the screen.
 const readRoute = () => {
   const h = location.hash.replace(/^#\/?/, '').split('/')[0];
@@ -80,7 +82,7 @@ function useHashRoute(): [string, (r: string) => void] {
 const ChecklistView = lazy(() => import('./features/checklist/Checklist'));
 const AdminView = lazy(() => import('./console/ConsoleShell'));
 const SignInScreen = lazy(() => import('./app/SignInScreen'));
-// Signed-out visitors get the landing page; signed-in users get the dashboard. Without a Clerk key the app is open (no accounts).
+// Signed-out visitors get the sign-in screen; signed-in users get the app. Without a Clerk key the app is open (no accounts).
 function Gate() {
   const { isLoaded, isSignedIn } = useAuth();
   const [slow, setSlow] = useState(false);
@@ -101,6 +103,14 @@ function Gate() {
     </>
   );
 }
+type NavItem = {
+  id: string;
+  icon: typeof LayoutGrid;
+  label: string;
+  text: string;
+  short: string;
+  count: number | null;
+};
 function Dashboard() {
   const [number, setNumber] = useState(''),
     [date, setDate] = useState(today),
@@ -138,7 +148,9 @@ function Dashboard() {
     request = useRef<AbortController | null>(null),
     version = useRef(0),
     previous = useRef<Flight | null>(null),
-    active = useRef<{ number: string; date: string } | null>(null);
+    active = useRef<{ number: string; date: string } | null>(null),
+    // The last look-up asked for, so "Try again" after a failed search repeats it (active is only set after a success).
+    attempt = useRef<{ number: string; date: string } | null>(null);
   const flight = data?.flights[selected];
   useEffect(() => {
     if (!CLERK_KEY || !userId) {
@@ -212,6 +224,7 @@ function Dashboard() {
     const controller = new AbortController();
     request.current = controller;
     const id = ++version.current;
+    attempt.current = { number: n, date: d };
     setBusy(true);
     setError('');
     setStale('');
@@ -269,6 +282,7 @@ function Dashboard() {
         const kept = recallResult(n + '|' + d);
         if (kept && (!navigator.onLine || (e as Error).name === 'TypeError')) {
           setData(kept.data);
+          active.current = { number: n, date: d };
           setStale(
             `You're offline. This is what Flightdeck last fetched at ${new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short', timeZone: localZone() }).format(new Date(kept.at))}, so it may be out of date.`,
           );
@@ -286,24 +300,54 @@ function Dashboard() {
     }, 60000);
     return () => clearInterval(timer);
   }, [auto, online]);
-  function save() {
-    if (!active.current) return;
-    ga('flight_saved');
-    const a = active.current;
-    const items = [a, ...saved.filter((s) => s.number !== a.number || s.date !== a.date)].slice(
-      0,
-      6,
-    );
+  const storeSaved = (items: SavedItem[], failText: string) => {
     setSaved(items);
     try {
       localStorage.setItem('flightdeck-saved', JSON.stringify(items));
     } catch {
-      setError('Your browser could not save this flight.');
+      setError(failText);
     }
+  };
+  const isSaved = (n: { number: string; date: string } | null) =>
+    !!n && saved.some((s) => s.number === n.number && s.date === n.date);
+  // Save toggles: a flight that is already saved is removed again (the button then reads "Saved").
+  function save() {
+    const a = active.current;
+    if (!a) return;
+    if (isSaved(a)) {
+      storeSaved(
+        saved.filter((s) => s.number !== a.number || s.date !== a.date),
+        'Your browser could not update saved flights.',
+      );
+      return;
+    }
+    ga('flight_saved');
+    storeSaved(
+      [a, ...saved.filter((s) => s.number !== a.number || s.date !== a.date)].slice(0, 12),
+      'Your browser could not save this flight.',
+    );
   }
   const refresh = () => {
-    const a = active.current;
-    if (a) void load(a.number, a.date, true);
+    const a = active.current || attempt.current;
+    if (a) void load(a.number, a.date, !!active.current);
+  };
+  // Back to the tracker's start screen: forget the flight on screen (it stays in the offline copy and can be opened again).
+  const clearFlight = () => {
+    request.current?.abort();
+    version.current++;
+    setBusy(false);
+    setData(null);
+    setError('');
+    setStale('');
+    setChanges([]);
+    setAuto(false);
+    previous.current = null;
+    active.current = null;
+    try {
+      if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+    } catch {
+      /* ignore */
+    }
   };
   useEffect(() => {
     const m = location.hash.match(FLIGHT_LINK);
@@ -313,65 +357,111 @@ function Dashboard() {
       void load(m[1], m[2]);
     }
   }, []);
+  const openFlight = (s: SavedItem) => {
+    setNumber(s.number);
+    setDate(s.date);
+    setTab('overview');
+    void load(s.number, s.date);
+  };
+  const removeSaved = (index: number) =>
+    storeSaved(
+      saved.filter((_, j) => j !== index),
+      'Your browser could not update saved flights.',
+    );
   async function share() {
     const a = active.current;
     if (!a) return;
     const url = `${location.origin}/app/#/flight/${a.number}/${a.date}`;
+    const note = (t: string, ms = 3000) => {
+      setShareNote(t);
+      setTimeout(() => setShareNote(''), ms);
+    };
     try {
       if (navigator.share) {
         await navigator.share({ title: `${a.number} on Flightdeck`, url });
         return;
       }
       await navigator.clipboard.writeText(url);
-      setShareNote('Link copied');
-      setTimeout(() => setShareNote(''), 3000);
+      note('Link copied. Anyone signed in can open it.');
     } catch (e) {
-      if ((e as Error).name !== 'AbortError') {
-        setShareNote('Copy this link: ' + url);
-      }
+      if ((e as Error).name !== 'AbortError') note('Copy this link: ' + url, 8000);
     }
   }
-  // One list drives both menus: the sidebar (full labels, icon-only between 701 and 1000px) and the phone row (short labels).
-  const navItems: {
-    id: string;
-    icon: typeof Plane;
-    label: string;
-    short: string;
-    count: number | null;
-  }[] = [
-    { id: 'overview', icon: Navigation, label: 'Flight tracker', short: 'Tracker', count: null },
-    { id: 'saved', icon: Bookmark, label: 'Saved flights', short: 'Saved', count: saved.length },
+  const installApp = async () => {
+    if (install) {
+      await install.prompt();
+      setInstall(null);
+    } else setInstallHelp(true);
+  };
+  const lookup = () => {
+    if (!number.trim()) {
+      searchRef.current?.focus();
+      return;
+    }
+    setTab('overview');
+    void load();
+  };
+  // The travel menu: the sidebar shows full labels (icons only between 761 and 1200px), the phone tab bar short ones.
+  const navItems: NavItem[] = [
+    {
+      id: 'overview',
+      icon: LayoutGrid,
+      label: 'Flight tracker',
+      text: 'Tracker',
+      short: 'Tracker',
+      count: null,
+    },
+    {
+      id: 'saved',
+      icon: Bookmark,
+      label: 'Saved flights',
+      text: 'Saved flights',
+      short: 'Saved',
+      count: saved.length,
+    },
     {
       id: 'checklist',
       icon: ListChecks,
       label: 'Packing list',
-      short: 'Packing list',
+      text: 'Packing list',
+      short: 'Packing',
       count: null,
     },
-    ...(me.isAdmin
-      ? [
-          {
-            id: 'admin',
-            icon: ShieldCheck,
-            label: 'Owner console',
-            short: 'Console',
-            count: me.unread || null,
-          },
-        ]
-      : []),
   ];
-  const navName = (n: (typeof navItems)[number]) =>
-    n.count == null
-      ? n.label
-      : n.id === 'admin'
-        ? `${n.label} (${n.count} unread)`
-        : `${n.label} (${n.count})`;
+  const navName = (n: NavItem) => (n.count == null ? n.label : `${n.label} (${n.count})`);
+  const go = (id: string) => {
+    // The tracker item always leads to the tracker's start screen, as the breadcrumb does.
+    if (id === 'overview' && tab === 'overview') clearFlight();
+    setTab(id);
+  };
   const skipToMain = (e: React.MouseEvent) => {
     e.preventDefault();
     const m = document.getElementById('main');
     m?.focus();
     m?.scrollIntoView?.();
   };
+  const ownerName = me.unread ? `Owner console (${me.unread} unread)` : 'Owner console';
+  const legPicker =
+    data && data.flights.length > 1 ? (
+      <label className="flight-picker">
+        Choose a leg{' '}
+        <select
+          onChange={(e) => {
+            const i = Number(e.target.value);
+            setSelected(i);
+            previous.current = data.flights[i];
+          }}
+          value={selected}
+        >
+          {data.flights.map((f, i) => (
+            <option value={i} key={f.id}>
+              {f.number} · {f.origin.code} → {f.destination.code} ·{' '}
+              {time(f.scheduledOut, f.origin.timezone)}
+            </option>
+          ))}
+        </select>
+      </label>
+    ) : null;
   return (
     <div className="app">
       <a className="skip-link" href="#main" onClick={skipToMain}>
@@ -391,351 +481,232 @@ function Dashboard() {
           setUserId={setUserId}
         />
       )}
-      <aside className="sidebar">
-        <a className="brand" href="#" aria-label="Flightdeck home">
-          <span className="brand-mark">
-            <Plane size={23} />
-          </span>
-          flightdeck<span className="brand-dot">.</span>
-        </a>
-        <div className="nav-label">Your travel space</div>
+      <aside className="sidebar" aria-label="Sidebar">
+        <Brand href="#" className="side-brand" />
+        <h2 className="side-label">Travel</h2>
         <nav className="side-nav" aria-label="Main">
           {navItems.map((n) => (
             <button
               key={n.id}
+              type="button"
               className={'nav nav-' + n.id + (tab === n.id ? ' active' : '')}
               aria-current={tab === n.id ? 'page' : undefined}
               aria-label={navName(n)}
               title={navName(n)}
-              onClick={() => {
-                setTab(n.id);
-                if (n.id === 'overview') searchRef.current?.focus();
-              }}
+              onClick={() => go(n.id)}
             >
-              <n.icon size={18} aria-hidden="true" />
-              <span className="nav-text">{n.label}</span>
-              {n.count != null && <span className="count">{n.count}</span>}
-              {n.id === 'overview' && (
-                <ChevronRight size={15} className="nav-chev" aria-hidden="true" />
-              )}
+              <n.icon size={20} aria-hidden="true" />
+              <span className="nav-text">{n.text}</span>
+              {n.count != null && <span className="count fd-data">{n.count}</span>}
             </button>
           ))}
         </nav>
-        <div className="side-bottom">
-          <div className="little-plane">
-            <Plane size={26} />
-          </div>
-          <h3>Track it, then pack for it.</h3>
-          <p>Check your flight and the weather, then tick off your packing list.</p>
+        <h2 className="side-label">Support</h2>
+        <nav className="side-nav" aria-label="Support">
           <button
-            className="btn btn-secondary install"
-            onClick={async () => {
-              if (install) {
-                await install.prompt();
-                setInstall(null);
-              } else {
-                setInstallHelp(true);
-              }
-            }}
+            type="button"
+            className={'nav' + (tab === 'help' ? ' active' : '')}
+            aria-current={tab === 'help' ? 'page' : undefined}
+            aria-label="Help and FAQ"
+            title="Help and FAQ"
+            onClick={() => setTab('help')}
           >
-            <Download size={15} />
-            Install app
+            <CircleHelp size={20} aria-hidden="true" />
+            <span className="nav-text">Help and FAQ</span>
           </button>
-          <div className="connection">
-            <span className={online ? 'dot' : 'dot offline'} />
-            {online ? 'Connected' : 'Offline · updates paused'}
-          </div>
+          <button
+            type="button"
+            className="nav"
+            aria-label="Send feedback"
+            title="Send feedback"
+            onClick={openFeedback}
+          >
+            <MessageCircle size={20} aria-hidden="true" />
+            <span className="nav-text">Send feedback</span>
+          </button>
+          <button
+            type="button"
+            className="nav install"
+            aria-label="Install the app"
+            title="Install the app"
+            onClick={() => void installApp()}
+          >
+            <Smartphone size={20} aria-hidden="true" />
+            <span className="nav-text">Install the app</span>
+          </button>
+        </nav>
+        <div className="side-foot">
+          {!online && (
+            <p className="connection" role="status">
+              <span className="dot offline" />
+              <span className="nav-text">Offline · updates paused</span>
+            </p>
+          )}
+          {me.isAdmin && (
+            <button
+              type="button"
+              className={'owner-link' + (tab === 'admin' ? ' active' : '')}
+              aria-current={tab === 'admin' ? 'page' : undefined}
+              aria-label={ownerName}
+              title={ownerName}
+              onClick={() => setTab('admin')}
+            >
+              <ShieldCheck size={20} aria-hidden="true" />
+              <span className="nav-text">Owner console</span>
+              {me.unread ? <span className="count fd-data">{me.unread}</span> : null}
+            </button>
+          )}
+          {CLERK_KEY && <SignOutItem />}
         </div>
       </aside>
       <main id="main" tabIndex={-1}>
         <header className="topbar">
-          <span className="topbar-location">
-            <span className="topbar-home">Workspace</span>
-            <ChevronRight size={14} />
-            {
-              (
-                {
-                  overview: 'Flight tracker',
-                  saved: 'Saved flights',
-                  checklist: 'Packing list',
-                  admin: 'Owner console',
-                } as Record<string, string>
-              )[tab]
-            }
-          </span>
-          <div>
+          <Brand href="#" className="top-brand" />
+          <form
+            className="topsearch"
+            role="search"
+            onSubmit={(e) => {
+              e.preventDefault();
+              lookup();
+            }}
+          >
+            <Search size={20} aria-hidden="true" />
+            <input
+              aria-label="Look up a flight number"
+              value={number}
+              onChange={(e) => setNumber(e.target.value.toUpperCase())}
+              placeholder="Look up a flight, such as BA117"
+              autoComplete="off"
+              autoCapitalize="characters"
+              spellCheck={false}
+              maxLength={12}
+            />
+          </form>
+          <div className="top-end">
+            <Announcements />
             <Feedback />
-            {CLERK_KEY ? <AuthBar /> : <span className="avatar">FD</span>}
+            {CLERK_KEY ? (
+              <AuthBar isAdmin={me.isAdmin} onConsole={() => setTab('admin')} />
+            ) : (
+              <span className="avatar" aria-hidden="true">
+                FD
+              </span>
+            )}
           </div>
         </header>
-        <nav className="mobile-nav" aria-label="Main">
-          {navItems.map((n) => (
-            <button
-              key={n.id}
-              className={tab === n.id ? 'on' : undefined}
-              aria-current={tab === n.id ? 'page' : undefined}
-              onClick={() => setTab(n.id)}
-            >
-              <n.icon size={15} aria-hidden="true" />
-              {n.short}
-              {n.count != null && (
-                <>
-                  {' '}
-                  <span className="count">{n.count}</span>
-                </>
-              )}
-            </button>
-          ))}
-        </nav>
-        {(tab === 'overview' || tab === 'saved') && (
-          <>
-            {tab === 'overview' && data && <h1 className="sr-only">Flight tracker</h1>}
-            {(tab === 'saved' || !data) && (
-              <section className="heading">
-                <div>
-                  <p className="workspace-eyebrow">
-                    {tab === 'saved' ? 'SAVED FLIGHTS' : 'FLIGHT TRACKER'}
-                  </p>
-                  <h1>{tab === 'saved' ? 'Your saved flights' : 'Which flight?'}</h1>
-                  <p>
-                    {tab === 'saved'
-                      ? 'Flights you saved, each with its own packing list.'
-                      : 'Enter a flight number and the departure date.'}
-                  </p>
-                </div>
-                <span className="date-badge">
-                  <CalendarDays size={16} />
-                  {new Intl.DateTimeFormat('en-GB', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                    timeZone: 'Europe/London',
-                  }).format(now)}
-                </span>
-              </section>
-            )}
-            <form
-              className="search-card"
-              onSubmit={(e) => {
-                e.preventDefault();
-                setTab('overview');
-                void load();
-              }}
-            >
-              <label>
-                <span>Flight number</span>
-                <div>
-                  <Plane size={18} />
-                  <input
-                    ref={searchRef}
-                    aria-label="Flight number"
-                    value={number}
-                    onChange={(e) => setNumber(e.target.value.toUpperCase())}
-                    placeholder="e.g. BA117"
-                    required
-                    maxLength={12}
-                  />
-                </div>
-              </label>
-              <label>
-                <span>Departure date</span>
-                <div>
-                  <CalendarDays size={18} />
-                  <input
-                    aria-label="Departure date"
-                    type="date"
-                    value={date}
-                    required
-                    onChange={(e) => setDate(e.target.value)}
-                  />
-                </div>
-              </label>
-              <button className="btn btn-primary search-button" disabled={busy}>
-                <Search size={17} />
-                {busy ? 'Searching…' : 'Track flight'}
-                <ArrowRight size={17} />
+        <div className={'view view-' + tab}>
+          {needRefresh && (
+            <div role="status" className="notice">
+              <RefreshCw size={18} aria-hidden="true" />
+              <span>
+                <strong>A new version is ready.</strong> Reload to update.
+              </span>
+              <button className="text-button" onClick={() => void updateRef.current?.(true)}>
+                Reload
               </button>
-            </form>
-          </>
-        )}
-        <Announcements />
-        {needRefresh && (
-          <div role="status" className="notice">
-            <RefreshCw size={17} />
-            <span>
-              <strong>A new version is ready.</strong> Reload to update.
-            </span>
-            <button className="text-button" onClick={() => void updateRef.current?.(true)}>
-              Reload
-            </button>
-          </div>
-        )}
-        {!online && (
-          <div className="notice error">
-            <AlertCircle size={17} />
-            You're offline. What you've already loaded may be out of date. Updates restart when
-            you're back online.
-          </div>
-        )}
-        {stale && (
-          <div role="status" className="notice">
-            <AlertCircle size={17} />
-            <span>{stale}</span>
-          </div>
-        )}
-        {error && (
-          <div role="alert" className="notice error">
-            <AlertCircle size={18} />
-            {error}
-            <button onClick={refresh}>Try again</button>
-          </div>
-        )}
-        {tab === 'admin' ? (
-          me.isAdmin ? (
+            </div>
+          )}
+          {!online && (
+            <div className="notice error">
+              <AlertCircle size={18} aria-hidden="true" />
+              <span>
+                You're offline. What you've already loaded may be out of date. Updates restart when
+                you're back online.
+              </span>
+            </div>
+          )}
+          {tab === 'overview' && stale && (
+            <div role="status" className="notice warn">
+              <AlertCircle size={18} aria-hidden="true" />
+              <span>{stale}</span>
+            </div>
+          )}
+          {error && (
+            <div role="alert" className="notice error">
+              <AlertCircle size={18} aria-hidden="true" />
+              <span>{error}</span>
+              <button className="text-button" onClick={refresh}>
+                Try again
+              </button>
+            </div>
+          )}
+          {tab === 'overview' && !live && (
+            <div className="notice error">
+              <AlertCircle size={18} aria-hidden="true" />
+              <span>Live flight data is not configured on this server yet.</span>
+            </div>
+          )}
+          {tab === 'admin' ? (
+            me.isAdmin ? (
+              <Suspense
+                fallback={
+                  <div role="status" className="panel state">
+                    Loading the owner console…
+                  </div>
+                }
+              >
+                <AdminView onUnread={(n: number) => setMe((m) => ({ ...m, unread: n }))} />
+              </Suspense>
+            ) : (
+              <div className="panel state">
+                <span className="tile">
+                  <ShieldCheck size={28} aria-hidden="true" />
+                </span>
+                <h1>This area is for the site owner</h1>
+                <p>You are signed in, but this account does not have owner access.</p>
+              </div>
+            )
+          ) : tab === 'checklist' ? (
             <Suspense
               fallback={
-                <div role="status" className="panel empty">
-                  Loading the owner console…
+                <div role="status" className="panel state">
+                  Loading your packing list…
                 </div>
               }
             >
-              <AdminView onUnread={(n: number) => setMe((m) => ({ ...m, unread: n }))} />
+              <ChecklistView
+                saved={saved}
+                signedIn={signedIn}
+                userId={userId}
+                request={packFor}
+                onRequestDone={() => setPackFor(null)}
+                onTrack={(n: string, d: string) => openFlight({ number: n, date: d })}
+              />
             </Suspense>
-          ) : (
-            <div className="panel empty">
-              <ShieldCheck size={30} />
-              <h2>This area is for the site owner</h2>
-              <p>You are signed in, but this account does not have owner access.</p>
-            </div>
-          )
-        ) : tab === 'checklist' ? (
-          <Suspense
-            fallback={
-              <div role="status" className="panel empty">
-                Loading your packing list…
-              </div>
-            }
-          >
-            <ChecklistView
-              saved={saved}
+          ) : tab === 'saved' ? (
+            <SavedFlights
+              items={saved}
               signedIn={signedIn}
-              userId={userId}
-              request={packFor}
-              onRequestDone={() => setPackFor(null)}
-              onTrack={(n: string, d: string) => {
-                setNumber(n);
-                setDate(d);
-                setTab('overview');
-                void load(n, d);
+              onOpen={openFlight}
+              onPack={(s) => {
+                setPackFor(s);
+                setTab('checklist');
               }}
+              onRemove={removeSaved}
+              onLookup={() => go('overview')}
             />
-          </Suspense>
-        ) : tab === 'saved' ? (
-          <SavedFlights
-            items={saved}
-            signedIn={signedIn}
-            onOpen={(s) => {
-              setNumber(s.number);
-              setDate(s.date);
-              setTab('overview');
-              void load(s.number, s.date);
-            }}
-            onPack={(s) => {
-              setPackFor(s);
-              setTab('checklist');
-            }}
-            onRemove={(index) => {
-              const items = saved.filter((_, j) => j !== index);
-              setSaved(items);
-              try {
-                localStorage.setItem('flightdeck-saved', JSON.stringify(items));
-              } catch {
-                setError('Your browser could not update saved flights.');
-              }
-            }}
-          />
-        ) : (
-          <>
-            {data?.notes?.length ? (
-              <div role="status" className="notice">
-                <Info size={17} />
-                <span>{data.notes.join(' ')}</span>
-              </div>
-            ) : null}
-            {!live && (
-              <div className="notice error">
-                <AlertCircle size={17} />
-                Live flight data is not configured on this server yet.
-              </div>
-            )}
-            {busy && !data && (
-              <div role="status" className="panel empty">
-                Looking up your flight…
-              </div>
-            )}
-            {!busy && !data && !error && (
-              <div className="panel empty tracker-welcome">
-                <span className="welcome-icon">
-                  <Plane size={30} />
-                </span>
-                <p className="workspace-eyebrow">NOTHING LOOKED UP YET</p>
-                <h2>Enter a flight number above.</h2>
-                <p>
-                  You get the status, the airport details and the destination weather, each as soon
-                  as its source reports it.
-                </p>
-                <div className="welcome-details">
-                  <span>
-                    <Navigation size={16} />
-                    Flight status
-                  </span>
-                  <span>
-                    <CalendarDays size={16} />
-                    Airport local times
-                  </span>
-                  <span>
-                    <ListChecks size={16} />
-                    Packing list
-                  </span>
+          ) : tab === 'help' ? (
+            <HelpView
+              onFeedback={openFeedback}
+              onInstall={() => void installApp()}
+              account={!!CLERK_KEY}
+            />
+          ) : flight && data ? (
+            <>
+              <nav className="crumb" aria-label="Breadcrumb">
+                <button type="button" onClick={clearFlight}>
+                  <ArrowLeft size={16} aria-hidden="true" />
+                  Tracker
+                </button>
+                <span aria-hidden="true">/</span>
+                <span aria-current="page">{flight.number}</span>
+              </nav>
+              {data.notes?.length ? (
+                <div role="status" className="notice">
+                  <Info size={18} aria-hidden="true" />
+                  <span>{data.notes.join(' ')}</span>
                 </div>
-                <a className="text-button" href="/coverage/">
-                  About the data <ArrowUpRight size={14} />
-                </a>
-              </div>
-            )}
-            {data && !data.flights.length && (
-              <div className="panel empty">
-                <Search size={30} />
-                <h2>No flights found</h2>
-                <p>
-                  Nothing matched that flight number and date. Check the number, or try the
-                  airline's three-letter callsign, such as BAW117. Schedules cover yesterday to
-                  three days ahead, and a live position shows only while the aircraft is
-                  transmitting.
-                </p>
-              </div>
-            )}
-            {data && data.flights.length > 1 && (
-              <label className="flight-picker">
-                Choose a leg{' '}
-                <select
-                  onChange={(e) => {
-                    const i = Number(e.target.value);
-                    setSelected(i);
-                    previous.current = data.flights[i];
-                  }}
-                  value={selected}
-                >
-                  {data.flights.map((f, i) => (
-                    <option value={i} key={f.id}>
-                      {f.number} · {f.origin.code} → {f.destination.code} ·{' '}
-                      {time(f.scheduledOut, f.origin.timezone)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-            {flight && data && (
+              ) : null}
               <FlightView
                 flight={flight}
                 data={data}
@@ -746,16 +717,69 @@ function Dashboard() {
                 changes={changes}
                 onRefresh={refresh}
                 onSave={save}
+                saved={isSaved(active.current)}
+                offline={!!stale}
                 onShare={() => void share()}
-                shareNote={shareNote}
+                legPicker={legPicker}
               />
-            )}
-          </>
-        )}
+            </>
+          ) : (
+            <TrackerHome
+              number={number}
+              setNumber={setNumber}
+              date={date}
+              setDate={setDate}
+              busy={busy}
+              data={data}
+              error={error}
+              searchRef={searchRef}
+              onSearch={lookup}
+              saved={saved}
+              userId={userId}
+              now={now}
+              onOpen={openFlight}
+              onPack={(s) => {
+                setPackFor(s);
+                setTab('checklist');
+              }}
+              onRemove={removeSaved}
+              onGo={setTab}
+            />
+          )}
+        </div>
         {installHelp && <InstallHelp onClose={() => setInstallHelp(false)} />}
+        {shareNote && (
+          <div className="toast" role="status">
+            {shareNote}
+          </div>
+        )}
         <div className="sf-gap" />
         <SiteFooter inApp />
       </main>
+      <nav className="mobile-nav" aria-label="Main">
+        {navItems.map((n) => (
+          <button
+            key={n.id}
+            type="button"
+            className={tab === n.id ? 'on' : undefined}
+            aria-current={tab === n.id ? 'page' : undefined}
+            aria-label={n.count ? `${n.short} (${n.count})` : undefined}
+            onClick={() => go(n.id)}
+          >
+            <n.icon size={20} aria-hidden="true" />
+            {n.short}
+          </button>
+        ))}
+        <button
+          type="button"
+          className={tab === 'help' ? 'on' : undefined}
+          aria-current={tab === 'help' ? 'page' : undefined}
+          onClick={() => setTab('help')}
+        >
+          <CircleHelp size={20} aria-hidden="true" />
+          Help
+        </button>
+      </nav>
     </div>
   );
 }
@@ -764,17 +788,7 @@ createRoot(document.getElementById('root')!).render(
   <AppBoundary>
     <React.StrictMode>
       {CLERK_KEY ? (
-        <ClerkProvider
-          publishableKey={CLERK_KEY}
-          afterSignOutUrl="/"
-          appearance={{
-            variables: {
-              colorPrimary: '#214e3e',
-              borderRadius: '8px',
-              fontFamily: 'Inter, sans-serif',
-            },
-          }}
-        >
+        <ClerkProvider publishableKey={CLERK_KEY} afterSignOutUrl="/" appearance={clerkAppearance}>
           {app}
         </ClerkProvider>
       ) : (

@@ -18,3 +18,10 @@ export const fromAny = (
 ) => {
   if (targets.length) host.from(targets, vars, position);
 };
+
+// For one-off animations started from an event handler or layout effect (GSAP Flip): true only when the browser can say the
+// visitor does not prefer reduced motion.
+export const motionAllowed = () =>
+  typeof window !== 'undefined' &&
+  typeof window.matchMedia === 'function' &&
+  window.matchMedia('(prefers-reduced-motion: no-preference)').matches;
