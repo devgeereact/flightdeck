@@ -1,10 +1,12 @@
 import { registerSW } from 'virtual:pwa-register';
-import { SignInButton, SignUpButton } from '@clerk/react';
-import { ArrowLeft, Plane } from 'lucide-react';
-import { useEffect } from 'react';
-import SiteFooter from '../SiteFooter';
-import { ga, track, trackOnce } from '../shared/track';
+import { SignIn } from '@clerk/react';
+import { Plane } from 'lucide-react';
+import { useEffect, useLayoutEffect, useState } from 'react';
+import { Brand } from '../shared/Logo';
+import { trackOnce } from '../shared/track';
 
+// Read back (and cleared) by the app in main.tsx once signed in.
+const BACK_KEY = 'fd-signin-back';
 const FLIGHT_LINK = /^#\/flight\/([A-Z0-9]{3,8})\/(\d{4}-\d{2}-\d{2})$/;
 const dayLabel = (d: string) => {
   const t = new Date(d + 'T12:00:00Z');
@@ -13,8 +15,9 @@ const dayLabel = (d: string) => {
     : t.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
 };
 
-// What a signed-out visitor sees at /app/. The public website (/) explains the product; this screen only asks them to sign in,
-// and says which flight they are about to open when they arrived from a link. After sign-in the same address opens that flight.
+// What a signed-out visitor sees at /app/: a photo panel and Clerk's own sign-in, drawn with Flightdeck's tokens (clerkAppearance).
+// The same steps create a free account (withSignUp). When they arrived from a flight link, it says which flight opens next; after
+// sign-in the same address opens it.
 export default function SignInScreen() {
   useEffect(() => {
     trackOnce('landing_view');
@@ -39,76 +42,97 @@ export default function SignInScreen() {
       if (t) clearInterval(t);
     };
   }, []);
-  const m = location.hash.match(FLIGHT_LINK);
+  // The app link they arrived with (#/flight/…, #/checklist), kept for this tab: Clerk's later steps live at /app/<step>, drop
+  // the hash and can remount this screen. After sign-in they land back on it, so a flight link opens that flight.
+  const [arrived] = useState(() => {
+    try {
+      if (location.hash.startsWith('#/')) sessionStorage.setItem(BACK_KEY, location.hash);
+      return sessionStorage.getItem(BACK_KEY) || '';
+    } catch {
+      return location.hash;
+    }
+  });
+  const m = arrived.match(FLIGHT_LINK);
   const target = m
     ? `${m[1]} on ${dayLabel(m[2])}`
-    : location.hash.startsWith('#/checklist')
+    : arrived.startsWith('#/checklist')
       ? 'your packing list'
       : '';
+  const back = `${typeof window === 'undefined' ? '' : location.origin}/app/${arrived}`;
+  // Clerk reads an app hash such as #/flight/BA59/… as one of its own routes and sends the visitor to its hosted page. So the
+  // hash leaves the address bar before the sign-in mounts; `back` (above) still holds it, and sign-in returns there.
+  const [ready, setReady] = useState(false);
+  useLayoutEffect(() => {
+    if (location.hash.startsWith('#/')) {
+      try {
+        history.replaceState(null, '', location.pathname + location.search);
+      } catch {
+        /* very old browsers: the hosted sign-in page still works */
+      }
+    }
+    setReady(true);
+  }, []);
   return (
-    <div className="signin-page">
-      <header className="signin-top">
-        <a className="brand" href="/">
-          <span className="brand-mark">
-            <Plane size={22} />
-          </span>
-          <span>
-            flightdeck<span className="brand-dot">.</span>
-          </span>
-        </a>
-        <a className="btn btn-secondary" href="/">
-          <ArrowLeft size={16} />
-          Home
-        </a>
-      </header>
-      <main id="main" className="signin-main">
-        <div className="signin-story">
-          <p className="workspace-eyebrow">FREE ACCOUNT</p>
-          <h2>Your flights and packing list, on every device.</h2>
-          <p>
-            Each flight look-up uses a limited allowance from our data providers, so look-ups need a
-            free account.
-          </p>
-          <ul className="signin-points">
-            <li>Keep up to 12 saved flights</li>
-            <li>Tick off your packing list on your phone, with one list per trip</li>
-            <li>The guides and the printable packing list stay open to everyone</li>
-          </ul>
-          <a href="/coverage/">How the data works →</a>
-        </div>
-        <section className="signin-card" aria-labelledby="signin-h">
-          <span className="signin-mark" aria-hidden="true">
-            <Plane size={26} />
-          </span>
-          <h1 id="signin-h">{target ? `Sign in to see ${target}` : 'Sign in to Flightdeck'}</h1>
-          <p>
-            Sign in to look up flights and open your saved flights and packing lists. New here?
-            Create a free account.
-          </p>
-          <div className="signin-actions">
-            <SignInButton mode="modal">
-              <button className="btn btn-primary btn-lg">Sign in</button>
-            </SignInButton>
-            <SignUpButton mode="modal">
-              <button
-                className="btn btn-secondary btn-lg"
-                onClick={() => {
-                  track('cta_click');
-                  ga('cta_click', { source: 'app_signin' });
-                }}
-              >
-                Create free account
-              </button>
-            </SignUpButton>
+    <div className="signin">
+      <div className="si-photo">
+        <img
+          src="/img/sunset-wing.jpg"
+          alt="An aircraft wing above the clouds at sunset"
+          width="1500"
+          height="942"
+        />
+        <Brand href="/" className="on-photo" />
+        <h1>Your flights and packing list, on every device.</h1>
+        <ul>
+          <li>
+            <b className="fd-data">12</b>saved flights on your account
+          </li>
+          <li>
+            <b>1 list</b>for every trip, linked to its flight
+          </li>
+          <li>
+            <b>Free</b>no adverts and nothing to buy
+          </li>
+        </ul>
+      </div>
+      <main id="main" className="si-form">
+        <div className="si-card">
+          <h2 id="signin-h">Sign in to Flightdeck</h2>
+          <p>New here? The same steps create your free account.</p>
+          {target && (
+            <div className="pending">
+              <Plane size={20} aria-hidden="true" />
+              <span>
+                Sign in to see <b>{target}</b>. We will take you straight there.
+              </span>
+            </div>
+          )}
+          <div className="si-step">
+            {ready && (
+              <SignIn
+                // Path routing under /app: the steps (code, factor) are /app/<step>, which the host serves the app shell for.
+                // Hash routing would clash with the app's own #/ links; virtual routing sent flight links to Clerk's hosted page.
+                routing="path"
+                path="/app"
+                withSignUp
+                fallbackRedirectUrl={back}
+                signUpFallbackRedirectUrl={back}
+              />
+            )}
           </div>
-          <p className="signin-note">
-            No account needed for the <a href="/guides/">travel guides</a> or the{' '}
-            <a href="/travel-checklist/">printable packing list</a>. See{' '}
-            <a href="/how-it-works/">how Flightdeck works</a>.
-          </p>
-        </section>
+          <div className="si-meta">
+            <span>
+              By continuing you agree to the <a href="/terms/">terms</a> and{' '}
+              <a href="/privacy/">privacy policy</a>.
+            </span>
+            <span>
+              No account is needed for the <a href="/guides/">travel guides</a> or the{' '}
+              <a href="/travel-checklist/">printable packing list</a>.
+            </span>
+            <a href="/">Back to the website</a>
+          </div>
+        </div>
       </main>
-      <SiteFooter />
     </div>
   );
 }

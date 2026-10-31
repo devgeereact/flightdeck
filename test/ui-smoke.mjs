@@ -190,15 +190,17 @@ async function boot({ config, storedMode, hash = '', storage = {}, fixtures = fa
 }
 const val = (app, sel) => app.w.document.querySelector(sel).value;
 async function search(app, number) {
+  // The look-up card on the tracker's start screen, or the top-bar search once a flight is showing.
   const { w } = app,
     d = w.document,
-    input = d.querySelector('input[aria-label="Flight number"]');
+    form = d.querySelector('form.search-card') || d.querySelector('form.topsearch'),
+    input = form.querySelector(
+      'input[aria-label="Flight number"], input[aria-label="Look up a flight number"]',
+    );
   Object.getOwnPropertyDescriptor(w.HTMLInputElement.prototype, 'value').set.call(input, number);
   input.dispatchEvent(new w.Event('input', { bubbles: true }));
   await sleep(100);
-  d.querySelector('form.search-card').dispatchEvent(
-    new w.Event('submit', { bubbles: true, cancelable: true }),
-  );
+  form.dispatchEvent(new w.Event('submit', { bubbles: true, cancelable: true }));
 }
 
 try {
@@ -252,8 +254,8 @@ try {
         ) && side[1].getAttribute('aria-label') === 'Saved flights (0)',
       );
       check(
-        'N3 the phone menu uses short labels and marks the current page',
-        phone.map((b) => b.textContent).join('|') === 'Tracker|Saved 0|Packing list' &&
+        'N3 the phone tab bar uses short labels and marks the current page',
+        phone.map((b) => b.textContent).join('|') === 'Tracker|Saved|Packing|Help' &&
           current(phone).length === 1 &&
           current(phone)[0].textContent === 'Tracker',
         phone.map((b) => b.textContent).join('|'),
@@ -343,9 +345,10 @@ try {
       await sleep(300);
     };
     check(
-      'B9 once a flight shows there is still exactly one h1 (hidden), and the search stays visible',
+      'B9 once a flight shows there is exactly one h1 (the flight number), and the top-bar search stays available',
       d.querySelectorAll('h1').length === 1 &&
-        !!d.querySelector('input[aria-label="Flight number"]'),
+        d.querySelector('h1').textContent.startsWith('BA59') &&
+        !!d.querySelector('form.topsearch input[aria-label="Look up a flight number"]'),
     );
     await tabClick('Airport');
     check(
@@ -444,6 +447,26 @@ try {
           (b) => b.textContent.trim() === 'Add to calendar',
         ),
     );
+    {
+      // Save is a toggle: it keeps the flight (button reads "Saved", pressed) and a second press removes it again
+      const saveBtn = () =>
+        [...d.querySelectorAll('.fv-bar button')].find((b) =>
+          /^(Save|Saved)$/.test(b.textContent.trim()),
+        );
+      const stored = () => JSON.parse(a.w.localStorage.getItem('flightdeck-saved') || '[]').length;
+      saveBtn().dispatchEvent(new a.w.MouseEvent('click', { bubbles: true }));
+      await sleep(200);
+      const on =
+        saveBtn()?.textContent.trim() === 'Saved' &&
+        saveBtn().getAttribute('aria-pressed') === 'true' &&
+        stored() === 1;
+      saveBtn().dispatchEvent(new a.w.MouseEvent('click', { bubbles: true }));
+      await sleep(200);
+      check(
+        'S3 Save keeps the flight and reads "Saved"; pressing it again removes it',
+        on && saveBtn()?.textContent.trim() === 'Save' && stored() === 0,
+      );
+    }
     // offline: the network fails, so the last copy is shown and clearly marked as such
     Object.defineProperty(a.w.navigator, 'onLine', { get: () => false, configurable: true });
     const realFetch = a.w.fetch;
@@ -545,10 +568,10 @@ try {
         .querySelector('.sidebar nav [aria-current="page"]')
         ?.getAttribute('aria-label') === 'Saved flights (2)' &&
         sv.w.document.querySelector('nav.mobile-nav [aria-current="page"]')?.textContent ===
-          'Saved 2',
+          'Saved',
     );
     const ib = [...sv.w.document.querySelectorAll('button')].find((b) =>
-      b.textContent.includes('Install app'),
+      b.textContent.includes('Install the app'),
     );
     ib.dispatchEvent(new sv.w.MouseEvent('click', { bubbles: true }));
     await sleep(300);
@@ -638,9 +661,11 @@ try {
       k.text().slice(300, 600),
     );
     check(
-      'K2b trips are plain buttons with aria-pressed (no tabs without a tab panel)',
-      !d.querySelector('.ck-tabs[role="tablist"], .ck-tab[role="tab"]') &&
-        d.querySelector('.ck-tabs .ck-tab')?.getAttribute('aria-pressed') === 'true' &&
+      'K2b the trip is chosen with a labelled select (no tabs without a tab panel)',
+      !d.querySelector('[role="tablist"]') &&
+        d.querySelector('select.ck-trip-select')?.getAttribute('aria-label') === 'Trip' &&
+        d.querySelector('select.ck-trip-select').selectedOptions[0]?.textContent ===
+          'Cape Town in October' &&
         d.querySelector('.sidebar nav [aria-current="page"]')?.getAttribute('aria-label') ===
           'Packing list',
     );
@@ -666,24 +691,23 @@ try {
     check(
       'K5 after a reload the trip, its name and the tick are still there',
       k2.text().includes('1 of 141 packed') &&
-        d2.querySelector('.ck-name').value === 'Cape Town in October' &&
+        d2.querySelector('select.ck-trip-select').selectedOptions[0]?.textContent ===
+          'Cape Town in October' &&
         byText(d2, '.ck-check', 'Passport').querySelector('input').checked,
     );
-    byText(d2, '.ck-sec', 'Last minute')
-      .querySelector('.ck-sec-foot .text-button')
-      .dispatchEvent(new k2.w.MouseEvent('click', { bubbles: true }));
-    await sleep(300);
-    setVal(k2.w, d2.querySelector('.ck-add input'), 'Travel pillow');
-    d2.querySelector('.ck-add').dispatchEvent(
-      new k2.w.Event('submit', { bubbles: true, cancelable: true }),
-    );
+    // Each section has its own "Add your own item" row; this adds to Last minute.
+    const lastMinute = byText(d2, '.ck-sec', 'Last minute');
+    setVal(k2.w, lastMinute.querySelector('.ck-add input'), 'Travel pillow');
+    await sleep(100);
+    lastMinute
+      .querySelector('.ck-add')
+      .dispatchEvent(new k2.w.Event('submit', { bubbles: true, cancelable: true }));
     await sleep(400);
     check(
       'K6 adding your own item puts it in that section and the total grows',
-      !!byText(d2, '.ck-check', 'Travel pillow') && k2.text().includes('1 of 142 packed'),
+      !!byText(byText(d2, '.ck-sec', 'Last minute'), '.ck-check', 'Travel pillow') &&
+        k2.text().includes('1 of 142 packed'),
     );
-    click(k2.w, byText(d2, 'button', 'Edit list'));
-    await sleep(300);
     const x = d2.querySelector('button[aria-label="Hide Watch"]');
     click(k2.w, x);
     await sleep(300);
@@ -697,8 +721,6 @@ try {
       'K8 restore works',
       k2.text().includes('of 142 packed') && !k2.text().includes('item hidden'),
     );
-    click(k2.w, byText(d2, 'button', 'Done editing'));
-    await sleep(200);
     click(k2.w, byText(d2, 'button', 'Reset ticks'));
     await sleep(200);
     check(
@@ -732,6 +754,24 @@ try {
       tampered.text().includes('Pack once. Reuse it every trip.') && tampered.errors.length === 0,
     );
     tampered.w.close();
+  }
+  {
+    // In-app help: the FAQ accordion opens a question, and the page has one h1
+    const h = await boot({ hash: '#/help' });
+    await sleep(1200);
+    const hb = [...h.w.document.querySelectorAll('.acc-btn')];
+    hb[0]?.dispatchEvent(new h.w.MouseEvent('click', { bubbles: true }));
+    await sleep(200);
+    check(
+      'H1 the help page lists the FAQs as an accordion that opens, with one h1',
+      hb.length > 5 &&
+        hb[0].getAttribute('aria-expanded') === 'true' &&
+        !h.w.document.getElementById(hb[0].getAttribute('aria-controls')).hidden &&
+        h.w.document.querySelectorAll('h1').length === 1 &&
+        h.errors.length === 0,
+      h.errors.join(' | '),
+    );
+    h.w.close();
   }
   const c = await boot({ config: { liveAvailable: false, provider: 'x' } });
   await sleep(2000);

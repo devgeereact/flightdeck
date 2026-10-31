@@ -1,0 +1,40 @@
+// Clerk's own screens (the inline sign-in card, the account menu and profile) drawn with Flightdeck's tokens, so the sign-in looks
+// like the rest of the app: blue primary button, 14px fields, pill buttons, Inter. Values mirror src/styles/tokens.css.
+export const clerkAppearance = {
+  variables: {
+    colorPrimary: '#1866ff',
+    colorPrimaryForeground: '#ffffff',
+    colorForeground: '#14171f',
+    colorMutedForeground: '#5e6675',
+    colorBackground: '#ffffff',
+    colorInput: '#ffffff',
+    colorInputForeground: '#14171f',
+    colorBorder: '#d3d9e3',
+    colorRing: '#1866ff',
+    colorDanger: '#c0392b',
+    colorSuccess: '#15803d',
+    borderRadius: '14px',
+    fontFamily: 'Inter, system-ui, -apple-system, "Segoe UI", sans-serif',
+    fontFamilyButtons: 'Inter, system-ui, -apple-system, "Segoe UI", sans-serif',
+    fontSize: '15px',
+  },
+  elements: {
+    // Inline on the sign-in screen: no card of its own, the screen is the card.
+    rootBox: 'fd-clerk-root',
+    cardBox: 'fd-clerk-cardbox',
+    card: 'fd-clerk-card',
+    header: 'fd-clerk-header',
+    headerTitle: 'fd-clerk-title',
+    headerSubtitle: 'fd-clerk-subtitle',
+    socialButtonsBlockButton: 'fd-clerk-social',
+    dividerRow: 'fd-clerk-divider',
+    formFieldLabel: 'fd-clerk-label',
+    formFieldInput: 'fd-clerk-input',
+    otpCodeFieldInput: 'fd-clerk-otp',
+    formButtonPrimary: 'fd-clerk-primary',
+    footer: 'fd-clerk-footer',
+    footerActionLink: 'fd-clerk-link',
+    userButtonAvatarBox: 'fd-clerk-avatar',
+    userButtonPopoverCard: 'fd-clerk-pop',
+  },
+};

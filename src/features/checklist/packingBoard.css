@@ -1,4 +1,4 @@
-/* Packing list board, shared by the app (Checklist.tsx) and the public packing list page (build-public.mjs inlines this file).
+/* Packing list board for the public printable packing list page (build-public.mjs inlines this file). The app's packing room has its own styles in styles/workspace.css.
    A section rail on the left and ONE section open at a time on the right, so no card grows past the others. */
 .ck-layout {
   display: grid;
@@ -12,7 +12,7 @@
   display: grid;
   gap: 4px;
   background: #fff;
-  border: 1px solid #e1e6dc;
+  border: 1px solid var(--fd-line);
   border-radius: var(--fd-radius-md);
   padding: 10px;
 }
@@ -27,18 +27,18 @@
   background: none;
   border-radius: 8px;
   padding: 10px;
-  color: #4d5f55;
+  color: var(--fd-ink);
   font:
     600 13.5px var(--fd-font-body),
     system-ui,
     sans-serif;
 }
 .ck-rail-item:hover {
-  background: #f4f7f1;
+  background: var(--fd-surface-raised);
 }
 .ck-rail-item.on {
-  background: #edf2e8;
-  color: #133c35;
+  background: var(--fd-blue-50);
+  color: var(--fd-heading);
 }
 .ck-rail-item .ck-n {
   grid-area: n;
@@ -51,28 +51,28 @@
   grid-area: c;
   font-size: 13px;
   font-weight: 600;
-  color: #5d6e64;
+  color: var(--fd-muted);
 }
 .ck-rail-bar {
   grid-area: b;
   height: 4px;
   border-radius: 4px;
-  background: #e8eee4;
+  background: var(--fd-line);
   overflow: hidden;
   margin-top: 6px;
 }
 .ck-rail-bar b {
   display: block;
   height: 100%;
-  background: #759966;
+  background: var(--fd-blue);
   border-radius: 4px;
   transition: width 0.3s;
 }
 .ck-rail-item.full .ck-n {
-  background: #4f8a5b;
+  background: var(--fd-blue);
 }
 .ck-rail-item.full .ck-rail-bar b {
-  background: #4f8a5b;
+  background: var(--fd-blue);
 }
 .ck-n {
   display: grid;
@@ -80,8 +80,8 @@
   min-width: 28px;
   height: 28px;
   border-radius: var(--fd-radius-md);
-  background: #173e34;
-  color: #d6eb9e;
+  background: var(--fd-blue);
+  color: #fff;
   font:
     800 13px var(--fd-font-head),
     system-ui,
@@ -111,24 +111,24 @@
     system-ui,
     sans-serif;
   letter-spacing: -0.02em;
-  color: #133c35;
+  color: var(--fd-heading);
   margin: 0;
 }
 .ck-sec-hint {
   padding: 0;
   margin: 4px 0 0;
   font-size: 14px;
-  color: #5d6e64;
+  color: var(--fd-muted);
 }
 .ck-sec-count {
-  background: #f1f4ee;
+  background: var(--fd-surface-raised);
   border-radius: var(--fd-radius-sm);
   padding: 4px 12px;
   font:
     600 12.5px var(--fd-font-body),
     system-ui,
     sans-serif;
-  color: #5d6e64;
+  color: var(--fd-muted);
   white-space: nowrap;
 }
 .ck-panels .ck-list {
@@ -139,7 +139,7 @@
   margin: 0;
 }
 .ck-panels .ck-list li {
-  border-bottom: 1px solid #f0f3ec;
+  border-bottom: 1px solid var(--fd-line-soft);
   border-radius: 0;
 }
 .ck-panels .ck-check {
@@ -150,7 +150,7 @@
 .ck-panels .ck-box {
   width: 19px;
   height: 19px;
-  border: 1.6px solid #7f9a89;
+  border: 1.6px solid var(--fd-line-strong);
   border-radius: 5px;
 }
 .ck-panels .ck-sec-foot {
@@ -162,8 +162,8 @@
   align-items: center;
   gap: 12px;
   padding: 14px 26px;
-  border-top: 1px solid #edf1e9;
-  background: #fafbf8;
+  border-top: 1px solid var(--fd-line);
+  background: var(--fd-surface-raised);
   border-radius: 0 0 12px 12px;
 }
 @media (max-width: 900px) {
@@ -265,7 +265,7 @@
     14.5px / 1.35 var(--fd-font-body),
     system-ui,
     sans-serif;
-  color: #2d4b3d;
+  color: var(--fd-ink);
 }
 .ck-layout .ck-check input {
   position: absolute;
@@ -277,7 +277,7 @@
   width: 19px;
   height: 19px;
   flex-shrink: 0;
-  border: 1.6px solid #7f9a89;
+  border: 1.6px solid var(--fd-line-strong);
   border-radius: 5px;
   display: grid;
   place-items: center;
@@ -288,21 +288,21 @@
     border-color 0.15s;
 }
 .ck-layout .ck-check input:checked + .ck-box {
-  background: #214e3e;
-  border-color: #214e3e;
+  background: var(--fd-blue);
+  border-color: var(--fd-blue);
 }
 .ck-layout .ck-check input:not(:checked) + .ck-box svg {
   opacity: 0;
 }
 .ck-layout .ck-check input:focus-visible + .ck-box {
-  outline: 2px solid #214e3e;
+  outline: 2px solid var(--fd-blue);
   outline-offset: 2px;
 }
 .ck-layout .ck-list li.done .ck-text,
 .ck-layout .ck-check input:checked ~ .ck-text {
-  color: #5d6e64;
+  color: var(--fd-muted);
   text-decoration: line-through;
-  text-decoration-color: #c5d2c8;
+  text-decoration-color: var(--fd-faint);
 }
 .ck-layout .ck-sec-foot {
   display: flex;
@@ -313,9 +313,9 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  border: 1px solid #dde4d8;
+  border: 1px solid var(--fd-line);
   background: #fff;
-  color: #2d4b3d;
+  color: var(--fd-ink);
   padding: 8px 12px;
   border-radius: 6px;
   font:
@@ -326,22 +326,22 @@
   text-decoration: none;
 }
 .ck-layout .text-button:hover {
-  background: #f4f7f1;
+  background: var(--fd-surface-raised);
 }
 .ck-layout .text-button.primary {
-  background: #214e3e;
+  background: var(--fd-blue);
   color: #fff;
-  border-color: #214e3e;
+  border-color: var(--fd-blue);
 }
 .ck-layout .text-button.primary:hover {
-  background: #1a4033;
+  background: var(--fd-blue-600);
 }
 a.ck-rail-item {
   text-decoration: none;
 }
 .ck-panels > .ck-sec {
   background: #fff;
-  border: 1px solid #e1e6dc;
+  border: 1px solid var(--fd-line);
   border-radius: var(--fd-radius-md);
 }
 .ck-panels > .ck-sec:target {

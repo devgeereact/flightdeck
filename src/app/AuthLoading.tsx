@@ -1,15 +1,19 @@
-import { Plane } from 'lucide-react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
+import { Brand } from '../shared/Logo';
+
+// While Clerk loads (and when it cannot): the brand, one sentence and, on failure, the way out. Also the error boundary's screen.
 export default function AuthLoading({ failed = false }: { failed?: boolean }) {
   return (
     <div className="auth-loading" role="status">
-      <a className="brand" href="/">
-        <span className="brand-mark">
-          <Plane size={23} />
+      <Brand href="/" />
+      <section className="panel state">
+        <span className={failed ? 'tile danger' : 'tile'}>
+          {failed ? (
+            <AlertCircle size={28} aria-hidden="true" />
+          ) : (
+            <RefreshCw size={28} className="spin" aria-hidden="true" />
+          )}
         </span>
-        flightdeck.
-      </a>
-      <section>
-        <Plane size={30} />
         <h1>{failed ? 'Sign-in could not load' : 'Opening Flightdeck'}</h1>
         <p>
           {failed
@@ -17,16 +21,18 @@ export default function AuthLoading({ failed = false }: { failed?: boolean }) {
             : 'Connecting securely to your account…'}
         </p>
         {failed && (
-          <div className="auth-loading-actions">
-            <button className="btn btn-primary" onClick={() => location.reload()}>
+          <div className="acts">
+            <button type="button" className="btn btn-primary" onClick={() => location.reload()}>
               Try again
             </button>
-            <a className="btn btn-secondary" href="https://flightdeck.gakinz.com/app/">
+            <a className="btn btn-ghost" href="https://flightdeck.gakinz.com/app/">
               Open live Flightdeck
             </a>
           </div>
         )}
-        <a href="/">Back to the website</a>
+        <a className="link-quiet" href="/">
+          Back to the website
+        </a>
       </section>
     </div>
   );
