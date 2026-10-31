@@ -15,6 +15,8 @@ description: >-
 
 Flightdeck is a calm, honest flight tracker: sky blue on a cool white canvas, near-black ink, an amber accent used only as a fill, photography where it earns its place, plain UK English. Three surfaces share one token file: the **public site** (server-rendered PHP), the **signed-in app** (React PWA at `/app/`) and the **owner console** (React, `#/admin`). Decision record: `docs/DECISIONS.md` ADR-020. Living description: `docs/DESIGN.md`.
 
+This is the project layer of the owner's general `product-design` skill (`~/.claude/skills/product-design/`): use that one for method and tooling (reference study, contrast script, screenshot + accessibility checker, 8K presentation export) and this one for Flightdeck's values.
+
 The owner approved this design from a prototype and asked for it to stay "high-end, human, no AI slop, no empty gaps, no uneven cards". Everything below serves that.
 
 ## Before you write anything
