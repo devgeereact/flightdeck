@@ -149,7 +149,7 @@ html.lenis body {
   margin-inline: auto;
 }
 section {
-  scroll-margin-top: 24px;
+  scroll-margin-top: 104px;
 }
 
 /* ------------------------------------------------------------------ buttons, chips, badges, fields */
@@ -679,6 +679,66 @@ section {
   top: var(--gut);
   left: 0;
   right: 0;
+}
+/* Stuck: fixed frosted bar with dark text, readable over photos, white sheets and the canvas alike */
+.site-top.stuck {
+  position: fixed;
+  top: 10px;
+  z-index: 60;
+  animation: fd-drop 0.32s var(--ease);
+}
+@keyframes fd-drop {
+  from {
+    transform: translateY(-130%);
+  }
+}
+/* The frosted surface is a pseudo-element: a backdrop-filter on the bar itself would trap the fixed phone menu inside it. */
+.site-top.stuck .topbar {
+  position: relative;
+  isolation: isolate;
+  padding-block: 10px;
+}
+.site-top.stuck .topbar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: rgb(255 255 255 / 88%);
+  -webkit-backdrop-filter: saturate(1.6) blur(14px);
+  backdrop-filter: saturate(1.6) blur(14px);
+  border: 1px solid rgb(20 23 31 / 6%);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-3);
+}
+.site-top.stuck .fd-brand.on-photo {
+  color: var(--fd-heading);
+}
+.site-top.stuck .topnav a {
+  color: var(--ink-2);
+}
+.site-top.stuck .topnav a:hover,
+.site-top.stuck .topnav a[aria-current] {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.site-top.stuck .btn-glass {
+  color: var(--ink);
+  border-color: var(--line-2);
+}
+.site-top.stuck .btn-glass:hover {
+  background: var(--surface-2);
+}
+.site-top.stuck .btn-white {
+  background: var(--blue);
+  color: #fff;
+  box-shadow: var(--sh-blue);
+}
+.site-top.stuck .btn-white:hover {
+  background: var(--blue-600);
+}
+.site-top.stuck .menu-btn {
+  background: var(--surface-2);
+  color: var(--ink);
 }
 .topbar {
   display: flex;
@@ -1582,7 +1642,7 @@ section {
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr; /* one column fills the panel for short sections; long ones scroll inside it */
   column-gap: 24px;
   align-content: start;
   flex: 1;
@@ -1974,7 +2034,7 @@ details[open] > .acc-btn .pm {
 }
 .toc {
   position: sticky;
-  top: 24px;
+  top: 104px; /* below the sticky header */
   padding: 20px;
   border-radius: var(--r-lg);
   background: var(--surface-2);
@@ -2020,7 +2080,7 @@ details[open] > .acc-btn .pm {
   font-size: clamp(24px, 2.4vw, 30px);
   letter-spacing: -0.025em;
   margin-top: 40px;
-  scroll-margin-top: 24px;
+  scroll-margin-top: 104px;
 }
 .prose > h2:first-child {
   margin-top: 0;
@@ -2118,7 +2178,7 @@ details[open] > .acc-btn .pm {
   margin-top: 5px;
 }
 
-/* Guide cards: equal heights, balanced rows (a last pair or four shares its row), no orphan */
+/* Guide cards: three equal columns, equal heights; the guides index fills a spare end slot with an action tile */
 .cards {
   list-style: none;
   margin: 0;
@@ -2133,11 +2193,54 @@ details[open] > .acc-btn .pm {
   display: flex;
   min-width: 0;
 }
-.cards:has(> :last-child:nth-child(3n + 1)) > :nth-last-child(-n + 4) {
-  grid-column: span 3;
+.cards > .cards-fill.fill-2 {
+  grid-column: span 4;
 }
-.cards:has(> :last-child:nth-child(3n + 2)) > :nth-last-child(-n + 2) {
-  grid-column: span 3;
+.cards-fill > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 26px;
+  border-radius: var(--r-lg);
+  background: var(--blue);
+  color: #fff;
+}
+.cards-fill .gtile {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 16%);
+  color: #fff;
+  display: grid;
+  place-items: center;
+}
+.cards-fill strong {
+  font: 600 22px / 1.2 var(--font-display);
+  letter-spacing: -0.02em;
+  margin-top: 16px;
+}
+.cards-fill span:not(.gtile) {
+  color: rgb(255 255 255 / 88%);
+  font-size: 15px;
+}
+.cards .cards-fill .btn {
+  width: auto;
+  flex-direction: row;
+  gap: 8px;
+  padding: 0 18px;
+  min-height: 40px;
+  margin-top: auto;
+  border: 0;
+  border-radius: var(--r-full);
+  background: #fff;
+  color: var(--ink);
+  box-shadow: none;
+}
+.cards .cards-fill .btn:hover {
+  background: var(--surface-2);
+  border: 0;
 }
 .cards > :only-child {
   grid-column: 1 / -1 !important;
@@ -2446,9 +2549,6 @@ details[open] > .acc-btn .pm {
   height: 20px;
   accent-color: var(--amber);
 }
-.packing-print-meta {
-  display: none;
-}
 .packing-page .ck-rail {
   background: var(--surface-2);
   border: 0;
@@ -2698,6 +2798,9 @@ details[open] > .acc-btn .pm {
   .cards > li {
     grid-column: span 3;
   }
+  .cards > .cards-fill.fill-2 {
+    grid-column: span 3;
+  }
   .cards:has(> :last-child:nth-child(odd)) > :nth-last-child(-n + 3) {
     grid-column: span 2;
   }
@@ -2895,13 +2998,6 @@ details[open] > .acc-btn .pm {
     font-size: 16pt;
     margin-top: 14pt;
   }
-  .packing-print-meta {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-    font-size: 10pt;
-    margin: 12px 0 18px;
-  }
   .packing-page .page-head .kicker,
   .packing-page .page-head .lede {
     display: none;
@@ -2916,7 +3012,7 @@ details[open] > .acc-btn .pm {
 .contact-side {
   align-self: start;
   position: sticky;
-  top: 24px;
+  top: 104px; /* below the sticky header */
 }
 .faq-page .qa-side .contact,
 .contact-side .contact {

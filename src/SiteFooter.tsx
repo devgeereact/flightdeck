@@ -34,7 +34,10 @@ export default function SiteFooter({ inApp = false }: { inApp?: boolean }) {
         <div className="sf-base">
           <p>{FOOTER_NOTE}</p>
           <p>
-            © {year} Flightdeck · <a href="/about/#photo-credits">Photo credits</a>
+            © {year}{' '}
+            <a href="https://gakinz.com" rel="noopener">
+              Gakinz
+            </a>
           </p>
         </div>
       </div>

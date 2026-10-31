@@ -160,8 +160,8 @@ final class App
     }
 
     /**
-     * Public: what the app needs from the CMS. Announcements meant for the app (within their time window), the footer links and the
-     * public settings. Nothing private is in published content, and this returns only these fields.
+     * Public: what the app needs from the CMS. Announcements meant for the app (within their time window), the published FAQ (help
+     * page order), the footer links and the public settings. Nothing private is in published content, and this returns only these fields.
      */
     private static function site(string $varDir): void
     {
@@ -177,8 +177,14 @@ final class App
             $href = Content\Markdown::safeHref((string) ($a['linkHref'] ?? ''));
             $ann[] = ['id' => $a['id'], 'message' => $a['message'], 'level' => $a['level'] ?? 'info', 'linkLabel' => $href !== null ? ($a['linkLabel'] ?? '') : '', 'linkHref' => $href ?? ''];
         }
+        $faqs = [];
+        foreach ($c['faqs'] ?? [] as $f) {
+            if (empty($f['unpublished'])) {
+                $faqs[] = ['id' => (string) ($f['id'] ?? ''), 'question' => (string) ($f['question'] ?? ''), 'answer' => (string) ($f['answer'] ?? '')];
+            }
+        }
         $s = $c['settings'];
-        Http::json(200, ['announcements' => $ann, 'footer' => $c['navigation']['footer'] ?? [],
+        Http::json(200, ['announcements' => $ann, 'faqs' => $faqs, 'footer' => $c['navigation']['footer'] ?? [],
             'settings' => ['siteName' => $s['siteName'] ?? 'Flightdeck', 'footerBlurb' => $s['footerBlurb'] ?? '', 'footerNote' => $s['footerNote'] ?? '']]);
     }
 

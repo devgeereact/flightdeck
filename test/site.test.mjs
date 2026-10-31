@@ -608,9 +608,12 @@ test('home follows the approved prototype: sections in order, real data behind e
       h.includes('id="contact-form"') &&
       h.includes('/js/contact-test.js'),
   );
-  // Photo credits: in the footer on every page, and on the About page.
-  for (const [p, d] of docs())
-    assert.ok(d.includes('href="/about/#photo-credits"') && d.includes('Harry Knight'), p);
+  // Footer: © Gakinz linking to gakinz.com on every page; photo credits live on the About page only.
+  for (const [p, d] of docs()) {
+    assert.ok(d.includes('<a href="https://gakinz.com" rel="noopener">Gakinz</a>'), p);
+    if (p !== '/about/')
+      assert.ok(!d.includes('Harry Knight'), `${p} has no credits in the footer`);
+  }
   const about = page('/about/');
   for (const who of [
     'Harry Knight',

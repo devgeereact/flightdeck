@@ -19,6 +19,15 @@
 
   var $ = (s, r) => (r || document).querySelector(s);
   var $$ = (s, r) => [].slice.call((r || document).querySelectorAll(s));
+
+  // Sticky header: over the photo band it stays as it is; once the visitor scrolls past it, it becomes a frosted white bar
+  // with dark text (.stuck) so it can be read on any background. Without JavaScript it simply scrolls with the page.
+  var topEl = $('.site-top');
+  if (topEl) {
+    var stick = () => topEl.classList.toggle('stuck', window.scrollY > 80);
+    window.addEventListener('scroll', stick, { passive: true });
+    stick();
+  }
   var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
   var motionOk = () => !(calm && calm.matches);
   var store = {

@@ -2137,6 +2137,23 @@ main#main {
 .fd-clerk-input {
   font-size: 15px;
 }
+/* Same height, corners and focus ring as the app's own fields; the Clerk card must not clip the ring. */
+.si-step .fd-clerk-input {
+  min-height: 52px;
+  padding-inline: 14px !important;
+  border-radius: var(--fd-radius-sm) !important;
+}
+.si-step .fd-clerk-input:focus {
+  box-shadow:
+    0 0 0 1px var(--fd-blue),
+    0 0 0 4px var(--fd-blue-50) !important;
+}
+.si-step .cl-cardBox,
+.si-step .cl-card,
+.si-step .cl-main,
+.si-step .cl-form {
+  overflow: visible !important;
+}
 /* Clerk draws field borders as a faint shadow; give fields and code boxes the app's visible border until they take focus. */
 .si-step .fd-clerk-input:not(:focus),
 .si-step .fd-clerk-otp:not(:focus) {

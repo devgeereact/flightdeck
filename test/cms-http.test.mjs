@@ -398,6 +398,14 @@ test('FAQs, announcements and settings reach the site and the app', async () => 
     !JSON.stringify(pub.json).includes('contactEmail'),
     '/api/site returns only the public fields it lists',
   );
+  assert.ok(
+    Array.isArray(pub.json.faqs) && pub.json.faqs.length > 0,
+    '/api/site lists the published FAQ for the app',
+  );
+  assert.ok(
+    pub.json.faqs.every((f) => Object.keys(f).sort().join() === 'answer,id,question'),
+    'each FAQ carries only id, question and answer',
+  );
   const badAnn = await api('PUT', '/api/admin/content/announcement/bad', {
     auth: OWNER(),
     body: {

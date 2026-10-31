@@ -567,3 +567,261 @@ a.ck-rail-item {
     visibility: hidden !important;
   }
 }
+
+/* ------------------------------------------------------------------ A4 paper (31 Oct 2026)
+   One authoritative print design for the public packing list: branded header with write-in lines, three even columns of
+   sections that never split, aligned tick boxes, branded footer. It comes last and is specific on purpose so the older
+   print rules above cannot leak into it. */
+.print-head,
+.print-foot {
+  display: none;
+}
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm 13mm 13mm;
+  }
+  .packing-page,
+  .packing-page * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    box-shadow: none !important;
+  }
+  html,
+  body {
+    background: #fff !important;
+  }
+  .skip {
+    display: none !important;
+  }
+  .packing-page {
+    width: auto !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .packing-page > :not(.packing-sheet),
+  .packing-page .packing-top,
+  .packing-page .packing-summary,
+  .packing-page .ck-rail,
+  .packing-page .ck-pager,
+  .packing-page .ck-sec-hint {
+    display: none !important;
+  }
+  .packing-page .packing-sheet {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    background: none !important;
+    border-radius: 0 !important;
+  }
+  .packing-page .fd-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 2.4mm;
+    color: #14171f;
+    font:
+      700 14pt / 1 "Inter Tight",
+      Inter,
+      sans-serif;
+    letter-spacing: -0.03em;
+    text-decoration: none;
+  }
+  .packing-page .fd-brand .fd-logo {
+    width: 8.5mm;
+    height: 8.5mm;
+    border-radius: 2.4mm;
+  }
+  .packing-page .print-head {
+    display: block;
+    margin: 0 0 4mm;
+  }
+  .packing-page .ph-top {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 6mm;
+    padding-bottom: 3.5mm;
+    border-bottom: 1.6pt solid #1866ff;
+  }
+  .packing-page .ph-title {
+    text-align: center;
+  }
+  .packing-page .ph-title b {
+    display: block;
+    font:
+      700 15pt / 1.1 "Inter Tight",
+      Inter,
+      sans-serif;
+    letter-spacing: -0.02em;
+    color: #14171f;
+  }
+  .packing-page .ph-title span {
+    font:
+      500 7.5pt Inter,
+      sans-serif;
+    color: #5e6675;
+  }
+  .packing-page .ph-url {
+    justify-self: end;
+    font:
+      600 8.5pt Inter,
+      sans-serif;
+    color: #1458e0;
+  }
+  .packing-page .ph-meta {
+    display: grid;
+    grid-template-columns: 2fr 1.4fr 1fr;
+    gap: 7mm;
+    margin-top: 3mm;
+  }
+  .packing-page .ph-meta span {
+    display: flex;
+    flex-direction: column;
+    gap: 1mm;
+  }
+  .packing-page .ph-meta i {
+    font:
+      normal 600 6.8pt Inter,
+      sans-serif;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #5e6675;
+  }
+  .packing-page .ph-meta b {
+    display: block;
+    min-height: 6mm;
+    border-bottom: 0.8pt solid #9aa2b1;
+    font:
+      600 10pt Inter,
+      sans-serif;
+    color: #14171f;
+  }
+  .packing-page .ck-layout {
+    display: block !important;
+  }
+  .packing-page .ck-panels {
+    display: block !important;
+    column-count: 3;
+    column-gap: 7mm;
+    column-rule: 0.5pt solid #e3e7ee;
+  }
+  .packing-page .ck-panels > .ck-sec,
+  .packing-page .ck-panels > .ck-sec[hidden] {
+    display: block !important;
+    break-inside: auto; /* a long section may continue in the next column so all three end level; headings stay with items */
+    page-break-inside: auto;
+    margin: 0 0 3.2mm !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: none !important;
+    overflow: visible !important;
+  }
+  .packing-page .ck-sec-head {
+    display: flex !important;
+    align-items: center;
+    gap: 1.8mm;
+    min-height: 0 !important;
+    margin: 0 0 1.4mm !important;
+    padding: 0 0 1.3mm !important;
+    border: 0 !important;
+    border-bottom: 1pt solid #1866ff !important;
+    background: none !important;
+    break-after: avoid;
+    break-inside: avoid;
+  }
+  .packing-page .ck-sec-head .ck-n {
+    display: inline-grid !important;
+    place-items: center;
+    flex: none;
+    width: 4.4mm;
+    height: 4.4mm;
+    border-radius: 1.2mm;
+    background: #1866ff !important;
+    color: #fff !important;
+    font:
+      700 7pt / 1 Inter,
+      sans-serif;
+  }
+  .packing-page .ck-sec-head > div {
+    flex: 1;
+    min-width: 0;
+  }
+  .packing-page .ck-sec-title {
+    margin: 0 !important;
+    font:
+      700 9.5pt / 1.2 "Inter Tight",
+      Inter,
+      sans-serif !important;
+    letter-spacing: -0.01em;
+    color: #14171f !important;
+  }
+  .packing-page .ck-sec-count {
+    padding: 0 !important;
+    background: none !important;
+    font:
+      600 7pt Inter,
+      sans-serif !important;
+    color: #5e6675 !important;
+  }
+  .packing-page .ck-panels .ck-list {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .packing-page .ck-layout .ck-list li {
+    display: block;
+    border: 0 !important;
+    break-inside: avoid;
+  }
+  .packing-page .ck-layout .ck-check {
+    display: grid !important;
+    grid-template-columns: 3mm minmax(0, 1fr);
+    align-items: start;
+    gap: 2mm;
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 0.25mm 0 !important;
+    font:
+      400 7.6pt / 1.25 Inter,
+      sans-serif !important;
+    color: #14171f !important;
+  }
+  .packing-page .ck-layout .ck-box {
+    width: 3mm !important;
+    height: 3mm !important;
+    margin: 0.25mm 0 0 !important;
+    border: 0.8pt solid #2f3644 !important;
+    border-radius: 0.7mm !important;
+    background: #fff !important;
+  }
+  .packing-page .ck-layout .ck-check input:checked ~ .ck-text {
+    color: #14171f !important;
+    text-decoration: none !important;
+  }
+  .packing-page .print-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6mm;
+    margin-top: 3mm;
+    padding-top: 2.5mm;
+    border-top: 0.6pt solid #d3d9e3;
+    font:
+      500 7pt Inter,
+      sans-serif;
+    color: #5e6675;
+    break-inside: avoid;
+  }
+  .packing-page .print-foot .fd-brand {
+    font-size: 9pt;
+    gap: 1.6mm;
+  }
+  .packing-page .print-foot .fd-logo {
+    width: 5mm;
+    height: 5mm;
+    border-radius: 1.4mm;
+  }
+}

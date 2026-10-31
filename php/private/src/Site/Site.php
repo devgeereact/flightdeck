@@ -266,16 +266,12 @@ final class Site
         $scripts = '<script src="/consent.js" defer></script>' . $lenis . $motion . '<script src="' . self::e($this->assets['js']) . '" defer></script>' . ($o['scripts'] ?? '');
         $adsHead = !empty($o['ads']) ? '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-' . self::e($this->config['ads_pub_id']) . '" crossorigin="anonymous"></script>' : '';
         $site = self::e($this->s['siteName'] ?? 'Flightdeck');
-        $owner = trim((string) ($this->s['ownerName'] ?? '')) !== '' ? self::e($this->s['ownerName']) : $site;
         // One header for every page, sitting over the photo band. On narrow screens the nav becomes the menu sheet (site.js);
         // without JavaScript it simply stays open under the bar.
         $header = '<header class="site-top"><div class="shell"><div class="topbar">' . $this->brand('on-photo')
             . '<nav class="site-nav" id="site-nav" aria-label="Main"><div class="sheet-top">' . $this->brand() . '<button class="icon-btn" type="button" data-menu-close aria-label="Close menu">' . self::ico('x') . '</button></div><div class="topnav">' . $nav . '</div>'
             . '<div class="end"><a class="btn btn-glass btn-sm" href="/app/">Sign in</a><a class="btn btn-white btn-sm" href="/app/">Open the app</a></div></nav>'
             . '<button class="icon-btn menu-btn" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">' . self::ico('menu') . '</button></div></div></header>';
-        $credits = implode('', array_map(static function (array $c): string {
-            return '<li><b>' . self::e($c[0]) . '</b> <span>· ' . self::e($c[1]) . ' · ' . self::e($c[2]) . ', via Wikimedia Commons</span></li>';
-        }, self::CREDITS));
         return '<!doctype html>
 <html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>' . self::e($fullTitle) . '</title>
@@ -287,8 +283,7 @@ final class Site
 <body class="' . (!empty($o['home']) ? 'is-home' : 'is-inner') . '"><a class="skip" href="#main">Skip to content</a>
 ' . $this->announcements() . '<div class="stage">' . $header . '
 <main id="main">' . $o['main'] . '</main></div>
-<footer class="sf" aria-label="Site"><div class="sf-in"><div class="sf-top"><div class="sf-about">' . $this->brand('sf-brand') . '<p class="sf-blurb">' . self::e($this->s['footerBlurb'] ?? '') . '</p></div><div class="sf-cols">' . $foot . '</div></div><div class="sf-base"><p>' . self::e($this->s['footerNote'] ?? '') . '</p><p>© ' . $year . ' ' . $owner . ' · <a href="/about/#photo-credits" class="sf-credits" data-dialog="photo-credits-dlg">Photo credits</a></p></div></div></footer>
-<dialog class="dialog" id="photo-credits-dlg" aria-labelledby="credits-dlg-h"><div class="dialog-head"><h2 id="credits-dlg-h">Photo credits</h2><button class="icon-btn" type="button" data-close aria-label="Close">' . self::ico('x') . '</button></div><ul class="credits">' . $credits . '</ul></dialog>
+<footer class="sf" aria-label="Site"><div class="sf-in"><div class="sf-top"><div class="sf-about">' . $this->brand('sf-brand') . '<p class="sf-blurb">' . self::e($this->s['footerBlurb'] ?? '') . '</p></div><div class="sf-cols">' . $foot . '</div></div><div class="sf-base"><p>' . self::e($this->s['footerNote'] ?? '') . '</p><p>© ' . $year . ' <a href="https://gakinz.com" rel="noopener">Gakinz</a></p></div></div></footer>
 ' . $scripts . '</body></html>
 ';
     }
@@ -323,12 +318,18 @@ final class Site
         return '<div class="panel sheet layout' . ($toc ? '' : ' no-toc') . '">' . $toc . '<div class="prose">' . $lead . $r['html'] . '</div></div>';
     }
 
-    private function cards(array $list, bool $pill = true): string
+    private function cards(array $list, bool $pill = true, bool $fill = false): string
     {
+        // $fill: on the guides index every row is three equal cards; a spare slot at the end becomes a real action tile
+        // (look up a flight) instead of stretching the last cards wider.
+        $rest = count($list) % 3;
+        $tile = $fill && $rest !== 0
+            ? '<li class="cards-fill fill-' . (3 - $rest) . '"><div><span class="gtile">' . self::ico('plane') . '</span><strong>Put it into practice</strong><span>Look up your flight to see its status, terminal, gate and baggage belt as they are reported.</span><a class="btn btn-primary btn-sm" href="/app/">Look up a flight</a></div></li>'
+            : '';
         return '<ul class="cards">' . implode('', array_map(function (array $g) use ($pill): string {
             $cat = $g['category'] ?? '';
             return '<li><a href="/' . self::e($g['slug']) . '/"><span class="gtile">' . self::ico(self::CAT_ICON[$cat] ?? 'book') . '</span>' . ($pill ? '<em>' . self::e($this->catTitle($cat)) . '</em>' : '') . '<strong>' . self::e($g['title']) . '</strong><span>' . self::e($g['description']) . '</span><span class="cd-meta"><span class="num">' . $this->minutes($g) . ' min read</span><span class="go">Read the guide' . self::ico('arrow', 'ico-sm') . '</span></span></a></li>';
-        }, $list)) . '</ul>';
+        }, $list)) . $tile . '</ul>';
     }
 
     private function cta(string $title, string $text, string $href, string $label): string
@@ -438,7 +439,7 @@ final class Site
                 return ($g['category'] ?? '') === $cat['id'];
             }));
             if ($list) {
-                $cats .= '<section class="cat" aria-labelledby="cat-' . self::e($cat['id']) . '"><div class="sheet-head"><div><h2 id="cat-' . self::e($cat['id']) . '">' . self::e($cat['title']) . '</h2><p class="sub">' . self::e($cat['blurb']) . '</p></div><span class="badge plain num">' . count($list) . ' guides</span></div>' . $this->cards($list, false) . '</section>';
+                $cats .= '<section class="cat" aria-labelledby="cat-' . self::e($cat['id']) . '"><div class="sheet-head"><div><h2 id="cat-' . self::e($cat['id']) . '">' . self::e($cat['title']) . '</h2><p class="sub">' . self::e($cat['blurb']) . '</p></div><span class="badge plain num">' . count($list) . ' guides</span></div>' . $this->cards($list, false, true) . '</section>';
             }
         }
         $main = '<div class="shell page">' . $this->head($p) . '<div class="panel sheet intro"><div class="prose">' . $intro . '</div><p class="badge blue plain num">' . count($guides) . ' guides.</p></div>' . $cats
@@ -473,8 +474,11 @@ final class Site
             . '<div class="panel sheet packing-sheet"><div class="packing-top noprint"><div class="sub">' . $intro . '<p class="packing-access">' . self::ico('info', 'ico-sm') . '<span>Free to use and print. No sign-in needed. Your ticks stay in this browser.</span></p></div>'
             . '<div class="tools"><button class="btn btn-primary" type="button" data-print>' . self::ico('printer', 'ico-sm') . 'Print this list</button><button class="btn btn-secondary" type="button" data-print-blank>Print blank copy</button><a class="btn btn-secondary" href="/app/#/checklist">Keep it in Flightdeck</a><span class="stat num">' . count($tpl) . ' sections · ' . $total . ' items</span></div></div>'
             . '<div class="packing-summary noprint"><div><strong id="packing-total" class="num" role="status" aria-live="polite">0 of ' . $total . ' packed</strong><span id="packing-for">Choose a section, or show the complete list.</span></div><label class="packing-show-all"><input type="checkbox" id="packing-show-all"> Show all sections</label></div>'
-            . '<div class="packing-print-meta"><span>Name / trip: <b id="packing-trip">____________________</b></span><span>Departure date: <b id="packing-date">________________</b></span></div>'
-            . '<div class="ck-layout" id="packing-board"><nav class="ck-rail" aria-label="Packing list sections">' . $rail . '</nav><div class="ck-panels">' . $panels . '</div></div></div>'
+            // Paper only: branded header with write-in lines, and a branded footer (hidden on screen, see packingBoard.css).
+            . '<div class="print-head"><div class="ph-top"><span class="fd-brand">' . self::LOGO . '<span class="fd-brand-word">Flightdeck</span></span><span class="ph-title"><b>Packing list</b><span>' . count($tpl) . ' sections · ' . $total . ' items · tick as you pack</span></span><span class="ph-url">flightdeck.gakinz.com</span></div>'
+            . '<div class="ph-meta"><span><i>Trip</i><b id="packing-trip"></b></span><span><i>Leaving</i><b id="packing-date"></b></span><span><i>Packed by</i><b></b></span></div></div>'
+            . '<div class="ck-layout" id="packing-board"><nav class="ck-rail" aria-label="Packing list sections">' . $rail . '</nav><div class="ck-panels">' . $panels . '</div></div>'
+            . '<div class="print-foot"><span class="fd-brand">' . self::LOGO . '<span class="fd-brand-word">Flightdeck</span></span><span>Free printable packing list · flightdeck.gakinz.com/travel-checklist/</span><span>Flight details can change. Always follow airline and airport instructions.</span></div></div>'
             . $slot
             . '<section class="panel sheet noprint" aria-labelledby="ck-how"><div class="sheet-head"><h2 id="ck-how">How to use it</h2></div><ol class="ck-steps"><li><span class="n num">1</span><b>Start days ahead</b><span>The first section holds the things that take time: visas, insurance and vaccinations.</span></li><li><span class="n num">2</span><b>Pack by section</b><span>Clothes, then the bathroom bag, then accessories, so nothing is forgotten halfway through.</span></li><li><span class="n num">3</span><b>Make it yours</b><span>Cross out what you never need and add what you always forget. In Flightdeck your edits are saved for every trip.</span></li><li><span class="n num">4</span><b>Finish with the last lists</b><span>The night-before and last-minute sections catch the keys, the charger and the back door.</span></li></ol>'
             . '<div class="prose"><p>For entry requirements, visas and health advice for your destination, use the official <a href="https://www.gov.uk/foreign-travel-advice" rel="noopener">GOV.UK foreign travel advice</a>. Planning the day itself? Read the <a href="/guides/departure-day-airport-timeline/">departure day timeline</a> and the guide to <a href="/guides/pack-your-cabin-bag-for-a-long-flight/">packing your cabin bag</a>.</p></div></section>'

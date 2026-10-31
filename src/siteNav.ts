@@ -54,6 +54,7 @@ export const FOOTER_GROUPS: SiteLinkGroup[] = [
   },
 ];
 
-export const FOOTER_BLURB = 'Flight status, airport details and a packing list you can reuse.';
+export const FOOTER_BLURB =
+  'Flight status, gates and baggage belts on one page, plus a packing list you can reuse. Free, with no adverts, and clear about anything not known yet.';
 export const FOOTER_NOTE =
   'Flight details can change. Always follow airline and airport instructions.';

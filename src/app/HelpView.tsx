@@ -1,14 +1,15 @@
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { Plus } from 'lucide-react';
-import { Fragment, type ReactNode, useRef, useState } from 'react';
-import { faqs } from '../../content/site-content.mjs';
+import { Fragment, type ReactNode, useEffect, useRef, useState } from 'react';
+import { faqs as builtInFaqs } from '../../content/site-content.mjs';
 import { fromAny, motionAllowed, withMotion } from '../shared/motion';
 import { AccountButton } from './auth';
 
 gsap.registerPlugin(useGSAP);
 
-// The same answers as the public help page (content/site-content.mjs, the CMS seed). Links in the safe Markdown subset become
+// The same answers as the public help page: the published FAQ from /api/site (edited in the owner console), with the
+// build-time seed (content/site-content.mjs) as the offline fallback. Links in the safe Markdown subset become
 // real links; anything else stays plain text.
 function answer(text: string): ReactNode {
   const out: ReactNode[] = [];
@@ -61,6 +62,19 @@ export default function HelpView({
   account: boolean;
 }) {
   const [open, setOpen] = useState<string | null>(null);
+  const [faqs, setFaqs] = useState<{ id: string; question: string; answer: string }[]>(builtInFaqs);
+  useEffect(() => {
+    const ac = new AbortController();
+    fetch('/api/site', { signal: ac.signal })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (j && Array.isArray(j.faqs) && j.faqs.length) setFaqs(j.faqs);
+      })
+      .catch(() => {
+        /* offline or aborted: keep the built-in answers */
+      });
+    return () => ac.abort();
+  }, []);
   const root = useRef<HTMLElement>(null);
   useGSAP(
     () => {
