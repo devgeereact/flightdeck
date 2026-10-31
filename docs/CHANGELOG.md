@@ -2,6 +2,10 @@
 
 Newest first. Dates are UK dates.
 
+## 31 October 2026 (later): "Too many requests" fixed
+- The API rate limit is now split per visitor: flight and weather look-ups keep the strict configured limit (`rate_per_minute`, default 30), other app requests (site content, account, packing-list sync, events) get at least 120 a minute, owner-console requests at least 240. One shared 30/minute bucket used to trip during normal use of the packing list or the console.
+- The packing list syncs after a 2.5-second pause in ticking instead of 0.9 seconds.
+
 ## 31 October 2026 (later): maintenance switch and Analytics ID in Site settings
 - Site settings has a **Maintenance page** switch (Visibility card) and message: public pages answer 503 with a branded "back soon" page (noindex, Retry-After); the app, the owner console and the API keep working so the owner can switch it off.
 - Site settings has an **Analytics** section: a GA4 Measurement ID set here replaces the build-time ID on the public pages (validated as `G-XXXXXXXXXX`; analytics still loads only after cookie consent).

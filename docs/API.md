@@ -8,7 +8,7 @@ Base: same-origin /api in browser; Vite proxies it during development. Guest end
 | GET /api/flights | number, date YYYY-MM-DD, mode=demo or otherwise live | FlightResponse | 400 invalid; 503 no key; 502 upstream; 429 local limiter |
 | GET /api/weather | lat, lon | current temperature_2m, weather_code, wind_speed_10m, time, timezone, source, fetchedAt | 400 coordinates; 502 upstream; 429 local limiter |
 
-Unknown /api paths return JSON 404. Global limiter is 30 requests per minute per req.ip in local memory; proxy/IP trust is not production configured.
+Unknown /api paths return JSON 404. Rate limits per visitor (Cloudflare-verified client address), per minute, in the server file store (`App::rateBucket`): `/flights` and `/weather` use `rate_per_minute` from the server config (default 30), because they reach the data providers; `/admin/*` at least 240; everything else at least 120. Over the limit: 429 `{error: "Too many requests. Please wait a minute."}`. Contact messages have their own hourly limits.
 
 ## Search semantics
 Number is uppercased and whitespace removed; accepted pattern is 2–3 alphanumeric carrier characters + 1–4 digits + optional trailing letter. Date must round-trip as a real ISO calendar date. Demo supports only BA117/EK2/AF1381 and returns [] otherwise. Unknown non-demo modes currently fall into live mode; future PHP contract should explicitly validate the enum rather than silently expand it.

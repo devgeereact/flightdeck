@@ -148,9 +148,10 @@ export default function Checklist({
   function scheduleSync() {
     if (!userId) return;
     if (timer.current) clearTimeout(timer.current);
+    // Wait for a pause in ticking: each sync is a pull and often a push, and quick ticks would otherwise send dozens a minute.
     timer.current = setTimeout(() => {
       void runSync();
-    }, 900);
+    }, 2500);
   }
   useEffect(() => {
     if (!userId) return;

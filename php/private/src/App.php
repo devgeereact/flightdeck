@@ -17,7 +17,8 @@ final class App
         $route = rtrim($pos === false ? $path : substr($path, $pos + 4), '/');
 
         $ip = CloudflareIps::clientIp((string) ($_SERVER['REMOTE_ADDR'] ?? 'local'), isset($_SERVER['HTTP_CF_CONNECTING_IP']) ? (string) $_SERVER['HTTP_CF_CONNECTING_IP'] : null, !empty($config['trust_cf_connecting_ip']));
-        if (!$store->rateAllow($ip, max(1, (int) ($config['rate_per_minute'] ?? 30)), 60000)) {
+        [$bucket, $perMinute] = self::rateBucket($route, (int) ($config['rate_per_minute'] ?? 30));
+        if (!$store->rateAllow($bucket . $ip, $perMinute, 60000)) {
             Metrics::count('rate_limited');
             Http::json(429, ['error' => 'Too many requests. Please wait a minute.']);
             return;
@@ -140,6 +141,27 @@ final class App
             }
         }
         return null;
+    }
+
+    /**
+     * Which per-visitor bucket a request counts against, and its limit per minute. Flight and weather look-ups reach paid or
+     * shared providers, so they keep the strict owner-configured limit (rate_per_minute, default 30). Everything else is cheap
+     * (site content, config, account, packing-list sync, events) and gets four times as much, at least 120; owner-console
+     * requests, which load several panels per screen, eight times, at least 240. Before 31 Oct 2026 one 30/minute bucket
+     * covered every request, so ticking a packing list or clicking through the console could show "Too many requests".
+     *
+     * @return array{0: string, 1: int} [key prefix, limit per minute]
+     */
+    public static function rateBucket(string $route, int $perMinute): array
+    {
+        $per = max(1, $perMinute);
+        if ($route === '/flights' || $route === '/weather') {
+            return ['p:', $per];
+        }
+        if (strpos($route, '/admin') === 0) {
+            return ['a:', max(240, $per * 8)];
+        }
+        return ['g:', max(120, $per * 4)];
     }
 
     /** Rate-limit key for a visitor: the address, or its /64 network for IPv6 (one home or phone usually owns a whole /64). */
