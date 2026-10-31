@@ -1,19 +1,19 @@
-import {
-  AlertTriangle,
-  ArrowLeft,
-  CheckCircle2,
-  Eye,
-  EyeOff,
-  History,
-  RotateCcw,
-  Save,
-  Send,
-  Trash2,
-  Undo2,
-  X,
-} from 'lucide-react';
+import { ArrowLeft, Eye, RotateCcw, Send, Trash2, Undo2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ApiError, call, when } from '../api';
+import { ApiError, ago, call, when } from '../api';
+import {
+  Badge,
+  Dialog,
+  LoadError,
+  Loading,
+  Notice,
+  PageHead,
+  Panel,
+  Switch,
+  type Tone,
+  toast,
+  useRise,
+} from '../ui';
 import type { Errors } from './fields';
 import {
   AnnouncementForm,
@@ -35,13 +35,20 @@ type Loaded = {
 const ACTION: Record<string, string> = {
   save: 'Draft saved',
   publish: 'Published',
-  unpublish: 'Unpublished',
+  unpublish: 'Hidden from the site',
   republish: 'Published again',
   discard: 'Draft discarded',
   delete: 'Deleted',
 };
 const actionLabel = (a: string) =>
   a.startsWith('restore ') ? 'Earlier version restored to draft' : ACTION[a] || a;
+const WHERE_SETTINGS: [string, string][] = [
+  ['Header and tab title', 'Site name and tagline'],
+  ['Contact page and footer', 'Contact email'],
+  ['Privacy, cookies and terms', 'Who runs the site, last reviewed'],
+  ['Every page footer', 'Description and note'],
+  ['Shared links', 'Link preview image'],
+];
 
 /**
  * Edit one item: changes are saved as a draft, previewed with the real site renderer, then published. Nothing reaches the public
@@ -56,6 +63,8 @@ export default function Editor({
   sections,
   onClose,
   onChanged,
+  onTitle,
+  backLabel = 'Back to the list',
 }: {
   type: ContentType;
   id: string;
@@ -65,24 +74,29 @@ export default function Editor({
   sections: string[];
   onClose?: () => void;
   onChanged: () => void;
+  onTitle?: (t: string | null) => void;
+  backLabel?: string;
 }) {
   const [loaded, setLoaded] = useState<Loaded | null>(null),
     [data, setData] = useState<any>(null),
     [baseRev, setBaseRev] = useState(0),
     [dirty, setDirty] = useState(false);
   const [errors, setErrors] = useState<Errors>({}),
-    [msg, setMsg] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null),
+    [msg, setMsg] = useState<string | null>(null),
+    [loadErr, setLoadErr] = useState<unknown>(null),
     [busy, setBusy] = useState(''),
     [conflict, setConflict] = useState(false);
   const [preview, setPreview] = useState<string | null>(null),
-    [showHistory, setShowHistory] = useState(false),
+    [allHistory, setAllHistory] = useState(false),
     [viewRev, setViewRev] = useState<{ name: string; data: any } | null>(null),
-    [confirm, setConfirm] = useState<string | null>(null);
+    [confirm, setConfirm] = useState<'discard' | 'unpublish' | 'delete' | null>(null),
+    [ads, setAds] = useState<boolean | null>(null);
   const base = `/api/admin/content/${type}/${type === 'page' ? id.split('/').map(encodeURIComponent).join('/') : encodeURIComponent(id)}`;
   const load = useCallback(async () => {
     setMsg(null);
     setConflict(false);
     setErrors({});
+    setLoadErr(null);
     try {
       const d = await call<Loaded>(base);
       setLoaded(d);
@@ -95,12 +109,19 @@ export default function Editor({
         setData(blank);
         setBaseRev(0);
         setDirty(true);
-      } else setMsg({ kind: 'error', text: (e as Error).message });
+      } else setLoadErr(e);
     }
   }, [base, isNew, blank]);
   useEffect(() => {
     void load();
   }, [load]);
+  // Site settings show whether adverts are on. That is set on the server only, so it is read, never changed, here.
+  useEffect(() => {
+    if (type !== 'settings') return;
+    call<{ ads: boolean }>('/api/admin/system')
+      .then((s) => setAds(!!s.ads))
+      .catch(() => setAds(null));
+  }, [type]);
   // Leaving with unsaved changes asks first (closing the tab, or going back to the list).
   useEffect(() => {
     if (!dirty) return;
@@ -111,6 +132,12 @@ export default function Editor({
     window.addEventListener('beforeunload', f);
     return () => window.removeEventListener('beforeunload', f);
   }, [dirty]);
+  // After a refused save, move to the first field the server marked.
+  useEffect(() => {
+    if (!Object.keys(errors).length) return;
+    const el = document.querySelector<HTMLElement>('.cs-ed [aria-invalid="true"]');
+    el?.focus();
+  }, [errors]);
   const set = (d: any) => {
     setData(d);
     setDirty(true);
@@ -120,13 +147,21 @@ export default function Editor({
     if (e instanceof ApiError) {
       if (e.status === 409) setConflict(true);
       if (e.errors) setErrors(e.errors);
-      setMsg({ kind: 'error', text: e.message });
-    } else setMsg({ kind: 'error', text: 'Something went wrong. Please try again.' });
+      setMsg(e.message);
+    } else setMsg('Something went wrong. Please try again.');
   };
 
-  async function save(): Promise<boolean> {
+  async function refresh() {
+    try {
+      setLoaded(await call<Loaded>(base));
+    } catch {
+      /* keep what is on screen */
+    }
+  }
+  async function save(quiet = false): Promise<boolean> {
     setBusy('save');
     setErrors({});
+    setMsg(null);
     try {
       const r = await call<{ draft: { rev: number; data: any } }>(base, {
         method: 'PUT',
@@ -135,7 +170,7 @@ export default function Editor({
       setBaseRev(r.draft.rev);
       setData(r.draft.data);
       setDirty(false);
-      setMsg({ kind: 'ok', text: 'Draft saved. It is not on the site until you publish.' });
+      if (!quiet) toast('Draft saved. It is not on the site until you publish.');
       onChanged();
       await refresh();
       return true;
@@ -146,14 +181,6 @@ export default function Editor({
       setBusy('');
     }
   }
-  async function refresh() {
-    try {
-      const d = await call<Loaded>(base);
-      setLoaded(d);
-    } catch {
-      /* keep what is on screen */
-    }
-  }
   async function act(action: string, extra: object = {}, done = '') {
     setBusy(action);
     setMsg(null);
@@ -161,7 +188,7 @@ export default function Editor({
       await call(base, { method: 'POST', body: { action, ...extra } });
       onChanged();
       await load();
-      if (done) setMsg({ kind: 'ok', text: done });
+      if (done) toast(done);
     } catch (e) {
       fail(e);
     } finally {
@@ -170,7 +197,7 @@ export default function Editor({
     }
   }
   async function publish() {
-    if (dirty && !(await save())) return;
+    if (dirty && !(await save(true))) return;
     await act('publish', {}, 'Published. The site shows it now.');
   }
   async function remove() {
@@ -179,6 +206,7 @@ export default function Editor({
       await call(base, { method: 'DELETE' });
       onChanged();
       setDirty(false);
+      toast('Deleted. Its history is kept, so it can be restored.');
       onClose?.();
     } catch (e) {
       fail(e);
@@ -211,34 +239,9 @@ export default function Editor({
     }
   }
 
-  const closeRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    if (preview) closeRef.current?.focus();
-  }, [preview]);
-  if (!loaded || !data)
-    return msg ? (
-      <div role="alert" className="notice error">
-        <AlertTriangle size={16} />
-        {msg.text}
-      </div>
-    ) : (
-      <p className="ad-loading" role="status">
-        Loading…
-      </p>
-    );
-  const pub = loaded.published,
-    hasDraft = !!loaded.draft || dirty,
-    hidden = !!pub?.unpublished,
-    canHide = ['page', 'faq', 'announcement'].includes(type) && !loaded.required;
-  const state = !pub
-    ? 'Not published yet'
-    : hidden
-      ? 'Hidden from the site'
-      : hasDraft
-        ? 'Published, with unpublished changes'
-        : 'Published';
-  const title =
-    type === 'settings'
+  const title = !data
+    ? ''
+    : type === 'settings'
       ? 'Site settings'
       : type === 'navigation'
         ? 'Menus'
@@ -247,261 +250,424 @@ export default function Editor({
           : type === 'announcement'
             ? data.message || 'New announcement'
             : data.title || id;
-  const back = () => {
-    if (dirty && !window.confirm('Leave without saving your changes?')) return;
-    onClose?.();
-  };
-  return (
-    <section className="cn-editor" aria-labelledby="cn-ed-h">
-      <div className="cn-ed-head">
-        {onClose && (
-          <button className="text-button" onClick={back}>
-            <ArrowLeft size={14} />
-            Back to the list
-          </button>
-        )}
-        <h2 id="cn-ed-h">{title}</h2>
-        <p className="cn-ed-meta">
-          <span className={'cn-badge ' + (!pub || hidden ? 'off' : hasDraft ? 'draft' : 'live')}>
-            {state}
-          </span>
-          {type === 'page' && (
-            <span>
-              Address:{' '}
-              <a href={id === 'home' ? '/' : `/${id}/`} target="_blank" rel="noreferrer">
-                {id === 'home' ? '/' : `/${id}/`}
-              </a>
-            </span>
-          )}
-          {loaded.draft && <span>Draft saved {when(loaded.draft.updatedAt)}</span>}
-        </p>
+  useEffect(() => {
+    if (title) onTitle?.(title);
+  }, [title, onTitle]);
+  const root = useRef<HTMLDivElement>(null);
+  useRise(root, [!!loaded]);
+
+  const back = onClose && (
+    <button
+      type="button"
+      className="cs-back"
+      onClick={() => {
+        if (dirty && !window.confirm('Leave without saving your changes?')) return;
+        onClose();
+      }}
+    >
+      <ArrowLeft size={16} aria-hidden="true" />
+      {backLabel}
+    </button>
+  );
+  if (!loaded || !data)
+    return (
+      <div className="cs-stack" ref={root}>
+        {back && <div className="cs-vh small">{back}</div>}
+        {loadErr ? <LoadError error={loadErr} retry={() => void load()} /> : <Loading />}
       </div>
+    );
+  const pub = loaded.published,
+    hasDraft = !!loaded.draft || dirty,
+    hidden = !!pub?.unpublished,
+    canHide = ['page', 'faq', 'announcement'].includes(type) && !loaded.required,
+    isSettings = type === 'settings',
+    single = type === 'settings' || type === 'navigation';
+  const [stateText, stateTone]: [string, Tone] = dirty
+    ? ['Unsaved changes', 'warn']
+    : !pub
+      ? ['Draft only', 'violet']
+      : hidden
+        ? ['Hidden', 'grey']
+        : loaded.draft
+          ? ['Changes not published', 'warn']
+          : ['Published', 'ok'];
+  const lastPub = loaded.revisions.find((r) => r.action === 'publish' || r.action === 'republish');
+  const revs = allHistory ? loaded.revisions : loaded.revisions.slice(0, 6);
+  const nothingToPublish = !hasDraft && !!pub && !hidden;
+  const lede = isSettings
+    ? 'Names and text used across every public page.'
+    : type === 'navigation'
+      ? 'The links in the website header and footer.'
+      : undefined;
+
+  return (
+    <div className="cs-stack" ref={root}>
+      <PageHead
+        small={!single}
+        back={back}
+        title={title}
+        lede={lede}
+        actions={<Badge tone={stateTone}>{stateText}</Badge>}
+      />
       {msg && (
-        <div
-          role={msg.kind === 'error' ? 'alert' : 'status'}
-          className={msg.kind === 'error' ? 'notice error' : 'notice'}
+        <Notice
+          kind="error"
+          action={
+            conflict && (
+              <button type="button" className="cs-linkbtn" onClick={() => void load()}>
+                Reload the latest version
+              </button>
+            )
+          }
         >
-          {msg.kind === 'error' ? <AlertTriangle size={16} /> : <CheckCircle2 size={16} />}
-          {msg.text}
-          {conflict && (
-            <button className="text-button" onClick={() => void load()}>
-              Reload the latest version
-            </button>
-          )}
-        </div>
+          {msg}
+        </Notice>
       )}
-      <form
-        className="cn-form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void save();
-        }}
-        noValidate
-      >
-        {type === 'page' && (
-          <PageForm data={data} set={set} errors={errors} categories={categories} />
-        )}
-        {type === 'faq' && <FaqForm data={data} set={set} errors={errors} sections={sections} />}
-        {type === 'announcement' && <AnnouncementForm data={data} set={set} errors={errors} />}
-        {type === 'navigation' && <NavigationForm data={data} set={set} errors={errors} />}
-        {type === 'settings' && <SettingsForm data={data} set={set} errors={errors} />}
-        <div className="cn-actions">
-          <button className="btn btn-secondary" type="submit" disabled={!!busy || !dirty}>
-            <Save size={15} />
-            {busy === 'save' ? 'Saving…' : 'Save draft'}
-          </button>
-          <button
-            className="btn btn-secondary"
-            type="button"
-            onClick={() => void showPreview()}
-            disabled={!!busy}
-          >
-            <Eye size={15} />
-            {busy === 'preview' ? 'Preparing…' : 'Preview'}
-          </button>
-          <button
-            className="btn btn-primary"
-            type="button"
-            onClick={() => void publish()}
-            disabled={!!busy || (!hasDraft && !!pub && !hidden)}
-          >
-            <Send size={15} />
-            {busy === 'publish' ? 'Publishing…' : 'Publish'}
-          </button>
-          <span className="cn-spacer" />
-          {loaded.draft && !dirty && (
-            <button
-              className="text-button"
-              type="button"
-              onClick={() => setConfirm('discard')}
-              disabled={!!busy}
-            >
-              <Undo2 size={14} />
-              Discard draft
-            </button>
+      <div className="cs-ed">
+        <form
+          id="cs-edform"
+          className={single ? 'cs-panel cs-form sectioned' : 'cs-panel cs-form'}
+          onSubmit={(e) => {
+            e.preventDefault();
+            void (isSettings ? publish() : save());
+          }}
+          noValidate
+        >
+          {type === 'page' && (
+            <PageForm
+              data={data}
+              set={set}
+              errors={errors}
+              categories={categories}
+              id={id}
+              live={!!pub && !hidden}
+            />
           )}
-          {dirty && pub && (
-            <button
-              className="text-button"
-              type="button"
-              onClick={() => {
-                setData(loaded.draft?.data ?? pub);
-                setDirty(false);
-                setErrors({});
-              }}
-            >
-              <Undo2 size={14} />
-              Undo changes
-            </button>
+          {type === 'faq' && <FaqForm data={data} set={set} errors={errors} sections={sections} />}
+          {type === 'announcement' && <AnnouncementForm data={data} set={set} errors={errors} />}
+          {type === 'navigation' && <NavigationForm data={data} set={set} errors={errors} />}
+          {isSettings && <SettingsForm data={data} set={set} errors={errors} />}
+        </form>
+        <div className="cs-aside">
+          <Panel title="Publishing" actions={<Badge tone={stateTone}>{stateText}</Badge>}>
+            <div className="cs-pb cs-aside-pb">
+              <div className="cs-aside-acts">
+                <button
+                  className="cs-btn primary"
+                  type="button"
+                  onClick={() => void publish()}
+                  disabled={!!busy || nothingToPublish}
+                >
+                  <Send size={16} aria-hidden="true" />
+                  {busy === 'publish' ? 'Publishing…' : isSettings ? 'Save and publish' : 'Publish'}
+                </button>
+                {isSettings ? (
+                  <button
+                    className="cs-btn ghost"
+                    type="button"
+                    disabled={!dirty || !!busy}
+                    onClick={() => {
+                      setData(loaded.draft?.data ?? pub);
+                      setDirty(false);
+                      setErrors({});
+                      setMsg(null);
+                      toast('Changes discarded.');
+                    }}
+                  >
+                    Discard changes
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      className="cs-btn ghost"
+                      type="button"
+                      onClick={() => void showPreview()}
+                      disabled={!!busy}
+                    >
+                      <Eye size={16} aria-hidden="true" />
+                      {busy === 'preview' ? 'Preparing…' : 'Preview'}
+                    </button>
+                    <button
+                      className="cs-btn ghost"
+                      type="submit"
+                      form="cs-edform"
+                      disabled={!!busy || !dirty}
+                    >
+                      {busy === 'save' ? 'Saving…' : 'Save draft'}
+                    </button>
+                  </>
+                )}
+                {loaded.draft && !dirty && (
+                  <button
+                    className="cs-btn quiet danger-text"
+                    type="button"
+                    onClick={() => setConfirm('discard')}
+                    disabled={!!busy}
+                  >
+                    <Undo2 size={16} aria-hidden="true" />
+                    Discard draft
+                  </button>
+                )}
+                {dirty && pub && !isSettings && (
+                  <button
+                    className="cs-btn quiet"
+                    type="button"
+                    onClick={() => {
+                      setData(loaded.draft?.data ?? pub);
+                      setDirty(false);
+                      setErrors({});
+                    }}
+                  >
+                    <Undo2 size={16} aria-hidden="true" />
+                    Undo changes
+                  </button>
+                )}
+                {isSettings && (
+                  <button
+                    className="cs-btn quiet"
+                    type="button"
+                    onClick={() => void showPreview()}
+                    disabled={!!busy}
+                  >
+                    <Eye size={16} aria-hidden="true" />
+                    {busy === 'preview' ? 'Preparing…' : 'Preview the home page'}
+                  </button>
+                )}
+              </div>
+              <p className="cs-label">
+                {dirty
+                  ? 'Unsaved changes'
+                  : loaded.draft
+                    ? `Draft saved ${ago(loaded.draft.updatedAt)}`
+                    : 'No unpublished changes'}
+                {lastPub ? ` · last published ${ago(lastPub.at)}` : pub ? '' : ' · never published'}
+              </p>
+            </div>
+          </Panel>
+          {canHide && (
+            <Panel>
+              <div className="cs-pb">
+                <div className="cs-swrow">
+                  <div>
+                    <b>Hidden</b>
+                    <small>
+                      {pub
+                        ? type === 'page'
+                          ? 'Hidden pages answer "not found" and leave the sitemap.'
+                          : 'Hidden items stay here but are not shown on the site.'
+                        : 'Publish it first; then it can be hidden.'}
+                    </small>
+                  </div>
+                  <Switch
+                    checked={hidden}
+                    label="Hide from the site"
+                    disabled={!pub || !!busy}
+                    onChange={() =>
+                      hidden
+                        ? void act('republish', {}, 'Shown on the site again.')
+                        : setConfirm('unpublish')
+                    }
+                  />
+                </div>
+                {(pub || loaded.draft) && (
+                  <button
+                    className="cs-btn quiet danger-text cs-del"
+                    type="button"
+                    onClick={() => setConfirm('delete')}
+                    disabled={!!busy}
+                  >
+                    <Trash2 size={16} aria-hidden="true" />
+                    Delete
+                  </button>
+                )}
+              </div>
+            </Panel>
           )}
-          {canHide &&
-            pub &&
-            (hidden ? (
-              <button
-                className="text-button"
-                type="button"
-                onClick={() => void act('republish', {}, 'Shown on the site again.')}
-                disabled={!!busy}
-              >
-                <Eye size={14} />
-                Show on site
-              </button>
-            ) : (
-              <button
-                className="text-button"
-                type="button"
-                onClick={() => setConfirm('unpublish')}
-                disabled={!!busy}
-              >
-                <EyeOff size={14} />
-                Hide from site
-              </button>
-            ))}
-          {canHide && (pub || loaded.draft) && (
-            <button
-              className="text-button danger"
-              type="button"
-              onClick={() => setConfirm('delete')}
-              disabled={!!busy}
-            >
-              <Trash2 size={14} />
-              Delete
-            </button>
+          {isSettings && (
+            <Panel title="Visibility">
+              <div className="cs-pb">
+                <div className="cs-swrow">
+                  <div>
+                    <b>Adverts</b>
+                    <small>
+                      {ads === null
+                        ? 'Set in the private server config, not here.'
+                        : ads
+                          ? 'On. Set in the private server config, not here.'
+                          : 'Locked off. Flightdeck is free and non-commercial; this is set on the server.'}
+                    </small>
+                  </div>
+                  <Switch checked={!!ads} label="Adverts, set on the server" disabled />
+                </div>
+              </div>
+            </Panel>
           )}
-          <button
-            className="text-button"
-            type="button"
-            onClick={() => setShowHistory((h) => !h)}
-            aria-expanded={showHistory}
-          >
-            <History size={14} />
-            History ({loaded.revisions.length})
-          </button>
-        </div>
-        {confirm && (
-          <div className="cn-confirm" role="alertdialog" aria-labelledby="cn-confirm-t">
-            <p id="cn-confirm-t">
-              {confirm === 'delete'
-                ? 'Delete this from the site? Its history is kept, so it can be restored later.'
-                : confirm === 'unpublish'
-                  ? 'Hide this from the site? You can show it again at any time.'
-                  : 'Discard the draft? The published version stays as it is.'}
-            </p>
-            <button
-              className="btn btn-primary"
-              type="button"
-              onClick={() =>
-                void (confirm === 'delete'
-                  ? remove()
-                  : act(
-                      confirm,
-                      {},
-                      confirm === 'unpublish' ? 'Hidden from the site.' : 'Draft discarded.',
-                    ))
-              }
-            >
-              {confirm === 'delete' ? 'Delete' : confirm === 'unpublish' ? 'Hide' : 'Discard'}
-            </button>
-            <button className="btn btn-secondary" type="button" onClick={() => setConfirm(null)}>
-              Cancel
-            </button>
-          </div>
-        )}
-      </form>
-      {showHistory && (
-        <section className="panel cn-history" aria-label="History">
-          <h3>History</h3>
-          {loaded.revisions.length === 0 ? (
-            <p className="ad-note">No changes yet. The current text is the starting content.</p>
-          ) : (
-            <ol>
-              {loaded.revisions.map((r) => (
-                <li key={r.name}>
-                  <span>
-                    <strong>{actionLabel(r.action)}</strong> · {when(r.at)}
-                  </span>
-                  {r.hasData && (
-                    <span className="cn-history-act">
-                      <button className="text-button" onClick={() => void openRev(r.name)}>
-                        View
-                      </button>
-                      <button
-                        className="text-button"
-                        onClick={() =>
-                          void act(
-                            'restore',
-                            { revision: r.name },
-                            'That version is now the draft. Review it, then publish.',
-                          )
-                        }
-                        disabled={!!busy}
-                      >
-                        <RotateCcw size={13} />
-                        Restore to draft
-                      </button>
+          {isSettings && (
+            <Panel title="Where these appear">
+              <ul className="cs-hist">
+                {WHERE_SETTINGS.map(([a, b]) => (
+                  <li key={a}>
+                    <span>
+                      <b>{a}</b>
+                      <small>{b}</small>
                     </span>
-                  )}
-                </li>
-              ))}
-            </ol>
+                  </li>
+                ))}
+              </ul>
+            </Panel>
           )}
-          {viewRev && (
-            <div className="cn-revview">
-              <div className="cn-panel-head">
-                <h4>
-                  Version from {when(loaded.revisions.find((r) => r.name === viewRev.name)?.at)}
-                </h4>
-                <button className="icon-button" aria-label="Close" onClick={() => setViewRev(null)}>
-                  <X size={14} />
+          <Panel title="History" className="cn-history">
+            {loaded.revisions.length === 0 ? (
+              <p className="cs-empty">No changes yet. The current text is the starting content.</p>
+            ) : (
+              <ul className="cs-hist">
+                {revs.map((r) => (
+                  <li key={r.name}>
+                    <span>
+                      <b>{actionLabel(r.action)}</b>
+                      <small className="cs-num">{when(r.at)}</small>
+                    </span>
+                    {r.hasData && (
+                      <span className="cs-hist-acts">
+                        <button
+                          type="button"
+                          className="cs-btn quiet sm"
+                          onClick={() => void openRev(r.name)}
+                        >
+                          View
+                        </button>
+                        <button
+                          type="button"
+                          className="cs-btn quiet sm"
+                          onClick={() =>
+                            void act(
+                              'restore',
+                              { revision: r.name },
+                              'That version is now the draft. Review it, then publish.',
+                            )
+                          }
+                          disabled={!!busy}
+                        >
+                          <RotateCcw size={16} aria-hidden="true" />
+                          Restore
+                        </button>
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {loaded.revisions.length > 6 && (
+              <div className="cs-panel-foot">
+                <button
+                  type="button"
+                  className="cs-linkbtn"
+                  onClick={() => setAllHistory((a) => !a)}
+                >
+                  {allHistory ? 'Show the latest 6' : `Show all ${loaded.revisions.length}`}
                 </button>
               </div>
-              <pre>{viewRev.data.body ?? JSON.stringify(viewRev.data, null, 2)}</pre>
-            </div>
-          )}
-        </section>
+            )}
+          </Panel>
+        </div>
+      </div>
+      {confirm && (
+        <Dialog
+          role="alertdialog"
+          title={
+            confirm === 'delete'
+              ? 'Delete this from the site?'
+              : confirm === 'unpublish'
+                ? 'Hide this from the site?'
+                : 'Discard this draft?'
+          }
+          sub={
+            confirm === 'delete'
+              ? 'Its history is kept, so it can be restored later.'
+              : confirm === 'unpublish'
+                ? 'It stays here and you can show it again at any time.'
+                : 'Your unpublished changes are lost. The published version stays as it is.'
+          }
+          onClose={() => setConfirm(null)}
+          footer={
+            <>
+              <button type="button" className="cs-btn ghost" onClick={() => setConfirm(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                data-autofocus
+                className="cs-btn danger"
+                disabled={!!busy}
+                onClick={() =>
+                  void (confirm === 'delete'
+                    ? remove()
+                    : act(
+                        confirm,
+                        {},
+                        confirm === 'unpublish' ? 'Hidden from the site.' : 'Draft discarded.',
+                      ))
+                }
+              >
+                {confirm === 'delete' ? 'Delete' : confirm === 'unpublish' ? 'Hide' : 'Discard'}
+              </button>
+            </>
+          }
+        >
+          {null}
+        </Dialog>
+      )}
+      {viewRev && (
+        <Dialog
+          wide
+          title={`Version from ${when(loaded.revisions.find((r) => r.name === viewRev.name)?.at)}`}
+          sub="Read only. Restore it from the history list to make it the draft."
+          onClose={() => setViewRev(null)}
+        >
+          <pre className="cs-revview">
+            {viewRev.data.body ?? JSON.stringify(viewRev.data, null, 2)}
+          </pre>
+        </Dialog>
       )}
       {preview !== null && (
-        <div
+        <Dialog
+          wide
           className="cn-preview"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Preview"
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') setPreview(null);
-          }}
-        >
-          <div className="cn-preview-bar">
-            <strong>Preview</strong>
-            <span>Not saved or published. Links and scripts are switched off in the preview.</span>
-            <button ref={closeRef} className="btn btn-secondary" onClick={() => setPreview(null)}>
-              <X size={15} />
+          title="Preview"
+          sub="How the draft will look once published. Visitors cannot see it yet. Links and scripts are switched off."
+          onClose={() => setPreview(null)}
+          footer={
+            <button
+              type="button"
+              className="cs-btn ghost"
+              data-autofocus
+              onClick={() => setPreview(null)}
+            >
               Close
             </button>
+          }
+        >
+          <div className="cs-prev">
+            <div className="cs-prev-bar" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+              <span className="cs-num">
+                {location.host}
+                {type === 'page'
+                  ? id === 'home'
+                    ? '/'
+                    : `/${id}/`
+                  : type === 'faq'
+                    ? '/help/'
+                    : '/'}
+              </span>
+            </div>
+            {/* sandbox with no permissions: the page cannot run scripts or navigate; it only draws. */}
+            <iframe title="Page preview" sandbox="" srcDoc={preview} />
           </div>
-          {/* sandbox with no permissions: the page cannot run scripts or navigate; it only draws. */}
-          <iframe title="Page preview" sandbox="" srcDoc={preview} />
-        </div>
+        </Dialog>
       )}
-    </section>
+    </div>
   );
 }

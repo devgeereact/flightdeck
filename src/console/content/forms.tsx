@@ -1,10 +1,11 @@
-import { AlertTriangle, ImagePlus } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { AlertTriangle, ExternalLink, ImagePlus } from 'lucide-react';
+import { type ReactNode, useEffect, useId, useState } from 'react';
 import { ApiError, call, when } from '../api';
 import {
   AreaField,
   Choice,
   type Errors,
+  FormSection,
   LinesEditor,
   ListEditor,
   SelectField,
@@ -16,10 +17,57 @@ export type Category = { id: string; title: string };
 type F = { data: any; set: (d: any) => void; errors: Errors };
 const at = (d: any, k: string, v: unknown) => ({ ...d, [k]: v });
 
-export function PageForm({ data, set, errors, categories }: F & { categories: Category[] }) {
+/** The page's address with the site in front. Fixed: existing addresses never change, so links and search results keep working. */
+function Address({ id, live }: { id: string; live: boolean }) {
+  const uid = useId();
+  const path = id === 'home' ? '/' : `/${id}/`;
+  return (
+    <div className="cn-field">
+      <label htmlFor={uid}>Address</label>
+      <div className="cs-slug">
+        <span className="cs-num">{location.host}/</span>
+        <input
+          id={uid}
+          className="cs-input cs-num"
+          value={id === 'home' ? '' : `${id}/`}
+          readOnly
+          aria-readonly="true"
+          aria-describedby={`${uid}-hint`}
+        />
+      </div>
+      <div className="cs-help" id={`${uid}-hint`}>
+        <span>Addresses stay fixed so links keep working.</span>
+        {live && (
+          <a className="cs-quiet" href={path} target="_blank" rel="noreferrer">
+            Open the live page <ExternalLink size={14} aria-hidden="true" />
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Group({ legend, children }: { legend: string; children: ReactNode }) {
+  return (
+    <fieldset className="cs-fieldset">
+      <legend>{legend}</legend>
+      {children}
+    </fieldset>
+  );
+}
+
+export function PageForm({
+  data,
+  set,
+  errors,
+  categories,
+  id,
+  live,
+}: F & { categories: Category[]; id: string; live: boolean }) {
   const legalish =
-    ['legal', 'about'].includes(data.kind) || ['privacy', 'cookies', 'terms'].includes(data.slug);
-  if (data.kind === 'home') return <HomeForm data={data} set={set} errors={errors} />;
+    ['legal', 'about'].includes(data.kind) || ['privacy', 'cookies', 'terms'].includes(id);
+  if (data.kind === 'home')
+    return <HomeForm data={data} set={set} errors={errors} id={id} live={live} />;
   return (
     <>
       <TextField
@@ -32,11 +80,12 @@ export function PageForm({ data, set, errors, categories }: F & { categories: Ca
         hint={
           data.kind === 'guide'
             ? 'Shown as the heading and in search results (keep it under about 58 characters).'
-            : undefined
+            : 'The page heading and the browser tab.'
         }
       />
+      <Address id={id} live={live} />
       <AreaField
-        label="Description"
+        label="Search description"
         path="description"
         errors={errors}
         value={data.description || ''}
@@ -101,7 +150,7 @@ export function PageForm({ data, set, errors, categories }: F & { categories: Ca
   );
 }
 
-function HomeForm({ data, set, errors }: F) {
+function HomeForm({ data, set, errors, id, live }: F & { id: string; live: boolean }) {
   const hero = data.hero || {},
     cov = data.coverage || { columns: [] },
     fin = data.final || {};
@@ -136,6 +185,7 @@ function HomeForm({ data, set, errors }: F) {
         onChange={(v) => set(at(data, 'title', v))}
         max={120}
       />
+      <Address id={id} live={live} />
       <AreaField
         label="Description (search results and link previews)"
         path="description"
@@ -145,129 +195,136 @@ function HomeForm({ data, set, errors }: F) {
         max={300}
         rows={2}
       />
-      <h3 className="cn-sub">Hero</h3>
-      <TextField
-        label="Small label above the headline"
-        path="hero.eyebrow"
-        errors={errors}
-        value={hero.eyebrow || ''}
-        onChange={(v) => set(at(data, 'hero', { ...hero, eyebrow: v }))}
-        max={60}
-      />
-      <TextField
-        label="Headline"
-        path="hero.title"
-        errors={errors}
-        value={hero.title || ''}
-        onChange={(v) => set(at(data, 'hero', { ...hero, title: v }))}
-        max={90}
-      />
-      <AreaField
-        label="Text under the headline"
-        path="hero.text"
-        errors={errors}
-        value={hero.text || ''}
-        onChange={(v) => set(at(data, 'hero', { ...hero, text: v }))}
-        max={400}
-        rows={3}
-      />
-      <LinesEditor
-        label="Points under the flight lookup"
-        items={data.points || []}
-        onChange={(v) => set(at(data, 'points', v))}
-        max={5}
-        maxLen={120}
-        path="points"
-        errors={errors}
-      />
-      <h3 className="cn-sub">How it works (exactly three steps)</h3>
-      <ListEditor
-        label="Steps"
-        items={data.steps || []}
-        onChange={(v) => set(at(data, 'steps', v))}
-        make={() => ({ title: '', text: '' })}
-        max={3}
-        path="steps"
-        errors={errors}
-        render={card('steps', 'Step')}
-      />
-      <h3 className="cn-sub">What you get</h3>
-      <ListEditor
-        label="Features"
-        items={data.features || []}
-        onChange={(v) => set(at(data, 'features', v))}
-        make={() => ({ title: '', text: '' })}
-        max={9}
-        path="features"
-        errors={errors}
-        render={card('features', 'Feature')}
-      />
-      <h3 className="cn-sub">Honest about the data</h3>
-      <TextField
-        label="Title"
-        path="coverage.title"
-        errors={errors}
-        value={cov.title || ''}
-        onChange={(v) => set(at(data, 'coverage', { ...cov, title: v }))}
-        max={60}
-      />
-      <TextField
-        label="Text"
-        path="coverage.text"
-        errors={errors}
-        value={cov.text || ''}
-        onChange={(v) => set(at(data, 'coverage', { ...cov, text: v }))}
-        max={300}
-      />
-      <ListEditor
-        label="Columns"
-        items={cov.columns || []}
-        onChange={(v) => set(at(data, 'coverage', { ...cov, columns: v }))}
-        make={() => ({ title: '', items: [] })}
-        max={4}
-        path="coverage.columns"
-        errors={errors}
-        render={(c: any, s, i) => (
-          <>
-            <TextField
-              label={`Column ${i + 1} title`}
-              path={`coverage.columns.${i}.title`}
-              errors={errors}
-              value={c.title || ''}
-              onChange={(v) => s({ ...c, title: v })}
-              max={60}
-            />
-            <LinesEditor
-              label={`Column ${i + 1} points`}
-              items={c.items || []}
-              onChange={(v) => s({ ...c, items: v })}
-              max={6}
-              maxLen={160}
-              path={`coverage.columns.${i}.items`}
-              errors={errors}
-            />
-          </>
-        )}
-      />
-      <h3 className="cn-sub">Closing section</h3>
-      <TextField
-        label="Title"
-        path="final.title"
-        errors={errors}
-        value={fin.title || ''}
-        onChange={(v) => set(at(data, 'final', { ...fin, title: v }))}
-        max={80}
-      />
-      <AreaField
-        label="Text"
-        path="final.text"
-        errors={errors}
-        value={fin.text || ''}
-        onChange={(v) => set(at(data, 'final', { ...fin, text: v }))}
-        max={300}
-        rows={2}
-      />
-      <p className="cn-hint">
+      <Group legend="Home page hero">
+        <TextField
+          label="Small label above the headline"
+          path="hero.eyebrow"
+          errors={errors}
+          value={hero.eyebrow || ''}
+          onChange={(v) => set(at(data, 'hero', { ...hero, eyebrow: v }))}
+          max={60}
+        />
+        <TextField
+          label="Headline"
+          path="hero.title"
+          errors={errors}
+          value={hero.title || ''}
+          onChange={(v) => set(at(data, 'hero', { ...hero, title: v }))}
+          max={90}
+        />
+        <AreaField
+          label="Text under the headline"
+          path="hero.text"
+          errors={errors}
+          value={hero.text || ''}
+          onChange={(v) => set(at(data, 'hero', { ...hero, text: v }))}
+          max={400}
+          rows={3}
+        />
+        <LinesEditor
+          label="Points under the flight lookup"
+          items={data.points || []}
+          onChange={(v) => set(at(data, 'points', v))}
+          max={5}
+          maxLen={120}
+          path="points"
+          errors={errors}
+        />
+      </Group>
+      <Group legend="How it works (exactly three steps)">
+        <ListEditor
+          label="Steps"
+          items={data.steps || []}
+          onChange={(v) => set(at(data, 'steps', v))}
+          make={() => ({ title: '', text: '' })}
+          max={3}
+          path="steps"
+          errors={errors}
+          render={card('steps', 'Step')}
+          plain
+        />
+      </Group>
+      <Group legend="What you get">
+        <ListEditor
+          label="Features"
+          items={data.features || []}
+          onChange={(v) => set(at(data, 'features', v))}
+          make={() => ({ title: '', text: '' })}
+          max={9}
+          path="features"
+          errors={errors}
+          render={card('features', 'Feature')}
+          plain
+        />
+      </Group>
+      <Group legend="Honest about the data">
+        <TextField
+          label="Title"
+          path="coverage.title"
+          errors={errors}
+          value={cov.title || ''}
+          onChange={(v) => set(at(data, 'coverage', { ...cov, title: v }))}
+          max={60}
+        />
+        <TextField
+          label="Text"
+          path="coverage.text"
+          errors={errors}
+          value={cov.text || ''}
+          onChange={(v) => set(at(data, 'coverage', { ...cov, text: v }))}
+          max={300}
+        />
+        <ListEditor
+          label="Columns"
+          items={cov.columns || []}
+          onChange={(v) => set(at(data, 'coverage', { ...cov, columns: v }))}
+          make={() => ({ title: '', items: [] })}
+          max={4}
+          path="coverage.columns"
+          errors={errors}
+          render={(c: any, s, i) => (
+            <>
+              <TextField
+                label={`Column ${i + 1} title`}
+                path={`coverage.columns.${i}.title`}
+                errors={errors}
+                value={c.title || ''}
+                onChange={(v) => s({ ...c, title: v })}
+                max={60}
+              />
+              <LinesEditor
+                label={`Column ${i + 1} points`}
+                items={c.items || []}
+                onChange={(v) => s({ ...c, items: v })}
+                max={6}
+                maxLen={160}
+                path={`coverage.columns.${i}.items`}
+                errors={errors}
+              />
+            </>
+          )}
+        />
+      </Group>
+      <Group legend="Closing band">
+        <TextField
+          label="Title"
+          path="final.title"
+          errors={errors}
+          value={fin.title || ''}
+          onChange={(v) => set(at(data, 'final', { ...fin, title: v }))}
+          max={80}
+        />
+        <AreaField
+          label="Text"
+          path="final.text"
+          errors={errors}
+          value={fin.text || ''}
+          onChange={(v) => set(at(data, 'final', { ...fin, text: v }))}
+          max={300}
+          rows={2}
+        />
+      </Group>
+      <p className="cs-label">
         The flight lookup form and the sample flight are part of the page design and always show.
         The sample is labelled as not a real flight.
       </p>
@@ -349,8 +406,8 @@ export function AnnouncementForm({ data, set, errors }: F) {
         value={data.level || 'info'}
         onChange={(v) => set(at(data, 'level', v))}
         options={[
-          ['info', 'Information (dark green)'],
-          ['warning', 'Warning (amber)'],
+          ['info', 'Information'],
+          ['warning', 'Warning'],
         ]}
       />
       <Choice
@@ -364,7 +421,7 @@ export function AnnouncementForm({ data, set, errors }: F) {
           ['both', 'Both'],
         ]}
       />
-      <div className="cn-row">
+      <div className="cs-row">
         <TextField
           type="datetime-local"
           label="Start (optional, your local time)"
@@ -382,7 +439,7 @@ export function AnnouncementForm({ data, set, errors }: F) {
           onChange={(v) => set(at(data, 'end', fromLocal(v)))}
         />
       </div>
-      <div className="cn-row">
+      <div className="cs-row">
         <TextField
           label="Link text (optional)"
           path="link.label"
@@ -404,9 +461,10 @@ export function AnnouncementForm({ data, set, errors }: F) {
   );
 }
 
+/** Menus: the header links as rows, then each footer group with its links. */
 export function NavigationForm({ data, set, errors }: F) {
   const link = (path: string) => (l: any, s: (v: any) => void, i: number) => (
-    <div className="cn-row">
+    <div className="cs-row">
       <TextField
         label={`Link ${i + 1} text`}
         path={`${path}.${i}.label`}
@@ -414,9 +472,11 @@ export function NavigationForm({ data, set, errors }: F) {
         value={l.label || ''}
         onChange={(v) => s({ ...l, label: v })}
         max={40}
+        compact
       />
       <TextField
-        label="Address"
+        label={`Link ${i + 1} address`}
+        compact
         path={`${path}.${i}.href`}
         errors={errors}
         value={l.href || ''}
@@ -426,59 +486,78 @@ export function NavigationForm({ data, set, errors }: F) {
   );
   return (
     <>
-      <ListEditor
-        label="Top menu"
-        items={data.header || []}
-        onChange={(v) => set(at(data, 'header', v))}
-        make={() => ({ label: '', href: '/' })}
-        max={7}
-        path="header"
-        errors={errors}
-        render={link('header')}
-      />
-      <ListEditor
-        label="Footer groups"
-        items={data.footer || []}
-        onChange={(v) => set(at(data, 'footer', v))}
-        make={() => ({ title: '', links: [{ label: '', href: '/' }] })}
-        max={5}
-        path="footer"
-        errors={errors}
-        render={(g: any, s, gi) => (
-          <>
-            <TextField
-              label={`Group ${gi + 1} title`}
-              path={`footer.${gi}.title`}
-              errors={errors}
-              value={g.title || ''}
-              onChange={(v) => s({ ...g, title: v })}
-              max={40}
-            />
-            <ListEditor
-              label={`Group ${gi + 1} links`}
-              items={g.links || []}
-              onChange={(v) => s({ ...g, links: v })}
-              make={() => ({ label: '', href: '/' })}
-              max={8}
-              path={`footer.${gi}.links`}
-              errors={errors}
-              render={link(`footer.${gi}.links`)}
-            />
-          </>
-        )}
-      />
-      <p className="cn-hint">
-        The "Open the app" button is always in the top menu. The app's own footer keeps its built-in
-        links.
-      </p>
+      <FormSection
+        title="Header"
+        sub={`Shown in this order, 1 to 7 links. The "Open the app" button is always added at the end.`}
+      >
+        <ListEditor
+          label="Top menu"
+          items={data.header || []}
+          onChange={(v) => set(at(data, 'header', v))}
+          make={() => ({ label: '', href: '/' })}
+          max={7}
+          path="header"
+          errors={errors}
+          addLabel="Add link"
+          plain
+          render={link('header')}
+        />
+      </FormSection>
+      <FormSection
+        title="Footer"
+        sub="1 to 5 groups of up to 8 links. The app's own footer keeps its built-in links."
+      >
+        <ListEditor
+          label="Footer groups"
+          items={data.footer || []}
+          onChange={(v) => set(at(data, 'footer', v))}
+          make={() => ({ title: '', links: [{ label: '', href: '/' }] })}
+          max={5}
+          path="footer"
+          errors={errors}
+          addLabel="Add group"
+          plain
+          grid
+          render={(g: any, s, gi) => (
+            <div className="cs-footgroup">
+              <TextField
+                label={`Group ${gi + 1} title`}
+                path={`footer.${gi}.title`}
+                errors={errors}
+                value={g.title || ''}
+                onChange={(v) => s({ ...g, title: v })}
+                max={40}
+                compact
+              />
+              <ListEditor
+                label={`Group ${gi + 1} links`}
+                items={g.links || []}
+                onChange={(v) => s({ ...g, links: v })}
+                make={() => ({ label: '', href: '/' })}
+                max={8}
+                path={`footer.${gi}.links`}
+                errors={errors}
+                addLabel="Add link"
+                plain
+                render={link(`footer.${gi}.links`)}
+              />
+            </div>
+          )}
+        />
+      </FormSection>
     </>
   );
 }
 
+/** Site settings in header-row sections, as in the approved prototype. Only the settings the server really keeps are shown. */
 export function SettingsForm({ data, set, errors }: F) {
   return (
     <>
-      <div className="cn-row">
+      <FormSection
+        title="Site identity"
+        sub="Shown in the header, the browser tab and search results."
+        two
+      >
         <TextField
           label="Site name"
           path="siteName"
@@ -486,6 +565,7 @@ export function SettingsForm({ data, set, errors }: F) {
           value={data.siteName || ''}
           onChange={(v) => set(at(data, 'siteName', v))}
           max={60}
+          hint="Used in page titles and next to the logo."
         />
         <TextField
           label="Tagline"
@@ -494,65 +574,78 @@ export function SettingsForm({ data, set, errors }: F) {
           value={data.tagline || ''}
           onChange={(v) => set(at(data, 'tagline', v))}
           max={80}
-        />
-      </div>
-      <div className="cn-row">
-        <TextField
-          label="Who runs the site (used in the legal pages)"
-          path="ownerName"
-          errors={errors}
-          value={data.ownerName || ''}
-          onChange={(v) => set(at(data, 'ownerName', v))}
-          max={80}
+          hint="A short line about the site, used in page titles."
         />
         <TextField
           type="email"
-          label="Contact email (shown publicly)"
+          label="Contact email"
           path="contactEmail"
           errors={errors}
           value={data.contactEmail || ''}
           onChange={(v) => set(at(data, 'contactEmail', v))}
           max={254}
+          hint="Shown publicly on the contact page and in the footer."
+          wide
         />
-      </div>
-      <TextField
-        type="date"
-        label="Last reviewed (legal pages and guides without their own date)"
-        path="lastReviewed"
-        errors={errors}
-        value={data.lastReviewed || ''}
-        onChange={(v) => set(at(data, 'lastReviewed', v))}
-      />
-      <TextField
-        label="Footer text"
-        path="footerBlurb"
-        errors={errors}
-        value={data.footerBlurb || ''}
-        onChange={(v) => set(at(data, 'footerBlurb', v))}
-        max={160}
-      />
-      <TextField
-        label="Footer note"
-        path="footerNote"
-        errors={errors}
-        value={data.footerNote || ''}
-        onChange={(v) => set(at(data, 'footerNote', v))}
-        max={200}
-      />
-      <MediaPicker
-        value={data.socialImage || ''}
-        onChange={(v) => set(at(data, 'socialImage', v))}
-        error={errors.socialImage}
-      />
-      <p className="cn-hint">
-        The site address ({data.siteUrl}) is set by hosting and cannot be changed here. Provider
-        keys and other private settings live only on the server and never appear in the console.
-      </p>
+      </FormSection>
+      <FormSection title="Legal pages" sub="Used in the privacy, cookies and terms pages." two>
+        <TextField
+          label="Who runs the site"
+          path="ownerName"
+          errors={errors}
+          value={data.ownerName || ''}
+          onChange={(v) => set(at(data, 'ownerName', v))}
+          max={80}
+          hint="Fills {{ownerName}} in the legal pages."
+        />
+        <TextField
+          type="date"
+          label="Last reviewed"
+          path="lastReviewed"
+          errors={errors}
+          value={data.lastReviewed || ''}
+          onChange={(v) => set(at(data, 'lastReviewed', v))}
+          hint="For legal pages and guides without their own date."
+        />
+      </FormSection>
+      <FormSection title="Footer" sub="The text under every public page.">
+        <TextField
+          label="Footer description"
+          path="footerBlurb"
+          errors={errors}
+          value={data.footerBlurb || ''}
+          onChange={(v) => set(at(data, 'footerBlurb', v))}
+          max={160}
+          hint="One sentence beside the logo."
+        />
+        <TextField
+          label="Footer note"
+          path="footerNote"
+          errors={errors}
+          value={data.footerNote || ''}
+          onChange={(v) => set(at(data, 'footerNote', v))}
+          max={200}
+          hint="Keep the safety advice: flight details can change."
+        />
+      </FormSection>
+      <FormSection
+        title="Link preview image"
+        sub="Shown when someone shares a Flightdeck link. 1200 × 630 pixels works best."
+      >
+        <MediaPicker
+          value={data.socialImage || ''}
+          onChange={(v) => set(at(data, 'socialImage', v))}
+          error={errors.socialImage}
+        />
+        <p className="cs-label">
+          The site address ({data.siteUrl}) is set by hosting and cannot be changed here. Provider
+          keys and other private settings live only on the server and never appear in the console.
+        </p>
+      </FormSection>
     </>
   );
 }
 
-/** Social preview image: pick an uploaded image or upload a new one. Uploads are re-encoded on the server. */
 function MediaPicker({
   value,
   onChange,
@@ -597,26 +690,22 @@ function MediaPicker({
     }
   };
   return (
-    <fieldset className="cn-media">
-      <legend>Link preview image</legend>
-      <p className="cn-hint">
-        Shown when someone shares a Flightdeck link. 1200 × 630 pixels works best. Leave on the
-        default to use the built-in image.
-      </p>
+    <fieldset className="cs-media">
+      <legend className="cs-sr">Link preview image</legend>
       {(error || err) && (
-        <p className="cn-err" role="alert">
-          <AlertTriangle size={13} />
+        <p className="cs-err" role="alert">
+          <AlertTriangle size={14} aria-hidden="true" />
           {error || err}
         </p>
       )}
-      <div className="cn-media-grid">
-        <label className={value === '' ? 'cn-media-item on' : 'cn-media-item'}>
+      <div className="cs-media-grid">
+        <label className={value === '' ? 'cs-media-item on' : 'cs-media-item'}>
           <input type="radio" name="social" checked={value === ''} onChange={() => onChange('')} />
           <img src="/og-image.png" alt="" loading="lazy" />
           <span>Default image</span>
         </label>
         {m?.items.map((it) => (
-          <label key={it.url} className={value === it.url ? 'cn-media-item on' : 'cn-media-item'}>
+          <label key={it.url} className={value === it.url ? 'cs-media-item on' : 'cs-media-item'}>
             <input
               type="radio"
               name="social"
@@ -629,17 +718,17 @@ function MediaPicker({
         ))}
       </div>
       {m && !m.available ? (
-        <p className="cn-hint">
+        <p className="cs-label">
           Uploads are switched off: the server is missing the image library (GD).
         </p>
       ) : (
-        <label className="btn btn-secondary cn-upload">
-          <ImagePlus size={15} />
+        <label className="cs-btn ghost sm cs-upload">
+          <ImagePlus size={16} aria-hidden="true" />
           {busy ? 'Uploading…' : 'Upload an image'}
           <input
             type="file"
             accept="image/png,image/jpeg,image/webp"
-            className="visually-hidden"
+            className="cs-sr"
             disabled={busy}
             onChange={(e) => {
               const f = e.target.files?.[0];

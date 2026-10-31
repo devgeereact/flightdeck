@@ -1,325 +1,212 @@
-import { AlertTriangle, CheckCircle2, CircleSlash, ExternalLink, Table2 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import { nf, when as whenAny } from './api';
+import {
+  Bookmark,
+  CheckCircle2,
+  CircleSlash,
+  ExternalLink,
+  Gauge,
+  Info,
+  ListChecks,
+  Search,
+  Users,
+} from 'lucide-react';
+import { type ReactNode, useEffect, useState } from 'react';
+import { ago, call, nf, when } from './api';
+import { Badge, ChartPanel, contentState, Empty, Kpi, Meter, Panel, RankTable } from './ui';
 
-// Operations sections of the owner console (moved from Admin.tsx unchanged in behaviour): overview, usage, costs and limits,
-// users, Google Analytics and system. Numbers come only from the server's own counters and the providers' answers.
-const when = (ms: number | null | undefined) => whenAny(ms);
-const shortDay = (d: string) =>
-  new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(
-    new Date(d + 'T12:00:00Z'),
-  );
+// Operations sections of the owner console: overview, usage, costs and limits, users, Google Analytics and system.
+// Numbers come only from the server's own counters and the providers' answers; nothing here is an example figure.
 const pct = (v: number | null | undefined) => (v == null ? '—' : `${v}%`);
+const sum = (a: number[]) => a.reduce((x, y) => x + y, 0);
 
-function Kpi({
-  label,
-  value,
-  sub,
-  warn,
+function Attention({
+  title,
+  href,
+  link,
+  children,
 }: {
-  label: string;
-  value: string | number;
-  sub?: string;
-  warn?: boolean;
+  title: ReactNode;
+  href: string;
+  link: string;
+  children: ReactNode;
 }) {
   return (
-    <div className={warn ? 'ad-kpi warn' : 'ad-kpi'}>
-      <span>{label}</span>
-      <strong>{typeof value === 'number' ? nf.format(value) : value}</strong>
-      {sub && <small>{sub}</small>}
+    <div className="cs-meter">
+      <div className="cs-meter-r">
+        <b>{title}</b>
+        <a href={href} className="cs-quiet">
+          {link}
+        </a>
+      </div>
+      <small>{children}</small>
     </div>
   );
 }
 
-// One series, one hue. Thin rounded marks anchored to the baseline, a 2px gap, recessive axes, hover/tap values, and a table view for screen readers.
-// The chart is drawn at the width it really has (measured), so its labels stay a readable size on a phone instead of shrinking with a fixed viewBox.
-function Chart({
-  title,
-  values,
-  dates,
-  kind = 'bars',
-  unit = '',
-  wide = false,
-}: {
-  title: string;
-  values: number[];
-  dates: string[];
-  kind?: 'bars' | 'line';
-  unit?: string;
-  wide?: boolean;
-}) {
-  const [hover, setHover] = useState<number | null>(null),
-    [table, setTable] = useState(false),
-    [W, setW] = useState(640);
-  const wrap = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = wrap.current;
-    if (!el) return;
-    const measure = () => {
-      const w = Math.round(el.getBoundingClientRect().width);
-      if (w > 0) setW(w);
-    };
-    measure();
-    if (typeof ResizeObserver === 'undefined') return;
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [table]);
-  const H = W < 480 ? 170 : 160,
-    L = 40,
-    R = 10,
-    T = 12,
-    B = 26,
-    n = values.length,
-    max = Math.max(1, ...values),
-    iw = W - L - R,
-    ih = H - T - B;
-  const last = n ? values[n - 1] : null;
-  const total = values.reduce((a, b) => a + b, 0),
-    peakI = values.indexOf(Math.max(...values, 0));
-  const x = (i: number) => L + (n <= 1 ? iw / 2 : i * (iw / (n - 1))),
-    slot = iw / Math.max(1, n),
-    bw = Math.max(2, Math.min(26, slot - 2));
-  const y = (v: number) => T + ih - (v / max) * ih;
-  const bar = (i: number, v: number) => {
-    const bx = L + i * slot + (slot - bw) / 2,
-      by = y(v),
-      h = T + ih - by,
-      r = Math.min(3, bw / 2, h);
-    return v > 0
-      ? `M${bx},${T + ih}V${by + r}Q${bx},${by} ${bx + r},${by}H${bx + bw - r}Q${bx + bw},${by} ${bx + bw},${by + r}V${T + ih}Z`
-      : '';
-  };
-  return (
-    <section className={wide ? 'panel ad-chart wide' : 'panel ad-chart'}>
-      <div className="ad-chart-head">
-        <div>
-          <h2>{title}</h2>
-          <p>
-            {last !== null && (
-              <>
-                <strong className="ad-latest">
-                  {nf.format(last)}
-                  {unit}
-                </strong>{' '}
-                latest ({shortDay(dates[n - 1])}) ·{' '}
-              </>
-            )}
-            {nf.format(total)}
-            {unit} in {n} days
-            {total > 0 && values[peakI] > 0
-              ? ` · busiest ${shortDay(dates[peakI])} (${nf.format(values[peakI])})`
-              : ''}
-          </p>
-        </div>
-        <button className="text-button" onClick={() => setTable((t) => !t)} aria-pressed={table}>
-          <Table2 size={13} />
-          {table ? 'Show chart' : 'Show as table'}
-        </button>
-      </div>
-      {table ? (
-        <div className="ad-table-wrap">
-          <table className="ad-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>{title}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {dates.map((d, i) => (
-                <tr key={d}>
-                  <td>{shortDay(d)}</td>
-                  <td>{nf.format(values[i])}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="ad-svg-wrap" ref={wrap}>
-          <svg
-            viewBox={`0 0 ${W} ${H}`}
-            width={W}
-            height={H}
-            role="img"
-            aria-label={`${title}: ${nf.format(total)} in ${n} days`}
-            onMouseLeave={() => setHover(null)}
-          >
-            <line x1={L} x2={W - R} y1={T + ih} y2={T + ih} stroke="#dbe3d6" />
-            <line x1={L} x2={W - R} y1={T} y2={T} stroke="#eef2ea" />
-            <text x={L - 6} y={T + 4} textAnchor="end" className="ad-ax">
-              {nf.format(max)}
-            </text>
-            <text x={L - 6} y={T + ih + 4} textAnchor="end" className="ad-ax">
-              0
-            </text>
-            {[0, Math.floor((n - 1) / 2), n - 1]
-              .filter((v, i, a) => n > 0 && a.indexOf(v) === i)
-              .map((i) => (
-                <text
-                  key={i}
-                  x={kind === 'bars' ? L + i * slot + slot / 2 : x(i)}
-                  y={H - 6}
-                  textAnchor={i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'}
-                  className="ad-ax"
-                >
-                  {shortDay(dates[i])}
-                </text>
-              ))}
-            {kind === 'bars' ? (
-              values.map((v, i) => (
-                <path
-                  key={i}
-                  d={bar(i, v)}
-                  fill="#214e3e"
-                  opacity={hover === null || hover === i ? 1 : 0.45}
-                />
-              ))
-            ) : (
-              <>
-                <polyline
-                  fill="none"
-                  stroke="#214e3e"
-                  strokeWidth="2"
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                  points={values.map((v, i) => `${x(i)},${y(v)}`).join(' ')}
-                />
-                {hover !== null && (
-                  <circle
-                    cx={x(hover)}
-                    cy={y(values[hover])}
-                    r="4.5"
-                    fill="#214e3e"
-                    stroke="#fff"
-                    strokeWidth="2"
-                  />
-                )}
-              </>
-            )}
-            {values.map((_, i) => (
-              <rect
-                key={i}
-                x={kind === 'bars' ? L + i * slot : x(i) - slot / 2}
-                y={T}
-                width={slot}
-                height={ih + B}
-                fill="transparent"
-                onMouseEnter={() => setHover(i)}
-                onPointerDown={() => setHover(i)}
-                onFocus={() => setHover(i)}
-                tabIndex={-1}
-              />
-            ))}
-          </svg>
-          {hover !== null && (
-            <div
-              className="ad-tip"
-              style={{
-                left: `${((kind === 'bars' ? L + hover * slot + slot / 2 : x(hover)) / W) * 100}%`,
-              }}
-            >
-              <b>{nf.format(values[hover])}</b>
-              <span>{shortDay(dates[hover])}</span>
-            </div>
-          )}
-        </div>
-      )}
-    </section>
-  );
-}
+type HealthSummary = { working: number; failing: number; never: number; lastOk: string | null };
+type PageItem = {
+  label: string;
+  kind: string | null;
+  published: boolean;
+  unpublished: boolean;
+  hasDraft: boolean;
+};
 
-function Rank({
-  title,
-  items,
-  empty,
-}: {
-  title: string;
-  items: { key: string; count: number }[];
-  empty: string;
-}) {
-  const max = Math.max(1, ...items.map((i) => i.count));
-  return (
-    <section className="panel ad-rank">
-      <h3 role="heading" aria-level={2}>
-        {title}
-      </h3>
-      {items.length === 0 ? (
-        <p className="ad-empty">{empty}</p>
-      ) : (
-        <ul>
-          {items.map((i) => (
-            <li key={i.key}>
-              <span className="ad-rank-k">{i.key}</span>
-              <span className="ad-rank-bar">
-                <i style={{ width: `${(i.count / max) * 100}%` }} />
-              </span>
-              <span className="ad-rank-n">{nf.format(i.count)}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
-  );
-}
-
-function Setup({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="panel ad-setup">
-      <AlertTriangle size={20} />
-      <div>
-        <h3 role="heading" aria-level={2}>
-          {title}
-        </h3>
-        {children}
-      </div>
-    </section>
-  );
-}
-
-export function Overview({ ov }: { ov: any }) {
+export function Overview({ ov, days }: { ov: any; days: number }) {
   const t = ov.overview.totals,
     s = ov.overview.series,
-    dates = ov.overview.dates;
+    dates: string[] = ov.overview.dates,
+    al = ov.allowance;
+  const [pending, setPending] = useState<PageItem[] | null | 'error'>(null),
+    [health, setHealth] = useState<HealthSummary | null | 'error'>(null);
+  // Two small reads for the "Needs your attention" list: pages waiting to be published, and provider state.
+  useEffect(() => {
+    const ctl = new AbortController();
+    call<{ items: PageItem[] }>('/api/admin/content/page', { signal: ctl.signal })
+      .then((d) =>
+        setPending(
+          d.items.filter((i) => {
+            const st = contentState(i);
+            return st === 'Changes not published' || st === 'Draft only';
+          }),
+        ),
+      )
+      .catch(() => !ctl.signal.aborted && setPending('error'));
+    call<{ providers: Record<string, any> }>('/api/admin/health', { signal: ctl.signal })
+      .then((d) => {
+        const ps = Object.values(d.providers);
+        const oks = ps.map((p) => p.lastOk).filter(Boolean) as string[];
+        setHealth({
+          working: ps.filter((p) => p.lastOk && !p.consecutiveFailures).length,
+          failing: ps.filter((p) => p.consecutiveFailures > 0).length,
+          never: ps.filter((p) => !p.lastOk && !p.lastFail).length,
+          lastOk: oks.sort().pop() ?? null,
+        });
+      })
+      .catch(() => !ctl.signal.aborted && setHealth('error'));
+    return () => ctl.abort();
+  }, []);
+  const stopPct = al.cap ? Math.round((al.used / al.cap) * 100) : 0;
   return (
     <>
-      <div className="ad-kpis">
+      <div className="cs-kpis">
         <Kpi
-          label="Searches"
+          icon={<Search size={16} />}
+          label="Flight searches"
           value={t.searches}
-          sub={`${t.found + t.usualRoute} answered · ${t.notFound} not found`}
+          corner={t.successRate == null ? undefined : `${t.successRate}% answered`}
+          cornerTone="ok"
+          spark={s.searches}
         />
         <Kpi
-          label="Success rate"
-          value={pct(t.successRate)}
-          sub={t.errors ? `${t.errors} provider errors` : 'no provider errors'}
-          warn={t.errors > 0}
-        />
-        <Kpi
-          label="Active user-days"
+          icon={<Users size={16} />}
+          label="Signed-in user-days"
           value={t.activeUserDays}
-          sub={`peak ${t.peakUsers} a day · ${t.searchesPerActiveUserDay ?? '—'} searches each`}
+          corner={`peak ${nf.format(t.peakUsers)} a day`}
+          cornerTone="ok"
+          spark={s.users}
         />
         <Kpi
+          icon={<ListChecks size={16} />}
           label="Packing lists started"
           value={t.checklistsCreated}
-          sub={`${t.checklistsCompleted} fully packed`}
+          corner={`${nf.format(t.checklistsCompleted)} packed`}
+          cornerTone="ok"
+          spark={s.checklistsCreated}
         />
         <Kpi
-          label="New enquiries"
-          value={t.enquiries}
-          sub={ov.unread ? `${ov.unread} unread` : 'none unread'}
-          warn={ov.unread > 0}
-        />
-        <Kpi
-          label="App installs"
-          value={t.pwaInstalls}
-          sub={`${t.landingViews} sign-in screen views · ${t.ctaClicks} sign-up clicks`}
+          icon={<Gauge size={16} />}
+          label="AeroDataBox units this month"
+          value={
+            <>
+              {nf.format(al.used)}
+              <small className="cs-kpi-of"> / {nf.format(al.cap)}</small>
+            </>
+          }
+          corner={`${stopPct}% of stop`}
+          cornerTone="warn"
+          meter={
+            <Meter
+              used={al.used}
+              cap={al.cap}
+              label="AeroDataBox units used this month"
+              stopLabel={`Stop at ${al.cap} units`}
+            />
+          }
         />
       </div>
-      <Chart title="Searches" values={s.searches} dates={dates} />
-      <Chart title="Signed-in users" values={s.users} dates={dates} kind="line" />
+      <div className="cs-two">
+        <ChartPanel
+          title="Searches and signed-in users"
+          sub={`Per day, the last ${days} days`}
+          series={[
+            { name: 'Flight searches', values: s.searches, tone: 1 },
+            { name: 'Signed-in users', values: s.users, tone: 2 },
+          ]}
+          dates={dates}
+          height={300}
+        />
+        <Panel title="Needs your attention">
+          <Attention
+            title={`${nf.format(ov.unread)} unread ${ov.unread === 1 ? 'enquiry' : 'enquiries'}`}
+            href="#/admin/inbox"
+            link="Open inbox"
+          >
+            {nf.format(t.enquiries)} received in the last {days} days
+          </Attention>
+          <Attention
+            title={
+              pending === null
+                ? 'Pages'
+                : pending === 'error'
+                  ? 'Pages could not be checked'
+                  : `${pending.length} ${pending.length === 1 ? 'page' : 'pages'} not published`
+            }
+            href="#/admin/pages"
+            link="Review"
+          >
+            {pending === null
+              ? 'Checking…'
+              : pending === 'error'
+                ? 'Open the pages list to see their state.'
+                : pending
+                    .map((p) => p.label)
+                    .slice(0, 2)
+                    .join(', ') || 'Everything is live'}
+          </Attention>
+          <Attention
+            title={`AeroDataBox at ${stopPct}% of its stop`}
+            href="#/admin/costs"
+            link="Limits"
+          >
+            {al.runsOutBeforeMonthEnd
+              ? `At this pace the allowance runs out in about ${al.daysUntilEmpty} days, before the month ends.`
+              : `Lookups stop at ${nf.format(al.cap)} units so the allowance is never exceeded.`}
+          </Attention>
+          <Attention
+            title={
+              health === null
+                ? 'Providers'
+                : health === 'error'
+                  ? 'Provider state could not be read'
+                  : health.failing
+                    ? `${health.failing} ${health.failing === 1 ? 'provider' : 'providers'} failing`
+                    : health.working && !health.never
+                      ? 'All providers responding'
+                      : `${health.working} responding, ${health.never} not called yet`
+            }
+            href="#/admin/health"
+            link="Health"
+          >
+            {health === null
+              ? 'Checking…'
+              : health === 'error'
+                ? 'Open provider health for details.'
+                : health.lastOk
+                  ? `Last answer ${ago(health.lastOk)}`
+                  : 'No provider has been called yet.'}
+          </Attention>
+        </Panel>
+      </div>
     </>
   );
 }
@@ -330,47 +217,111 @@ export function Usage({ ov }: { ov: any }) {
     dates = ov.overview.dates;
   return (
     <>
-      <div className="ad-grid2">
-        <Rank
+      <ChartPanel
+        title="Sign-in screen views and packing lists"
+        sub="Per day"
+        series={[
+          { name: 'Sign-in screen views', values: s.landingViews, tone: 1 },
+          { name: 'Packing lists started', values: s.checklistsCreated, tone: 2 },
+        ]}
+        dates={dates}
+      />
+      <div className="cs-kpis">
+        <Kpi
+          icon={<Search size={16} />}
+          label="Sign-in screen views"
+          value={t.landingViews}
+          corner={`${nf.format(t.ctaClicks)} signed up`}
+          cornerTone="ok"
+          spark={s.landingViews}
+        />
+        <Kpi
+          icon={<ListChecks size={16} />}
+          label="Packing lists"
+          value={t.checklistsCreated}
+          corner={`${nf.format(t.checklistSaves)} saved`}
+          cornerTone="ok"
+          spark={s.checklistsCreated}
+        />
+        <Kpi
+          icon={<CheckCircle2 size={16} />}
+          label="Accepted analytics cookies"
+          value={pct(t.consentOptIn)}
+          corner={`${nf.format(t.consentAccept + t.consentReject)} choices`}
+        />
+        <Kpi
+          icon={<Bookmark size={16} />}
+          label="Feedback opened"
+          value={t.feedbackOpened}
+          corner={`${nf.format(t.enquiries)} sent`}
+          spark={s.enquiries}
+        />
+      </div>
+      <div className="cs-half">
+        <RankTable
           title="Top airlines searched"
+          keyLabel="Airline"
+          countLabel="Searches"
           items={ov.overview.top.airlines}
           empty="No searches yet."
         />
-        <Rank title="Top routes" items={ov.overview.top.routes} empty="No routes yet." />
+        <RankTable
+          title="Top routes"
+          keyLabel="Route"
+          countLabel="Searches"
+          items={ov.overview.top.routes}
+          empty="No routes yet."
+        />
       </div>
-      <div className="ad-grid2">
-        <Rank title="Outbound or inbound" items={ov.overview.top.direction} empty="No data yet." />
-        <Rank
+      <div className="cs-half">
+        <RankTable
+          title="Outbound or inbound"
+          keyLabel="Direction"
+          countLabel="Searches"
+          items={ov.overview.top.direction}
+          empty="No data yet."
+        />
+        <RankTable
           title="Flight numbers people could not find"
+          keyLabel="Flight"
+          countLabel="Searches"
           items={ov.overview.top.notFoundNumbers}
           empty="Nothing missing. Every search found a flight."
         />
       </div>
-      <div className="ad-kpis">
-        <Kpi
-          label="Sign-in screen views"
-          value={t.landingViews}
-          sub={`${t.ctaClicks} clicked sign up`}
-        />
-        <Kpi
-          label="Packing lists"
-          value={t.checklistsCreated}
-          sub={`${t.checklistsCompleted} completed · ${t.checklistSaves} saved to accounts`}
-        />
-        <Kpi
-          label="Cookie choices"
-          value={pct(t.consentOptIn)}
-          sub={`${t.consentAccept} accepted · ${t.consentReject} declined`}
-        />
-        <Kpi
-          label="Feedback opened"
-          value={t.feedbackOpened}
-          sub={`${t.enquiries} messages sent`}
-        />
-      </div>
-      <Chart title="Sign-in screen views" values={s.landingViews} dates={dates} />
-      <Chart title="Packing lists started" values={s.checklistsCreated} dates={dates} />
     </>
+  );
+}
+
+function ProviderRow({
+  abbr,
+  name,
+  plan,
+  value,
+  children,
+}: {
+  abbr: string;
+  name: string;
+  plan: string;
+  value: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="cs-meter">
+      <div className="cs-meter-r">
+        <div className="cs-provider">
+          <span className="cs-lg" aria-hidden="true">
+            {abbr}
+          </span>
+          <div>
+            <b>{name}</b>
+            <small>{plan}</small>
+          </div>
+        </div>
+        <b className="cs-num">{value}</b>
+      </div>
+      {children}
+    </div>
   );
 }
 
@@ -379,263 +330,399 @@ export function Costs({ ov }: { ov: any }) {
     s = ov.overview.series,
     dates = ov.overview.dates,
     al = ov.allowance;
+  const resets = new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(Number(al.month.slice(0, 4)), Number(al.month.slice(5, 7)), 1, 12)));
+  const lat = Object.entries(ov.overview.latencyMs as Record<string, number | null>);
   return (
     <>
-      <section className={al.runsOutBeforeMonthEnd ? 'panel ad-allow warn' : 'panel ad-allow'}>
-        <div className="ad-allow-top">
-          <div>
-            <h3 role="heading" aria-level={2}>
-              Flight schedule allowance ({al.month})
-            </h3>
-            <p>
-              {al.used} of {al.cap} units used · {al.left} left
-            </p>
-          </div>
-          {al.runsOutBeforeMonthEnd ? (
-            <span className="pill warn">
-              <AlertTriangle size={11} />
-              Runs out early
-            </span>
+      <Panel
+        title={`This month (${al.month})`}
+        actions={
+          al.runsOutBeforeMonthEnd ? (
+            <Badge tone="warn">Runs out early</Badge>
           ) : (
-            <span className="pill ok">
-              <CheckCircle2 size={11} />
-              On track
-            </span>
-          )}
-        </div>
-        <div
-          className="ad-meter"
-          role="progressbar"
-          aria-valuenow={al.used}
-          aria-valuemin={0}
-          aria-valuemax={al.cap}
-          aria-label="Units used this month"
+            <Badge tone="ok">On track</Badge>
+          )
+        }
+      >
+        <ProviderRow
+          abbr="ADB"
+          name="AeroDataBox"
+          plan={`Flight schedules, ${nf.format(al.cap)} units a month`}
+          value={`${nf.format(al.used)} of ${nf.format(al.cap)}`}
         >
-          <i style={{ width: `${Math.min(100, al.cap ? (al.used / al.cap) * 100 : 0)}%` }} />
-        </div>
-        <p className="ad-allow-note">
-          {al.perDay > 0
-            ? `About ${al.perDay} units a day so far. ${al.daysUntilEmpty === null ? '' : al.runsOutBeforeMonthEnd ? `At this pace the allowance runs out in about ${al.daysUntilEmpty} days, before the month ends. Searches fall back to live position and routes only.` : 'At this pace it lasts to the end of the month.'}`
-            : 'No units used yet this month.'}
-        </p>
-      </section>
-      <div className="ad-kpis">
+          <Meter
+            used={al.used}
+            cap={al.cap}
+            label="AeroDataBox units used this month"
+            stopLabel={`Stop at ${al.cap} units`}
+          />
+          <small>
+            {al.perDay > 0
+              ? `About ${al.perDay} units a day so far. ${al.runsOutBeforeMonthEnd ? `At this pace it runs out in about ${al.daysUntilEmpty} days; searches then fall back to live position and routes only.` : 'At this pace it lasts to the end of the month.'}`
+              : 'No units used yet this month.'}{' '}
+            Lookups stop at {nf.format(al.cap)} units. Resets on {resets}.
+          </small>
+        </ProviderRow>
+        <ProviderRow
+          abbr="OS"
+          name="OpenSky Network"
+          plan="Live aircraft position"
+          value={`${nf.format(t.openskyFetches)} fetches`}
+        >
+          <small>
+            {nf.format(t.openskyCacheHits)} answered from the cache · {nf.format(t.openskyErrors)}{' '}
+            failed (this range)
+          </small>
+        </ProviderRow>
+        <ProviderRow
+          abbr="ADS"
+          name="adsbdb"
+          plan="Usual routes"
+          value={`${nf.format(t.routeLookups)} lookups`}
+        >
+          <small>{nf.format(t.routeCacheHits)} answered from the cache (this range)</small>
+        </ProviderRow>
+      </Panel>
+      <div className="cs-kpis">
         <Kpi
-          label="Cache hit rate"
+          icon={<Gauge size={16} />}
+          label="Schedule cache hit rate"
           value={pct(t.adbCacheRatio)}
-          sub={`${t.adbCacheHits} answered from memory · ${t.adbUnitsSaved} units saved`}
+          corner={`${nf.format(t.adbCacheHits)} hits`}
+          cornerTone="ok"
         />
         <Kpi
-          label="Paid lookups"
-          value={t.adbCalls}
-          sub={`${t.adbUnits} units · ${t.adbErrors} failed`}
-          warn={t.adbErrors > 0}
+          icon={<CheckCircle2 size={16} />}
+          label="Units saved by the cache"
+          value={t.adbUnitsSaved}
+          corner={`${nf.format(t.adbCalls)} paid calls`}
+          spark={s.adbUnits}
         />
         <Kpi
-          label="Live position fetches"
-          value={t.openskyFetches}
-          sub={`${t.openskyCacheHits} cached · ${t.openskyErrors} failed`}
-          warn={t.openskyErrors > 0}
-        />
-        <Kpi label="Route lookups" value={t.routeLookups} sub={`${t.routeCacheHits} cached`} />
-        <Kpi
+          icon={<CircleSlash size={16} />}
           label="Blocked by limits"
           value={t.rateLimited}
-          sub="too many requests from one visitor"
+          corner="too many requests"
+          cornerTone={t.rateLimited ? 'warn' : 'muted'}
         />
         <Kpi
-          label="Refused (not signed in)"
+          icon={<CircleSlash size={16} />}
+          label="Refused, not signed in"
           value={t.authDenied}
-          sub="requests without a valid sign-in"
+          corner="no valid sign-in"
+          cornerTone={t.authDenied ? 'warn' : 'muted'}
         />
       </div>
-      <section className="panel">
-        <h3 role="heading" aria-level={2}>
-          Average answer time
-        </h3>
-        <ul className="ad-lat">
-          {Object.keys(ov.overview.latencyMs).length === 0 ? (
-            <li className="ad-empty">No provider calls yet.</li>
+      <div className="cs-two">
+        <ChartPanel
+          title="Paid units used"
+          sub="AeroDataBox units per day. Repeat lookups within 10 minutes come from the cache."
+          series={[{ name: 'Units', values: s.adbUnits, tone: 1 }]}
+          dates={dates}
+        />
+        <Panel title="Average answer time" sub="Per provider, this range">
+          {lat.length === 0 ? (
+            <Empty>No provider calls yet.</Empty>
           ) : (
-            Object.entries(ov.overview.latencyMs).map(([k, v]) => (
-              <li key={k}>
-                <span>{k}</span>
-                <strong>{v == null ? '—' : `${nf.format(v as number)} ms`}</strong>
-              </li>
-            ))
+            <div className="cs-tw">
+              <table className="cs-table">
+                <thead>
+                  <tr>
+                    <th>Provider</th>
+                    <th className="num">Average</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lat.map(([k, v]) => (
+                    <tr key={k}>
+                      <td className="cs-strong">{k}</td>
+                      <td className="num">{v == null ? '—' : `${nf.format(v)} ms`}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
-        </ul>
-      </section>
-      <Chart title="Paid units used" values={s.adbUnits} dates={dates} unit=" units" wide />
-      <p className="ad-note">AI usage is not switched on yet, so there is no AI cost to show.</p>
+        </Panel>
+      </div>
+      <p className="cs-label">AI usage is not switched on, so there is no AI cost to show.</p>
     </>
   );
 }
 
+function Setup({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="cs-panel cs-setup">
+      <span className="cs-setup-ico" aria-hidden="true">
+        <Info size={20} />
+      </span>
+      <div>
+        <h2>{title}</h2>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export function UsersView({ users }: { users: any }) {
-  return !users.configured ? (
-    <Setup title="Show your user numbers here">
-      <p>
-        This needs your Clerk <b>secret</b> key stored on the server (never in the browser). Add it
-        to the private server config as <code>clerk_secret_key</code>, or ask to have it set up for
-        you. Until then, see your users in the{' '}
-        <a href="https://dashboard.clerk.com" target="_blank" rel="noreferrer">
-          Clerk dashboard <ExternalLink size={11} />
-        </a>
-        .
-      </p>
-    </Setup>
-  ) : users.error ? (
-    <Setup title="Clerk did not answer">
-      <p>{users.error}</p>
-    </Setup>
-  ) : (
+  const [q, setQ] = useState('');
+  if (!users.configured)
+    return (
+      <Setup title="Show your user numbers here">
+        <p>
+          This needs your Clerk <b>secret</b> key stored on the server (never in the browser). Add
+          it to the private server config as <code>clerk_secret_key</code>. Until then, see your
+          users in the{' '}
+          <a href="https://dashboard.clerk.com" target="_blank" rel="noreferrer">
+            Clerk dashboard <ExternalLink size={12} aria-hidden="true" />
+          </a>
+          .
+        </p>
+      </Setup>
+    );
+  if (users.error)
+    return (
+      <Setup title="Clerk did not answer">
+        <p>{users.error}</p>
+      </Setup>
+    );
+  const rows = (users.newest as any[]).filter((u) =>
+    (u.email || '').toLowerCase().includes(q.trim().toLowerCase()),
+  );
+  const share = (n: number) =>
+    users.total ? `${Math.round((n / users.total) * 100)}% of accounts` : undefined;
+  return (
     <>
-      <div className="ad-kpis">
-        <Kpi label="Accounts" value={users.total} sub="all time" />
-        <Kpi label="New in 7 days" value={users.signups7} sub={`${users.signups30} in 30 days`} />
+      <div className="cs-kpis">
+        <Kpi icon={<Users size={16} />} label="Accounts" value={users.total} corner="all time" />
         <Kpi
+          icon={<Users size={16} />}
+          label="New in 7 days"
+          value={users.signups7}
+          corner={`${nf.format(users.signups30)} in 30 days`}
+          cornerTone="ok"
+        />
+        <Kpi
+          icon={<Users size={16} />}
           label="Active in 7 days"
           value={users.active7}
-          sub={users.total ? `${Math.round((users.active7 / users.total) * 100)}% of accounts` : ''}
+          corner={share(users.active7)}
         />
         <Kpi
+          icon={<Users size={16} />}
           label="Active in 30 days"
           value={users.active30}
-          sub={
-            users.total ? `${Math.round((users.active30 / users.total) * 100)}% of accounts` : ''
-          }
+          corner={share(users.active30)}
         />
       </div>
-      <section className="panel">
-        <h3 role="heading" aria-level={2}>
-          Newest accounts
-        </h3>
-        <div className="ad-table-wrap">
-          <table className="ad-table">
+      <Panel>
+        <div className="cs-toolbar">
+          <div className="cs-search">
+            <Search size={18} aria-hidden="true" />
+            <label className="cs-sr" htmlFor="cs-uq">
+              Search users
+            </label>
+            <input
+              id="cs-uq"
+              className="cs-input"
+              placeholder="Search by email"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+          </div>
+          <span className="cs-label">
+            Newest {nf.format(users.newest.length)} of {nf.format(users.total)} accounts
+          </span>
+        </div>
+        <div className="cs-tw">
+          <table className="cs-table">
             <thead>
               <tr>
                 <th>Email</th>
-                <th>Joined</th>
-                <th>Last active</th>
+                <th className="num">Joined</th>
+                <th className="num">Last active</th>
               </tr>
             </thead>
             <tbody>
-              {users.newest.map((u: any) => (
-                <tr key={u.id}>
-                  <td>{u.email || '—'}</td>
-                  <td>{when(u.createdAt)}</td>
-                  <td>{when(u.lastActiveAt)}</td>
+              {rows.length ? (
+                rows.map((u) => (
+                  <tr key={u.id}>
+                    <td className="cs-strong">{u.email || '—'}</td>
+                    <td className="num cs-muted">{when(u.createdAt)}</td>
+                    <td className="num cs-muted">{when(u.lastActiveAt)}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={3} className="cs-empty-cell">
+                    {q ? `No one matches "${q}".` : 'No accounts yet.'}
+                  </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
-        <p className="ad-note">Refreshed every five minutes. Checked at {when(users.fetchedAt)}.</p>
-      </section>
+      </Panel>
+      <p className="cs-label">
+        From Clerk, refreshed every five minutes. Checked at {when(users.fetchedAt)}.
+      </p>
     </>
   );
 }
 
 export function Analytics({ ga }: { ga: any }) {
-  return ga.configured && ga.error ? (
-    <Setup title="Google Analytics is connected but not answering">
-      <p>{ga.error}</p>
-    </Setup>
-  ) : ga.configured ? (
+  if (ga.configured && ga.error)
+    return (
+      <Setup title="Google Analytics is connected but not answering">
+        <p>{ga.error}</p>
+      </Setup>
+    );
+  if (!ga.configured)
+    return (
+      <Setup title="Connect Google Analytics">
+        <p>
+          Once you add your Google Analytics 4 Measurement ID to the app and a read-only Google
+          service account to the server, its visitor numbers (countries, devices, traffic sources)
+          will appear here. Until then, open Google Analytics directly.
+        </p>
+        <p>
+          <a
+            className="cs-btn ghost sm"
+            href="https://analytics.google.com"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Open Google Analytics <ExternalLink size={16} aria-hidden="true" />
+          </a>
+        </p>
+      </Setup>
+    );
+  const t7 = ga.totals['7'],
+    t28 = ga.totals['28'];
+  const users: number[] = ga.series.map((d: any) => d.users);
+  return (
     <>
-      <div className="ad-kpis">
+      <div className="cs-kpis">
         <Kpi
+          icon={<Users size={16} />}
           label="Visitors, 7 days"
-          value={ga.totals['7'].users}
-          sub={`${ga.totals['7'].sessions} visits · ${ga.totals['7'].pageViews} page views`}
+          value={t7.users}
+          corner={`${nf.format(t7.sessions)} visits`}
+          spark={users.slice(-7)}
         />
         <Kpi
+          icon={<Users size={16} />}
           label="Visitors, 28 days"
-          value={ga.totals['28'].users}
-          sub={`${ga.totals['28'].sessions} visits · ${ga.totals['28'].pageViews} page views`}
+          value={t28.users}
+          corner={`${nf.format(t28.sessions)} visits`}
+          spark={users}
         />
         <Kpi
+          icon={<Search size={16} />}
+          label="Page views, 28 days"
+          value={t28.pageViews}
+          corner={`${nf.format(t7.pageViews)} in 7 days`}
+        />
+        <Kpi
+          icon={<Bookmark size={16} />}
           label="Pages per visit"
-          value={
-            ga.totals['28'].sessions
-              ? (ga.totals['28'].pageViews / ga.totals['28'].sessions).toFixed(1)
-              : '—'
-          }
-          sub="last 28 days"
+          value={t28.sessions ? (t28.pageViews / t28.sessions).toFixed(1) : '—'}
+          corner="last 28 days"
         />
       </div>
-      <Chart
-        title="Visitors per day (Google Analytics)"
-        values={ga.series.map((d: any) => d.users)}
+      <ChartPanel
+        title="Visitors"
+        sub={`Per day, ${nf.format(sum(users))} in total`}
+        series={[{ name: 'Visitors', values: users, tone: 1 }]}
         dates={ga.series.map((d: any) => d.date)}
-        wide
       />
-      <div className="ad-grid2">
-        <Rank title="Top countries" items={ga.countries} empty="No data yet." />
-        <Rank title="Devices" items={ga.devices} empty="No data yet." />
+      <div className="cs-half">
+        <RankTable
+          title="Top countries"
+          keyLabel="Country"
+          countLabel="Visitors"
+          items={ga.countries}
+          empty="No data yet."
+        />
+        <RankTable
+          title="Devices"
+          keyLabel="Device"
+          countLabel="Visitors"
+          items={ga.devices}
+          empty="No data yet."
+        />
       </div>
-      <Rank title="Where visits come from" items={ga.channels} empty="No data yet." />
-      <p className="ad-note">
+      <RankTable
+        title="How people arrive"
+        keyLabel="Source"
+        countLabel="Visits"
+        items={ga.channels}
+        empty="No data yet."
+      />
+      <p className="cs-label">
         Only visitors who accepted analytics appear here, so these numbers are lower than real
         traffic. Checked at {when(ga.fetchedAt)}; refreshed every 15 minutes.
       </p>
     </>
-  ) : (
-    <Setup title="Connect Google Analytics">
-      <p>
-        Once you add your Google Analytics 4 Measurement ID to the app and a read-only Google
-        service account to the server, its visitor numbers (countries, devices, traffic sources)
-        will appear here. Until then, open Google Analytics directly.
-      </p>
-      <p>
-        <a
-          className="btn btn-secondary"
-          href="https://analytics.google.com"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Open Google Analytics <ExternalLink size={13} />
-        </a>
-      </p>
-    </Setup>
   );
 }
 
 export function SystemView({ sys }: { sys: any }) {
+  const flags: [string, boolean][] = [
+    ['Sign-in required for lookups', sys.signInEnforced],
+    ['Flight schedules (AeroDataBox)', sys.aerodatabox],
+    ['Live aircraft position (OpenSky)', sys.opensky],
+    ['User numbers (Clerk secret key)', sys.clerkApi],
+    ['Google Analytics numbers', sys.googleAnalyticsApi],
+    ['Email for new enquiries', sys.emailNotifications],
+    ['AI features', sys.ai],
+    ['Adverts', sys.ads],
+    ['Per-visitor limits behind Cloudflare', sys.trustCloudflareIp],
+  ];
+  const on = flags.filter(([, v]) => v).length;
   return (
-    <section className="panel">
-      <h3 role="heading" aria-level={2}>
-        What is switched on
-      </h3>
-      <ul className="ad-flags">
-        {(
-          [
-            ['Sign-in required for lookups', sys.signInEnforced],
-            ['Flight schedule data (AeroDataBox)', sys.aerodatabox],
-            ['Live aircraft position (OpenSky)', sys.opensky],
-            ['User numbers (Clerk secret key)', sys.clerkApi],
-            ['Google Analytics numbers', sys.googleAnalyticsApi],
-            ['Email notifications for enquiries', sys.emailNotifications],
-            ['AI features', sys.ai],
-            ['Ads', sys.ads],
-            ['Per-visitor rate limits behind Cloudflare', sys.trustCloudflareIp],
-          ] as [string, boolean][]
-        ).map(([k, v]) => (
-          <li key={k}>
-            {v ? (
-              <CheckCircle2 size={16} className="ok" />
-            ) : (
-              <CircleSlash size={16} className="off" />
-            )}
-            <span>{k}</span>
-            <strong>{v ? 'On' : 'Off'}</strong>
-          </li>
-        ))}
-      </ul>
-      <p className="ad-note">
-        PHP {sys.phpVersion} · server time {sys.serverTime}
-      </p>
-    </section>
+    <div className="cs-ed">
+      <Panel
+        title="What is switched on"
+        sub={`${on} of ${flags.length} switched on. Read from the private server config.`}
+      >
+        <div className="cs-sysgrid">
+          {flags.map(([k, v]) => (
+            <div key={k}>
+              <span>{k}</span>
+              <b>{v ? <Badge tone="ok">On</Badge> : <Badge tone="grey">Off</Badge>}</b>
+            </div>
+          ))}
+        </div>
+      </Panel>
+      <div className="cs-aside">
+        <Panel title="Server">
+          <ul className="cs-hist">
+            <li>
+              <span>
+                <b>PHP</b>
+                <small className="cs-num">{sys.phpVersion}</small>
+              </span>
+            </li>
+            <li>
+              <span>
+                <b>Server time</b>
+                <small className="cs-num">{when(sys.serverTime)}</small>
+              </span>
+            </li>
+          </ul>
+        </Panel>
+        <Panel title="Changing these">
+          <p className="cs-pb cs-muted">
+            These switches live only in the private server config, never in the browser, so they
+            cannot be changed from the console. Provider keys are never shown here.
+          </p>
+        </Panel>
+      </div>
+    </div>
   );
 }

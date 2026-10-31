@@ -32,6 +32,21 @@ export async function call<T = any>(
 }
 
 export const nf = new Intl.NumberFormat('en-GB');
+/** "just now", "12 min ago", "3 h ago", then the date ("27 Oct"). For lists; the full time is shown alongside where it matters. */
+export const ago = (v: number | string | null | undefined) => {
+  if (!v) return 'Never';
+  const t = new Date(v).getTime();
+  if (Number.isNaN(t)) return 'Never';
+  const s = (Date.now() - t) / 1000;
+  if (s < 60) return 'just now';
+  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
+  return new Intl.DateTimeFormat('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    timeZone: 'Europe/London',
+  }).format(new Date(t));
+};
 /** UK date and time, or "Never". Accepts ms or an ISO string. */
 export const when = (v: number | string | null | undefined) => {
   if (!v) return 'Never';

@@ -76,7 +76,7 @@ check(
   c.d.querySelector('.cn-nav a[aria-current="page"]')?.textContent.includes('Pages'),
 );
 c.click(
-  [...c.d.querySelectorAll('.cn-items a')].find((a) => a.textContent.includes('About Flightdeck')),
+  [...c.d.querySelectorAll('.cs-list a')].find((a) => a.textContent.includes('About Flightdeck')),
 );
 check(
   'C3 opening a page shows its editor with the current text',
@@ -117,7 +117,6 @@ check(
   !!(await c.until(() => c.text().includes('Published. The site shows it now.'))) &&
     (await page('/about/')).includes('About Flightdeck (edited in test)'),
 );
-c.click(c.button('History'));
 const restore = await c.until(() =>
   [...c.d.querySelectorAll('.cn-history button')]
     .filter((b) => b.textContent.includes('Restore'))
@@ -139,8 +138,8 @@ check('C11 no script errors while editing', c.errors.length === 0, c.errors.join
 
 // ---------------------------------------------------------------- owner: a new FAQ, published
 c = boot('user_owner', '#/admin/faqs');
-await c.until(() => c.button('New question'));
-c.click(c.button('New question'));
+await c.until(() => c.button('Add a question'));
+c.click(c.button('Add a question'));
 await c.until(() => c.field('Question'));
 c.type(c.field('Question'), 'Is this question from the console test?');
 c.type(c.field('Answer'), 'Yes, it was written and published through the console.');
@@ -155,9 +154,7 @@ check(
 // ---------------------------------------------------------------- owner: inbox
 c = boot('user_owner', '#/admin/inbox');
 await c.until(() => c.text().includes('TEST DATA'));
-c.click(
-  [...c.d.querySelectorAll('.ad-enq-act button')].find((b) => b.textContent.trim() === 'Resolve'),
-);
+c.click(c.button('Mark resolved'));
 check(
   'C13 an enquiry can be resolved and moves to the Resolved filter',
   !!(await c.until(() => c.text().includes('Marked as resolved.'))) &&
