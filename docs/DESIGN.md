@@ -51,6 +51,10 @@ Loading (role=status text), empty (what to do next), validation (field-level, fr
 
 Skip link, landmarks, one h1 per page, labelled controls, visible 2px blue focus ring, keyboard tabs (arrow keys, Home, End), `aria-current` on navigation, dialogs that trap and return focus, reduced motion respected everywhere (CSS and GSAP through `withMotion` / `matchMedia`). Target WCAG 2.2 AA; not certified.
 
+## Agent skill
+
+`.claude/skills/flightdeck-design/` packages this system for coding agents (tokens, logo, rules, surfaces and reusable components, states and copy, verification). Keep it in step with this document when the system changes.
+
 ## Design presentation
 
 The artifact "Flightdeck Design System and Screens" (claude.ai, owner only) is the reference board: the design system on the left and every major screen, captured from the real product at 2x with labelled sample data, on the right, plus responsive sets at 834/1280/1920/2560 and the A4 print. It is exported as six 8K boards. Rebuild it after visual changes: the capture scripts live in `.local-test/portfolio/` (local only).

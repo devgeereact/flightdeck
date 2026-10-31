@@ -2,6 +2,9 @@
 
 Newest first. Dates are UK dates.
 
+## 31 October 2026 (later): design system as an agent skill
+- New project skill `.claude/skills/flightdeck-design/` (SKILL.md plus tokens, surfaces, patterns and verification references, and the logo) so every agent builds UI the same way. `AGENTS.md` points to it.
+
 ## 31 October 2026 (later): responsive touch-ups and the design presentation
 - App: the content column is centred on large and ultra-wide screens (1480px, 1680px above 2200px) instead of sitting flush left, and the footer follows it; on tablets the lookup card's Quick pick spans the full row (no empty cell, chips on one line).
 - Website: the page column widens to 1600px above 2200px.
