@@ -2,6 +2,9 @@
 
 Newest first. Moved out of `.agent/CURRENT-TASK.md` on 1 Nov 2026; earlier entries describe the project at the time (paths and release steps may since have changed).
 
+## 1 November 2026: go-live fixes and hardening (branch `golive/2026-11`)
+- All review findings fixed test first, plus headers, exposed-file rules, `.env.*` ignore and in-major dependency updates (docs/AUDIT.md, ADR-022). All gates PASS. Not pushed.
+
 ## 1 November 2026: go-live security review (branch `golive/2026-11`)
 - No Critical or High findings, no code changes; 2 Medium and 5 Low items for the owner (docs/AUDIT.md, docs/SECURITY.md). Landing-page SEO: minor items only. `pnpm verify` PASS. Not pushed.
 

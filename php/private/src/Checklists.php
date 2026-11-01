@@ -131,23 +131,52 @@ final class Checklists
         return $out;
     }
 
+    /** True while $h is still the file at $path (an erase deletes the lock file, and a new request may create a fresh one). */
+    public static function stillCurrent($h, string $path): bool
+    {
+        $held = fstat($h);
+        clearstatcache(true, $path);
+        $now = @stat($path);
+        return $held !== false && $now !== false && $held['ino'] === $now['ino'] && $held['dev'] === $now['dev'];
+    }
+
+    /**
+     * Take this user's lock. A request that was waiting while an erase removed the lock file would otherwise hold a lock on a
+     * deleted file that nobody else sees, so it checks it still holds the current file and tries again if not.
+     * @return resource|false
+     */
+    private static function lock(string $lockPath)
+    {
+        for ($i = 0; $i < 20; $i++) {
+            $h = @fopen($lockPath, 'c');
+            if ($h === false) {
+                return false;
+            }
+            flock($h, LOCK_EX);
+            if (self::stillCurrent($h, $lockPath)) {
+                return $h;
+            }
+            flock($h, LOCK_UN);
+            fclose($h);
+        }
+        return false;
+    }
+
     /** Erase everything stored for this user (their right to erasure). Returns true when something was removed. */
     public function delete(string $sub): bool
     {
         $path = $this->path($sub);
-        $lock = @fopen($path . '.lock', 'c');
-        if ($lock !== false) {
-            flock($lock, LOCK_EX);
-        }
+        $lock = self::lock($path . '.lock');
         $had = is_file($path);
         @unlink($path);  // nosemgrep: php.lang.security.unlink-use.unlink-use -- path built from validated ids or a private storage folder
         foreach (glob($path . '.*.tmp') ?: [] as $t) {
             @unlink($t);  // nosemgrep: php.lang.security.unlink-use.unlink-use -- path built from validated ids or a private storage folder
         }
         if ($lock !== false) {
+            // Removed while still held, so a request waiting on it notices (stillCurrent) instead of writing beside a new lock.
+            @unlink($path . '.lock');  // nosemgrep: php.lang.security.unlink-use.unlink-use -- path built from validated ids or a private storage folder
             flock($lock, LOCK_UN);
             fclose($lock);
-            @unlink($path . '.lock');  // nosemgrep: php.lang.security.unlink-use.unlink-use -- path built from validated ids or a private storage folder
         }
         return $had;
     }
@@ -167,12 +196,11 @@ final class Checklists
     public function put(string $sub, array $doc, int $baseRev): array
     {
         $path = $this->path($sub);
-        $lock = fopen($path . '.lock', 'c');
+        $lock = self::lock($path . '.lock');
         if ($lock === false) {
             throw new \RuntimeException('Checklist storage is not writable.');
         }
         try {
-            flock($lock, LOCK_EX);
             $cur = $this->get($sub);
             if ($cur['rev'] !== $baseRev) {
                 return ['ok' => false, 'rev' => $cur['rev'], 'data' => $cur['data']];

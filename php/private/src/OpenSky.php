@@ -11,16 +11,20 @@ final class OpenSky
 {
     /** One global snapshot costs credits, so it is shared by all searches for this long. */
     public const SNAPSHOT_SECONDS = 120;
+    /** How long a request waits for another request's snapshot before answering "busy" (a snapshot can take up to 30 s). */
+    public const LOCK_WAIT_MS = 10000;
 
     private $id;
     private $secret;
     private $store;
+    private $lockWaitMs;
 
-    public function __construct(?string $id, ?string $secret, Store $store)
+    public function __construct(?string $id, ?string $secret, Store $store, int $lockWaitMs = self::LOCK_WAIT_MS)
     {
         $this->id = $id;
         $this->secret = $secret;
         $this->store = $store;
+        $this->lockWaitMs = max(1, $lockWaitMs);
     }
 
     public function configured(): bool
@@ -93,6 +97,8 @@ final class OpenSky
             $now = Store::nowMs();
             $this->store->put('snapshot', ['fetchedAt' => $now, 'states' => $states], self::SNAPSHOT_SECONDS * 1000);
             return [$states, false, $now];
+        }, $this->lockWaitMs, static function (): array {
+            throw new OpenSkyError('Live positions are busy. Try again in a moment.');
         });
     }
 }

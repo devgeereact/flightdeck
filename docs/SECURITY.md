@@ -43,8 +43,11 @@ Still open (needs the owner): set `clerk_authorized_parties` to `['https://fligh
 - **Test-only switches:** `FLIGHTDECK_RATE_PER_MINUTE` (server environment only, never a request) raises the limit for local test runs; `FLIGHTDECK_DIST` lets the dev router serve a test build. Neither exists in the production config.
 - **Still open:** audit-log rotation; Turnstile on the contact form (owner decision); confirm GD on the server.
 
-## Go-live review (1 Nov 2026)
-No Critical or High findings (details: docs/AUDIT.md, 1 Nov 2026 go-live entry). Open for the owner:
-- Before adding a Bright Data key: make the daily cap count under a lock (`WebCheck.php`), otherwise concurrent searches can exceed it.
-- Make sign-in fail closed: a missing or malformed `clerk_issuer` (for example a trailing slash) currently opens `/flights`, `/weather`, `/place` and `/web-check` to anonymous visitors. The live config was correct on 24 Oct.
-- Low: a per-user allowance for paid look-ups; lock wait timeouts around provider calls; keep the checklist `.lock` file on erase; add `from`/`to` to the web-check cache key; restrict guide page links to the Wikimedia hosts.
+## Go-live review and fixes (1 Nov 2026)
+Review: no Critical or High findings. The owner asked for everything to be fixed; all Medium and Low items are fixed (docs/AUDIT.md, both 1 Nov go-live entries; ADR-022):
+- Sign-in fails closed. Without a valid Clerk issuer, protected routes answer 503 (only `FLIGHTDECK_AUTH=off` in local tests opens the look-ups). An empty or trailing-slash issuer no longer switches sign-in off.
+- Paid look-ups have per-user allowances (AeroDataBox half the hourly cap, Bright Data 20 a day; the owner is exempt). Allowance counters are locked, so simultaneous searches cannot pass a cap. Provider lock waits give up after 10 s.
+- Checklist saves cannot run under a lock file removed by an erase. The web-check cache key includes the airports. Guide links must be on the guide's own site.
+- Headers: COOP `same-origin-allow-popups`, `X-Permitted-Cross-Domain-Policies: none`; `X-Powered-By` and `X-Turbo-Charged-By` removed. Hidden, backup, log, config and map files are never served (404).
+- `.gitignore` covers every `.env.*` except the example. Git history is clean (gitleaks, 129 commits).
+Still open: Google Tag Manager in `script-src` (self-host gtag to remove it), `'unsafe-inline'` styles, and build-time-only advisories in workbox-build (glob, minimatch, deepmerge) until the vite-plugin-pwa 2 upgrade.

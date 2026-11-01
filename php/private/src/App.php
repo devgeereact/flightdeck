@@ -45,12 +45,9 @@ final class App
         $sub = null;
         if (in_array($route, ['/flights', '/weather', '/place', '/web-check', '/checklist', '/me'], true) || $isAdminRoute) {
             if (!$auth->enabled()) {
-                if ($route === '/me') {
-                    Http::json(200, ['signedIn' => false, 'isAdmin' => false]);
-                    return;
-                }
-                if ($route === '/checklist' || $isAdminRoute) {
-                    Http::json(503, ['error' => 'This needs sign-in, which is not enabled on this server.']);
+                $off = self::whenSignInOff($route, !empty($config['auth_off_for_tests']));
+                if ($off !== null) {
+                    Http::json($off[0], $off[1]);
                     return;
                 }
             } else {
@@ -81,12 +78,12 @@ final class App
                     'liveAvailable' => $opensky->configured() || $adb->configured(),
                     'provider' => $adb->configured() ? 'AeroDataBox + OpenSky Network' : 'OpenSky Network',
                     'providers' => ['opensky' => $opensky->configured(), 'aerodatabox' => $adb->configured(), 'routes' => true],
-                    'signInRequired' => $auth->enabled(),
+                    'signInRequired' => self::signInRequired($auth->enabled(), $config),
                     'webCheck' => WebCheck::enabled($config),
                 ]);
                 return;
             case $route === '/flights':
-                self::flights($opensky, $adb, $routes, $config);
+                self::flights($opensky, $adb, $routes, $config, Admin::isAdmin($sub, $config) ? null : $sub);
                 return;
             case $route === '/weather':
                 self::weather($store);
@@ -96,7 +93,7 @@ final class App
                 Http::json($place === null || isset($place['missing']) ? 404 : 200, $place === null || isset($place['missing']) ? ['error' => 'No travel guide found for this place.'] : $place);
                 return;
             case $route === '/web-check':
-                self::webCheck($config, $store);
+                self::webCheck($config, $store, Admin::isAdmin($sub, $config) ? null : $sub);
                 return;
             case $route === '/checklist':
                 self::checklist(new Checklists($varDir), (string) $sub);
@@ -123,6 +120,30 @@ final class App
             default:
                 Http::json(404, ['error' => 'Unknown endpoint']);
         }
+    }
+
+    /** True unless look-ups are open to anonymous visitors, which only the local test switch allows (see whenSignInOff). */
+    public static function signInRequired(bool $authEnabled, array $config): bool
+    {
+        return $authEnabled || empty($config['auth_off_for_tests']);
+    }
+
+    /**
+     * What a protected route answers when sign-in is not configured (no valid Clerk issuer). It fails closed: look-ups that reach
+     * paid or shared providers are refused unless the local test switch FLIGHTDECK_AUTH=off is set (server environment, never a
+     * request); the checklist and the owner console are always refused. Before 1 Nov 2026 a missing or mistyped issuer quietly
+     * opened the look-ups to everyone.
+     * @return array{0:int,1:array}|null the response, or null to carry on without a user
+     */
+    public static function whenSignInOff(string $route, bool $offForTests): ?array
+    {
+        if ($route === '/me') {
+            return [200, ['signedIn' => false, 'isAdmin' => false]];
+        }
+        if ($offForTests && $route !== '/checklist' && strpos($route, '/admin/') !== 0) {
+            return null;
+        }
+        return [503, ['error' => 'This needs sign-in, which is not set up on this server.']];
     }
 
     /**
@@ -408,7 +429,8 @@ final class App
         return isset($_GET[$name]) && is_string($_GET[$name]) ? $_GET[$name] : '';
     }
 
-    private static function flights(OpenSky $opensky, AeroDataBox $adb, RouteLookup $routes, array $config): void
+    /** @param string|null $who the signed-in user for per-user allowances; null for the owner (and when sign-in is off for tests) */
+    private static function flights(OpenSky $opensky, AeroDataBox $adb, RouteLookup $routes, array $config, ?string $who): void
     {
         $number = Flight::normalizeNumber(self::param('number'));
         $date = self::param('date');
@@ -443,7 +465,7 @@ final class App
             if ($adb->configured()) {
                 if (Flight::scheduleDateOk($date, $now)) {
                     try {
-                        [$raw, $c, $t] = $adb->fetch($number, $date);
+                        [$raw, $c, $t] = $adb->fetch($number, $date, $who);
                         [$raw, $exact] = Flight::filterByDepartureDate($raw, $date);
                         if (!$exact) {
                             $notes[] = 'No departure is scheduled on this date; showing the nearest departures instead.';
@@ -590,7 +612,7 @@ final class App
         return $rows;
     }
 
-    private static function webCheck(array $config, Store $store): void
+    private static function webCheck(array $config, Store $store, ?string $who): void
     {
         $number = strtoupper(preg_replace('/\s+/', '', self::param('number')) ?? '');
         $date = self::param('date');
@@ -601,6 +623,6 @@ final class App
             Http::json(400, ['error' => 'A flight number and date are required.']);
             return;
         }
-        Http::json(200, WebCheck::lookup($config, $store, $number, $date, $from, $to));
+        Http::json(200, WebCheck::lookup($config, $store, $number, $date, $from, $to, null, $who));
     }
 }

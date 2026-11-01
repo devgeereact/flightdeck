@@ -8,8 +8,9 @@ namespace Flightdeck;
  * brightdata_key and brightdata_zone (it costs money per search, so the owner switches it on).
  *
  * Results are search-result links (title, snippet, site) shown as links to check. They are never parsed into the flight's gate,
- * terminal or time fields: snippets mix dates and sources, and a wrong gate is worse than none. Cached 15 minutes per flight and
- * date, and capped per day (brightdata_daily_cap, default 150 searches) so a busy day cannot run up a bill.
+ * terminal or time fields: snippets mix dates and sources, and a wrong gate is worse than none. Cached 15 minutes per flight, date
+ * and airports, and capped per day (brightdata_daily_cap, default 150 searches; brightdata_user_daily_cap, default 20 per signed-in
+ * user) so a busy day cannot run up a bill. The counts are taken under a lock, so simultaneous searches cannot slip past the cap.
  */
 final class WebCheck
 {
@@ -23,24 +24,37 @@ final class WebCheck
 
     /**
      * @param callable|null $post test seam: fn(string $url, array $headers, string $body): array{0:int,1:string}
+     * @param string|null $who the signed-in user's id, for their daily allowance (null: the owner or a test, not limited per user)
      * @return array{status:string, results?:array, fetchedAt?:string}
      */
-    public static function lookup(array $config, Store $store, string $number, string $date, string $from, string $to, ?callable $post = null): array
+    public static function lookup(array $config, Store $store, string $number, string $date, string $from, string $to, ?callable $post = null, ?string $who = null): array
     {
         if (!self::enabled($config)) {
             return ['status' => 'off'];
         }
-        $key = 'web-' . $number . '-' . $date;
+        $key = 'web-' . $number . '-' . $date . '-' . $from . '-' . $to;
         $hit = $store->get($key);
         if (is_array($hit)) {
             return $hit;
         }
-        $day = 'web-count-' . gmdate('Y-m-d', intdiv(Store::nowMs(), 1000));
-        $used = (int) ($store->get($day) ?? 0);
-        if ($used >= max(0, (int) ($config['brightdata_daily_cap'] ?? 150))) {
+        $allowed = $store->withLock('web-count', static function () use ($store, $config, $who): bool {
+            $today = gmdate('Y-m-d', intdiv(Store::nowMs(), 1000));
+            $day = 'web-count-' . $today;
+            $used = (int) ($store->get($day) ?? 0);
+            $userDay = $who !== null && $who !== '' ? 'web-user-' . substr(hash('sha256', $who), 0, 24) . '-' . $today : null;
+            $userUsed = $userDay !== null ? (int) ($store->get($userDay) ?? 0) : 0;
+            if ($used >= max(0, (int) ($config['brightdata_daily_cap'] ?? 150)) || ($userDay !== null && $userUsed >= max(0, (int) ($config['brightdata_user_daily_cap'] ?? 20)))) {
+                return false;
+            }
+            $store->put($day, $used + 1, 2 * 86400000);
+            if ($userDay !== null) {
+                $store->put($userDay, $userUsed + 1, 2 * 86400000);
+            }
+            return true;
+        }, 5000, static fn (): bool => false);
+        if (!$allowed) {
             return ['status' => 'cap'];
         }
-        $store->put($day, $used + 1, 2 * 86400000);
         $q = trim($number . ' ' . $from . ' ' . $to . ' flight status');
         $payload = json_encode([
             'zone' => (string) $config['brightdata_zone'],

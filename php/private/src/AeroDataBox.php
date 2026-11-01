@@ -18,11 +18,15 @@ final class AeroDataBox
     public const CACHE_MS = 600000;
     public const DEFAULT_MONTHLY_UNITS = 360;
     public const DEFAULT_HOURLY_CALLS = 12;
+    /** How long a request waits for another request's fetch before answering "busy" (the fetch itself can take up to 20 s). */
+    public const LOCK_WAIT_MS = 10000;
 
     private $key;
     private $host;
     private $monthly;
     private $hourly;
+    private $userHourly;
+    private $lockWaitMs;
     private $store;
     private $http;
 
@@ -33,6 +37,10 @@ final class AeroDataBox
         $this->host = is_string($host) && preg_match('/^[a-z0-9.-]+$/Di', $host) ? $host : 'aerodatabox.p.rapidapi.com';
         $this->monthly = max(0, (int) ($config['aerodatabox_monthly_units'] ?? self::DEFAULT_MONTHLY_UNITS));
         $this->hourly = max(0, (int) ($config['aerodatabox_hourly_calls'] ?? self::DEFAULT_HOURLY_CALLS));
+        // Paid look-ups one signed-in user may cause per hour (default half the site's hourly cap), so nobody can use up everyone's
+        // allowance; the owner is exempt. Watching one flight costs at most 6 an hour (it is cached for 10 minutes).
+        $this->userHourly = max(0, (int) ($config['aerodatabox_user_hourly_calls'] ?? max(1, intdiv($this->hourly, 2))));
+        $this->lockWaitMs = max(1, (int) ($config['provider_lock_wait_ms'] ?? self::LOCK_WAIT_MS));
         $this->store = $store;
         $this->http = $http ?? [Http::class, 'request'];
     }
@@ -48,8 +56,11 @@ final class AeroDataBox
         return ['unitsUsed' => (int) ($this->store->get('adb-units-' . gmdate('Y-m')) ?? 0), 'unitsAllowed' => $this->monthly];
     }
 
-    /** @return array{0:array,1:bool,2:int} raw flights, served-from-cache, fetched-at (ms) */
-    public function fetch(string $number, string $date): array
+    /**
+     * @param string|null $who the signed-in user's id, for their hourly allowance (null: the owner or a test, not limited per user)
+     * @return array{0:array,1:bool,2:int} raw flights, served-from-cache, fetched-at (ms)
+     */
+    public function fetch(string $number, string $date, ?string $who = null): array
     {
         $cacheKey = 'adb-' . sha1($number . '|' . $date);
         $hit = $this->store->get($cacheKey);
@@ -57,7 +68,7 @@ final class AeroDataBox
             Metrics::count('adb_cache_hit');
             return [$hit['flights'], true, $hit['fetchedAt']];
         }
-        return $this->store->withLock('adb', function () use ($number, $date, $cacheKey) {
+        return $this->store->withLock('adb', function () use ($number, $date, $cacheKey, $who) {
             $hit = $this->store->get($cacheKey);
             if (is_array($hit) && isset($hit['flights'], $hit['fetchedAt'])) {
                 Metrics::count('adb_cache_hit');
@@ -66,7 +77,7 @@ final class AeroDataBox
             if ($this->store->get('adb-cooldown') !== null) {
                 throw new AeroDataBoxError('Scheduled flight details are paused for a few minutes.');
             }
-            $this->spend();
+            $this->spend($who);
             Metrics::count('adb_call');
             Metrics::count('adb_units', self::COST_UNITS);
             $t0 = microtime(true);
@@ -106,16 +117,23 @@ final class AeroDataBox
             $now = Store::nowMs();
             $this->store->put($cacheKey, ['flights' => $flights, 'fetchedAt' => $now], self::CACHE_MS);
             return [$flights, false, $now];
+        }, $this->lockWaitMs, static function (): array {
+            throw new AeroDataBoxError('Scheduled flight details are busy. Try again in a moment.');
         });
     }
 
-    /** Count a call before making it; refuse when the monthly or hourly allowance is gone. */
-    private function spend(): void
+    /** Count a call before making it (under the adb lock); refuse when the monthly, hourly or this user's hourly allowance is gone. */
+    private function spend(?string $who): void
     {
         $monthKey = 'adb-units-' . gmdate('Y-m');
         $hourKey = 'adb-calls-' . gmdate('Y-m-d-H');
         $units = (int) ($this->store->get($monthKey) ?? 0);
         $calls = (int) ($this->store->get($hourKey) ?? 0);
+        $userKey = $who !== null && $who !== '' ? 'adb-user-' . substr(hash('sha256', $who), 0, 24) . '-' . gmdate('Y-m-d-H') : null;
+        $userCalls = $userKey !== null ? (int) ($this->store->get($userKey) ?? 0) : 0;
+        if ($userKey !== null && $userCalls >= $this->userHourly) {
+            throw new AeroDataBoxError('You have used your scheduled-detail look-ups for this hour. Live data still shows; try again later for gates and times.');
+        }
         if ($units + self::COST_UNITS > $this->monthly) {
             throw new AeroDataBoxError('The monthly allowance for scheduled flight details is used up.');
         }
@@ -124,5 +142,8 @@ final class AeroDataBox
         }
         $this->store->put($monthKey, $units + self::COST_UNITS, 45 * 86400000);
         $this->store->put($hourKey, $calls + 1, 2 * 3600000);
+        if ($userKey !== null) {
+            $this->store->put($userKey, $userCalls + 1, 2 * 3600000);
+        }
     }
 }

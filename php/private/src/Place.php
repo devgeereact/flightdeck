@@ -36,7 +36,11 @@ final class Place
             if (!is_array($s) || ($s['type'] ?? '') === 'disambiguation' || trim((string) ($s['extract'] ?? '')) === '') {
                 continue;
             }
-            $page = (string) ($s['content_urls']['desktop']['page'] ?? ('https://' . $host . '/wiki/' . rawurlencode($title)));
+            // The page link comes from the provider; keep it only when it points at the guide's own site, else build it ourselves.
+            $page = (string) ($s['content_urls']['desktop']['page'] ?? '');
+            if (strpos($page, 'https://' . $host . '/wiki/') !== 0) {
+                $page = 'https://' . $host . '/wiki/' . rawurlencode(str_replace(' ', '_', $title));
+            }
             $out = [
                 'title' => (string) ($s['title'] ?? $title),
                 'summary' => self::trimText((string) $s['extract'], 600),

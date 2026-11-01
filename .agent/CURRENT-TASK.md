@@ -1,20 +1,21 @@
 # Current task
 
 ## Goal (1 November 2026, owner)
-Get Flightdeck ready for live on branch `golive/2026-11`: security review (checklist storage, Clerk token checks, provider calls, .htaccess/CSP), fix Critical/High, SEO check of the landing page. No push, deploy or Clerk/Cloudflare/GitHub changes.
+Get Flightdeck ready for live on branch `golive/2026-11`: security review, then (owner, later) "fix all" plus a standard hardening list (keys, env, admin routes, auth, access, forms, XSS, rate limits, API, CORS, headers, debug, dependencies, unused packages, exposed files, database, passwords, git secrets, full audit), and hide X-Powered-By and the server version. No push, deploy or Clerk/Cloudflare/GitHub changes.
 
 ## Status: DONE locally on `golive/2026-11`, NOT pushed or deployed
-- Security review: no Critical or High findings, so no code fixes. 2 Medium (Bright Data cap race, sign-in fails open on a missing/malformed issuer) and 5 Low recorded in docs/AUDIT.md (1 Nov go-live entry) and docs/SECURITY.md. Independent second review agreed.
-- SEO (home page, rendered locally from the seed): sound; minor items only (description 185 chars, JPEG without srcset, no Organization schema).
-- Earlier today's feature work (commit 31f6851 on `main`: gates/key times, weather and Discover, cleanup) is still unpushed; this branch starts from it.
+- All review findings fixed test first (M1 cap race reproduced 116/40, now 40/40; M2 fail-closed sign-in; L1 per-user allowances; L2 lock timeouts; L3 erase lock race reproduced and fixed; L4 cache key; L5 guide links). ADR-022.
+- Hardening: new headers (COOP, X-Permitted-Cross-Domain-Policies), X-Powered-By and X-Turbo-Charged-By unset, hidden/backup/log/map files 404, `.env.*` ignored, Clerk 6.18.4, Biome 2.6.4, serialize-javascript 7.1.4 override, Semgrep clean, gitleaks history clean. Database and passwords: not applicable (no DB; Clerk).
+- Independent review of the diff found an empty-issuer regression and a test gap; both fixed.
+- Earlier today's feature commit 31f6851 (gates/key times, weather, Discover) is on `main`, unpushed; this branch builds on it.
 
 ## Checks run (1 Nov 2026)
-`pnpm verify` PASS before the commit (lint, typecheck, tests, PHP "All passed", build, upload guard). PHP suite prints harmless teardown `unlink` warnings on directories.
+`pnpm verify` PASS (node 116/116, PHP 229 all passed, build, upload guard); `pnpm test:ui` PASS; `pnpm test:console` PASS; `scripts/check-apache-routes.sh` PASS; Semgrep (p/default, p/php, p/secrets) clean; gitleaks full history clean. Details: docs/AUDIT.md.
 
 ## Next
-1. Owner: decide whether to fix M1 (lock the Bright Data daily count, needed before adding a key) and M2 (fail closed when `clerk_issuer` is missing or malformed). Both are small.
-2. Owner: approve merge of `golive/2026-11` into `main` and push (a push deploys).
-3. After deploy: check a real flight live (gates, key times, weather, Discover) and Provider health.
-4. Optional: Bright Data (key, zone and budget, after M1); the SEO touch-ups.
+1. Owner: look at the bare non `NAME=value` line in `.env` (reading `.env` was blocked). If it is the Clerk secret key, name it `CLERK_SECRET_KEY` or remove it.
+2. Owner: approve merging `golive/2026-11` into `main` and pushing (a push deploys).
+3. After deploy: live sign-in with the new COOP header; response headers (`X-Turbo-Charged-By` gone?); a real flight (gates, key times, weather, Discover); Provider health.
+4. Planned tasks: major upgrades (vite 8, plugin-react 6, vite-plugin-pwa 2 which clears the build-time advisories, TypeScript 7, lucide 1, concurrently 10); self-host gtag to drop GTM from the CSP.
 5. Still open from 31 Oct: console with the production account, a real phone, a screen reader, a paper print, Firefox (BLOCKED here).
-6. For the owner (GitHub, needs approval): delete the stale remote branch `origin/production`; the 4 Dependabot PRs include major upgrades (vite 8, lucide 1.x), which are planned tasks.
+6. For the owner (GitHub, needs approval): delete the stale remote branch `origin/production`; the 4 Dependabot PRs are the majors above.

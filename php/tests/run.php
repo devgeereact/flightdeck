@@ -818,6 +818,143 @@ check('web check: a repeat for the same flight and date is cached', $posts === 1
 check('web check: the daily cap stops further searches', \Flightdeck\WebCheck::lookup($wcfg, $pstore, 'BA118', '2026-11-01', 'JFK', 'LHR', $fakePost)['status'] === 'cap' && $posts === 1);
 check('rate buckets: the web check counts against the strict look-up limit', \Flightdeck\App::rateBucket('/web-check', 30) === ['p:', 30] && \Flightdeck\App::rateBucket('/place', 30)[0] === 'g:');
 check('weather: Open-Meteo parallel arrays become short rows', \Flightdeck\App::columns(['time' => ['a', 'b'], 'temperature_2m' => [1.5, 2]], ['time' => 'time', 'temperature_2m' => 't', 'weather_code' => 'code']) === [['time' => 'a', 't' => 1.5, 'code' => null], ['time' => 'b', 't' => 2, 'code' => null]] && \Flightdeck\App::columns(null, ['time' => 'time']) === []);
+// ---- go-live hardening (1 Nov 2026, docs/AUDIT.md M1-M2, L1-L5)
+$gdir = sys_get_temp_dir() . '/fd-golive-' . bin2hex(random_bytes(3));
+$gstore = new Store($gdir);
+
+// M2: sign-in must not switch itself off quietly.
+check('auth: a trailing slash on the issuer is tolerated (sign-in stays on)', (new ClerkAuth('https://clerk.example.com/', $gstore))->enabled());
+check('auth: with sign-in not configured, paid and shared look-ups are refused (503), not opened to everyone', App::whenSignInOff('/flights', false)[0] === 503 && App::whenSignInOff('/weather', false)[0] === 503 && App::whenSignInOff('/place', false)[0] === 503 && App::whenSignInOff('/web-check', false)[0] === 503);
+check('auth: the local test switch opens look-ups only; checklist and admin stay refused; /me says signed out', App::whenSignInOff('/flights', true) === null && App::whenSignInOff('/checklist', true)[0] === 503 && App::whenSignInOff('/admin/overview', true)[0] === 503 && App::whenSignInOff('/me', false) === [200, ['signedIn' => false, 'isAdmin' => false]]);
+
+check('auth: an empty issuer in config.php counts as unset (the environment or the publishable key still apply)', ClerkAuth::resolveIssuer('', 'https://clerk.example.com', null) === 'https://clerk.example.com' && ClerkAuth::resolveIssuer('  ', null, 'pk_test_Y2xlcmsuZXhhbXBsZS5jb20k') === 'https://clerk.example.com' && ClerkAuth::resolveIssuer('https://a.example.com', 'https://b.example.com', null) === 'https://a.example.com' && ClerkAuth::resolveIssuer('', null, null) === null);
+check('auth: /api/config says sign-in is required whenever look-ups refuse anonymous visitors', App::signInRequired(true, []) && App::signInRequired(false, []) && !App::signInRequired(false, ['auth_off_for_tests' => true]));
+
+// L2: lock waits are bounded.
+$held = fopen($gdir . '/held.lock', 'c');
+flock($held, LOCK_EX);
+$t0 = microtime(true);
+$lr = $gstore->withLock('held', static fn () => 'ran', 300, static fn () => 'busy');
+$waited = microtime(true) - $t0;
+check('lock: a held lock gives up after the wait and returns the busy answer', $lr === 'busy' && $waited >= 0.25 && $waited < 2);
+flock($held, LOCK_UN);
+fclose($held);
+check('lock: a free lock runs the work', $gstore->withLock('held', static fn () => 'ran', 300, static fn () => 'busy') === 'ran');
+$adbHeld = fopen($gdir . '/adb.lock', 'c');
+flock($adbHeld, LOCK_EX);
+$adbBusy = '';
+try {
+    (new AeroDataBox(['aerodatabox_key' => 'k', 'provider_lock_wait_ms' => 200], $gstore, $fakeAdb(200, '[]')))->fetch('BA9', '2026-10-24');
+} catch (AeroDataBoxError $e) {
+    $adbBusy = $e->getMessage();
+}
+flock($adbHeld, LOCK_UN);
+fclose($adbHeld);
+check('lock: AeroDataBox answers "busy" instead of tying up the worker while another fetch runs', strpos($adbBusy, 'busy') !== false);
+$snapHeld = fopen($gdir . '/snapshot.lock', 'c');
+flock($snapHeld, LOCK_EX);
+$osBusy = '';
+try {
+    (new \Flightdeck\OpenSky('id', 'secret', $gstore, 200))->states();
+} catch (\Flightdeck\OpenSkyError $e) {
+    $osBusy = $e->getMessage();
+}
+flock($snapHeld, LOCK_UN);
+fclose($snapHeld);
+check('lock: OpenSky answers "busy" instead of tying up the worker while another snapshot loads', strpos($osBusy, 'busy') !== false);
+
+// L1: one signed-in user cannot use up the shared AeroDataBox allowance.
+$calls = [];
+$ustore = new Store($gdir . '-u');
+$per = new AeroDataBox(['aerodatabox_key' => 'k', 'aerodatabox_hourly_calls' => 10, 'aerodatabox_user_hourly_calls' => 1], $ustore, $fakeAdb(204, ''));
+$per->fetch('ZZ1', '2026-10-24', 'user_a');
+$per->fetch('ZZ1', '2026-10-24', 'user_a'); // cached: costs nothing
+$userCapped = '';
+try {
+    $per->fetch('ZZ2', '2026-10-24', 'user_a');
+} catch (AeroDataBoxError $e) {
+    $userCapped = $e->getMessage();
+}
+$per->fetch('ZZ2', '2026-10-24', 'user_b');
+$per->fetch('ZZ3', '2026-10-24', null); // the owner is not limited per user
+check('adb svc: each user has an hourly allowance of paid look-ups; others and the owner are unaffected', strpos($userCapped, 'You have used') !== false && count($calls) === 3);
+
+// L4 and L1 for the web check.
+$posts = 0;
+$wstore = new Store($gdir . '-w');
+$wcfg2 = ['brightdata_key' => 'test-key', 'brightdata_zone' => 'serp', 'brightdata_daily_cap' => 100, 'brightdata_user_daily_cap' => 2];
+\Flightdeck\WebCheck::lookup($wcfg2, $wstore, 'BA117', '2026-11-01', 'LHR', 'JFK', $fakePost, 'user_a');
+\Flightdeck\WebCheck::lookup($wcfg2, $wstore, 'BA117', '2026-11-01', '', '', $fakePost, 'user_a');
+check('web check: the cache key includes the airports, so the first caller cannot steer everyone\'s links', $posts === 2);
+$third = \Flightdeck\WebCheck::lookup($wcfg2, $wstore, 'BA118', '2026-11-01', 'JFK', 'LHR', $fakePost, 'user_a');
+$other = \Flightdeck\WebCheck::lookup($wcfg2, $wstore, 'BA118', '2026-11-01', 'JFK', 'LHR', $fakePost, 'user_b');
+check('web check: each user has a daily allowance; others are unaffected', $third['status'] === 'cap' && $other['status'] === 'ok' && $posts === 3);
+
+// M1: the Bright Data daily cap holds when many searches arrive at once.
+$wdir = $gdir . '-race';
+new Store($wdir);
+$procs = [];
+for ($i = 0; $i < 6; $i++) {
+    $procs[] = proc_open([PHP_BINARY, __DIR__ . '/fixtures/webcheck-worker.php', $wdir, (string) $i, '25', '40'], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+    $procPipes[] = $pipes;
+}
+$racePosts = 0;
+foreach ($procs as $i => $p) {
+    $racePosts += (int) trim((string) stream_get_contents($procPipes[$i][1]));
+    proc_close($p);
+}
+check('web check: the daily cap holds under 150 simultaneous searches (cap 40, got ' . $racePosts . ')', $racePosts === 40);
+
+// L3: a checklist lock file removed by an erase is noticed, so two saves cannot both think they hold the lock.
+$lp = $gdir . '/x.lock';
+$lh = fopen($lp, 'c');
+$fresh = Checklists::stillCurrent($lh, $lp);
+unlink($lp);
+$gone = Checklists::stillCurrent($lh, $lp);
+$lh2 = fopen($lp, 'c');
+$replaced = Checklists::stillCurrent($lh, $lp);
+fclose($lh);
+fclose($lh2);
+check('checklist: a lock handle is known stale once its file is deleted or replaced', $fresh && !$gone && !$replaced);
+// A save that was waiting while an erase removed the lock file must wait for whoever holds the NEW lock file.
+$cdir = $gdir . '-cl';
+new Checklists($cdir);
+$clock = $cdir . '/checklists/' . hash('sha256', 'user_w') . '.json.lock';
+$old = fopen($clock, 'c');
+flock($old, LOCK_EX);
+$waiter = proc_open([PHP_BINARY, __DIR__ . '/fixtures/checklist-worker.php', $cdir, 'user_w'], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $wp);
+usleep(400000); // the worker is now blocked on the old lock file
+unlink($clock); // what an erase does while it holds the lock
+$new = fopen($clock, 'c');
+flock($new, LOCK_EX); // another request takes the fresh lock file
+flock($old, LOCK_UN);
+fclose($old);
+usleep(400000);
+$stillWaiting = proc_get_status($waiter)['running'];
+flock($new, LOCK_UN);
+fclose($new);
+$waiterOut = trim((string) stream_get_contents($wp[1]));
+proc_close($waiter);
+check('checklist: a save that waited through an erase then waits for the new lock holder, and saves afterwards', $stillWaiting && $waiterOut === '1');
+
+$el = new Checklists($gdir . '-e');
+$el->put('user_e', Checklists::validate(['v' => 1, 'trips' => []]), 0);
+$el->delete('user_e');
+check('checklist: saving after an erase starts again at revision 1', $el->put('user_e', Checklists::validate(['v' => 1, 'trips' => []]), 0)['rev'] === 1);
+
+// L5: guide page links stay on the guide's own site.
+$evilGet = static function (string $url): array {
+    if (strpos($url, '/w/api.php') !== false) {
+        return [200, json_encode(['query' => ['search' => [['title' => 'Evil Town']]]])];
+    }
+    if (strpos($url, 'wikivoyage.org/api/rest_v1/page/summary/Evil_Town') !== false) {
+        return [200, json_encode(['type' => 'standard', 'title' => 'Evil Town', 'extract' => 'A town.', 'content_urls' => ['desktop' => ['page' => 'javascript:alert(1)']]])];
+    }
+    return [404, ''];
+};
+$ev = \Flightdeck\Place::lookup(new Store($gdir . '-p'), 'Evil Town', '', $evilGet);
+check('place: a provider page link that is not on the guide site is replaced by the guide\'s own link', is_array($ev) && $ev['url'] === 'https://en.wikivoyage.org/wiki/Evil_Town' && strpos($ev['sections'][0]['url'], 'https://en.wikivoyage.org/wiki/Evil_Town#') === 0);
+
 array_map('unlink', glob($pdir . '/*') ?: []);
 @rmdir($pdir);
 

@@ -34,15 +34,17 @@ if (($config['opensky_client_id'] ?? '') === '' || ($config['opensky_client_secr
 }
 
 // Sign-in enforcement: on when the Clerk issuer is known (explicit config, CLERK_ISSUER, or derived from the Clerk publishable key).
-// FLIGHTDECK_AUTH=off switches it off for local automated tests only.
+// FLIGHTDECK_AUTH=off switches it off for local automated tests only. Without a valid issuer, protected routes refuse (App::whenSignInOff).
 $config['clerk_authorized_parties'] = $config['clerk_authorized_parties'] ?? array_values(array_filter(array_map('trim', explode(',', (string) $env('CLERK_AUTHORIZED_PARTIES')))));
-$config['clerk_issuer'] = $config['clerk_issuer'] ?? $env('CLERK_ISSUER') ?? \Flightdeck\ClerkAuth::issuerFromPublishableKey($env('CLERK_PUBLISHABLE_KEY', 'VITE_CLERK_PUBLISHABLE_KEY'));
+$config['clerk_issuer'] = \Flightdeck\ClerkAuth::resolveIssuer(is_string($config['clerk_issuer'] ?? null) ? $config['clerk_issuer'] : null, $env('CLERK_ISSUER'), $env('CLERK_PUBLISHABLE_KEY', 'VITE_CLERK_PUBLISHABLE_KEY'));
 // Local automated tests only (server environment, never a request): a higher per-visitor limit for long test runs.
 if (getenv('FLIGHTDECK_RATE_PER_MINUTE') !== false && ctype_digit((string) getenv('FLIGHTDECK_RATE_PER_MINUTE'))) {
     $config['rate_per_minute'] = (int) getenv('FLIGHTDECK_RATE_PER_MINUTE');
 }
+$config['auth_off_for_tests'] = false;
 if (getenv('FLIGHTDECK_AUTH') === 'off') {
     $config['clerk_issuer'] = null;
+    $config['auth_off_for_tests'] = true;
 }
 
 

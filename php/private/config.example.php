@@ -7,8 +7,12 @@ return [
     'aerodatabox_key' => '',
     'aerodatabox_monthly_units' => 360, // each flight lookup costs 2 units; stops before the 400 allowance
     'aerodatabox_hourly_calls' => 12,   // global cap so searches by strangers cannot burn the allowance
+    // 'aerodatabox_user_hourly_calls' => 6, // optional: paid look-ups per signed-in user per hour (default half the global cap; the owner is exempt)
+    // 'provider_lock_wait_ms' => 10000,     // optional: how long a request waits for another's AeroDataBox fetch before saying "busy"
     // Only signed-in Clerk users may call /api/flights and /api/weather. Set to the Clerk Frontend API URL (the token issuer), e.g.
-    // 'https://clerk.flightdeck.gakinz.com'. Left empty the lookups are open. Turn it on only AFTER the app that sends the token is live.
+    // 'https://clerk.flightdeck.gakinz.com' (a trailing slash is ignored). Empty means: use CLERK_ISSUER or the Clerk publishable key
+    // from the environment. If no valid issuer is found at all, every protected route refuses with 503 (fails closed); only
+    // FLIGHTDECK_AUTH=off in a local test environment opens the look-ups.
     'clerk_issuer' => '',
     'clerk_authorized_parties' => [], // optional: allowed site origins (the token's azp), e.g. ['https://flightdeck.gakinz.com']
     // Owner console and enquiries (all optional, server-only):
@@ -24,6 +28,7 @@ return [
     'brightdata_key' => '',      // API token from the Bright Data dashboard; never commit it
     'brightdata_zone' => '',     // the SERP API zone name, e.g. 'serp_api1'
     'brightdata_daily_cap' => 150, // searches per day across all visitors; results are cached 15 minutes per flight
+    // 'brightdata_user_daily_cap' => 20, // optional: searches per signed-in user per day (the owner is exempt)
     'home_country_code' => 'GB', // flights are labelled Outbound/Inbound relative to this country
     // Per-visitor rate limits behind Cloudflare. The CF-Connecting-IP header is only trusted when the connection really comes from a Cloudflare range.
     'trust_cf_connecting_ip' => false,

@@ -79,14 +79,28 @@ final class Store
         @unlink($this->path($name));  // nosemgrep: php.lang.security.unlink-use.unlink-use -- path built from validated ids or a private storage folder
     }
 
-    /** Run $fn while holding an exclusive lock so only one request refreshes shared data. */
-    public function withLock(string $name, callable $fn)
+    /**
+     * Run $fn while holding an exclusive lock so only one request refreshes shared data. With $waitMs > 0 the wait is bounded:
+     * when the lock is still held after that long, $busy() is returned instead, so a slow provider cannot tie up every PHP worker.
+     */
+    public function withLock(string $name, callable $fn, int $waitMs = 0, ?callable $busy = null)
     {
         $h = fopen($this->dir . '/' . preg_replace('/[^a-z0-9._-]/i', '_', $name) . '.lock', 'c');
         if ($h === false) {
             return $fn();
         }
-        flock($h, LOCK_EX);
+        if ($waitMs <= 0) {
+            flock($h, LOCK_EX);
+        } else {
+            $deadline = microtime(true) + $waitMs / 1000;
+            while (!flock($h, LOCK_EX | LOCK_NB)) {
+                if (microtime(true) >= $deadline) {
+                    fclose($h);
+                    return $busy !== null ? $busy() : null;
+                }
+                usleep(50000);
+            }
+        }
         try {
             return $fn();
         } finally {

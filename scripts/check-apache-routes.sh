@@ -9,6 +9,9 @@ tmp="$(mktemp -d)"
 pub="$tmp/home/flightdeck.gakinz.com"; priv="$tmp/home/flightdeck-private"
 mkdir -p "$pub" "$priv/var" "$tmp/logs"
 cp -R "$root/dist/." "$pub/"; cp -R "$root/php/private/src" "$priv/src"
+# Files that must never be served even if a release or an editor leaves them in the webroot (dummy contents).
+mkdir -p "$pub/.git" "$pub/.well-known"; echo 'DUMMY' > "$pub/.env"; echo 'DUMMY' > "$pub/.git/config"; echo 'DUMMY' > "$pub/config.php.bak"
+echo 'DUMMY' > "$pub/error.log"; echo 'DUMMY' > "$pub/assets/old.js.map"; echo 'security contact' > "$pub/.well-known/security.txt"
 mkdir -p "$pub/about"; echo '<h1>OLD STATIC</h1>' > "$pub/about/index.html"; echo 'OLD SITEMAP' > "$pub/sitemap.xml"; echo 'OLD ROOT SHELL' > "$pub/index.html"
 fpm="$(command -v php-fpm || echo /opt/homebrew/sbin/php-fpm)"
 cat > "$tmp/fpm.conf" <<EOF
@@ -67,6 +70,14 @@ expect /sign-in/factor-one 200 'Flightdeck app'
 expect /api/config 200 'liveAvailable'
 expect /api/nope 404 'Unknown endpoint'
 expect /robots.txt 200 'Disallow: /app/'
+for f in /.env /.git/config /config.php.bak /error.log /assets/old.js.map /.htaccess; do expect "$f" 404 'Page not found'; done
+expect /.well-known/security.txt 200 'security contact'
+header / 'Cross-Origin-Opener-Policy: same-origin-allow-popups'
+header / 'X-Permitted-Cross-Domain-Policies: none'
+header /api/config 'Cross-Origin-Opener-Policy: same-origin-allow-popups'
+for u in / /api/config; do
+  if curl -sI "$B$u" | tr -d '\r' | grep -qiE '^(x-powered-by|x-turbo-charged-by):'; then echo "FAIL $u reveals the server stack"; fail=1; else echo "PASS $u hides X-Powered-By"; fi
+done
 header /guides/ 'Content-Security-Policy:'
 header /guides/ 'ETag:'
 header /guides/ 'Cache-Control: no-cache'

@@ -75,6 +75,7 @@ function fail(message) {
 const step = (m) => console.log(`\n> ${m}`);
 
 function run(cmd, args, opts = {}) {
+  // nosemgrep: javascript.lang.security.audit.spawn-shell-true.spawn-shell-true -- shell is off by default; only the repo's own release.json check/build commands opt in, on the owner's Mac
   const r = spawnSync(cmd, args, {
     cwd: root,
     encoding: 'utf8',

@@ -12,6 +12,11 @@ RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 RewriteCond %{REQUEST_URI} !^/api/index\.php$
 RewriteRule ^api(/.*)?$ api/index.php [L,QSA]
 
+# Never serve hidden files (.env, .git, .htaccess), backups, logs, config or source maps, even if one is left in the webroot:
+# they go to site.php, which renders a real 404. /.well-known/ stays reachable.
+RewriteRule (^|/)\.(?!well-known/) site.php [L]
+RewriteRule \.(bak|old|orig|save|swp|tmp|log|sql|sqlite|db|env|ini|conf|cfg|sh|map|md|lock|zip|tar|gz|tgz|7z)$ site.php [NC,L]
+
 # Site pages BEFORE the real-file check: releases are additive, so the old static copies of these pages may still be on the server.
 RewriteRule ^(index\.html)?$ site.php [L]
 RewriteRule ^(about|contact|privacy|cookies|terms|travel-checklist|guides|help|coverage|how-it-works|accessibility)(/.*)?$ site.php [L]
@@ -43,7 +48,11 @@ ErrorDocument 404 /site.php
   <FilesMatch "^(?!(index|sw|registerSW|consent|page|contact|travel-checklist)\.js$|workbox-).*\.(js|css)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
+  # Do not advertise the server stack (PHP and LiteSpeed add these; Cloudflare already replaces the Server header).
   Header always unset X-Powered-By
+  Header unset X-Powered-By
+  Header always unset X-Turbo-Charged-By
+  Header unset X-Turbo-Charged-By
   Header always set X-Content-Type-Options "nosniff"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
   # HSTS for this hostname only (no includeSubDomains, no preload), so sibling gakinz.com sites are unaffected.
@@ -53,5 +62,8 @@ ErrorDocument 404 /site.php
   # Content-Security-Policy is enforced. It was run report-only first and the owner confirmed no violations on production sign-in.
   Header always set Content-Security-Policy "default-src 'self'; script-src 'self' https://clerk.flightdeck.gakinz.com https://challenges.cloudflare.com https://*.protect.clerk.com https://www.googletagmanager.com https://static.cloudflareinsights.com; connect-src 'self' https://clerk.flightdeck.gakinz.com https://*.protect.clerk.com:* https://clerk-telemetry.com https://*.clerk-telemetry.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://stats.g.doubleclick.net https://www.google.com https://cloudflareinsights.com; img-src 'self' data: https://img.clerk.com https://upload.wikimedia.org https://thumb.wikimedia.org https://*.google-analytics.com https://*.googletagmanager.com https://www.google.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; frame-src https://challenges.cloudflare.com https://*.protect.clerk.com https://clerk.flightdeck.gakinz.com; worker-src 'self' blob:; manifest-src 'self'; frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'"
   Header always set X-Frame-Options "SAMEORIGIN"
+  # Keeps other sites from scripting this window; popups (Clerk sign-in with a provider) still work.
+  Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
+  Header always set X-Permitted-Cross-Domain-Policies "none"
   Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
 </IfModule>

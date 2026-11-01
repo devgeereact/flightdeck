@@ -2,6 +2,14 @@
 
 Newest first. Dates are UK dates.
 
+## 1 November 2026 (later): go-live security fixes
+- Sign-in fails closed. If the server's Clerk issuer is missing or mistyped, look-ups are refused instead of opened to everyone. A trailing slash or an empty value in config no longer switches sign-in off.
+- Fair use: each signed-in user can cause up to 6 paid schedule look-ups an hour and 20 web searches a day. The owner is exempt. Watching a flight never hits the limit, and over the limit the flight still shows live data with a note.
+- Spending caps hold under load (the Bright Data daily cap could be overrun by simultaneous searches). Slow providers answer "busy" after 10 seconds instead of holding the server.
+- Packing-list saves stay correct during an account erase. Web-search links are cached per flight and airports. Travel-guide links must point at Wikivoyage or Wikipedia.
+- Web server: new isolation headers. The server stack is no longer advertised. Stray `.env`, `.git`, backup, log and source-map files are never served.
+- Dependencies: Clerk 6.18.4, Biome 2.6.4, and a build-time `serialize-javascript` fix. All `.env.*` files are ignored by git.
+
 ## 1 November 2026 (later): go-live security review
 - Security review of checklist storage, sign-in checks, provider calls, `.htaccess` and the CSP: no Critical or High findings, no code changes. Two Medium and five Low items are recorded for the owner in docs/AUDIT.md and docs/SECURITY.md. The landing-page SEO check found only minor items.
 

@@ -22,6 +22,7 @@ final class ClerkAuth
     /** @param string[] $authorizedParties allowed `azp` origins; empty means do not check azp */
     public function __construct(?string $issuer, Store $store, ?callable $http = null, array $authorizedParties = [])
     {
+        $issuer = $issuer !== null ? rtrim(trim($issuer), '/') : null; // Clerk's iss has no trailing slash; a pasted one must not switch sign-in off
         $this->issuer = $issuer !== null && preg_match('#^https://[a-z0-9.-]+\.[a-z]{2,}$#D', $issuer) ? $issuer : null;
         $this->store = $store;
         $this->http = $http ?? [Http::class, 'request'];
@@ -31,6 +32,20 @@ final class ClerkAuth
     public function enabled(): bool
     {
         return $this->issuer !== null;
+    }
+
+    /**
+     * The issuer to enforce: config.php first, then CLERK_ISSUER, then the one derived from the publishable key. An empty or blank
+     * value counts as unset, so `'clerk_issuer' => ''` (as in config.example.php) never hides the environment's issuer.
+     */
+    public static function resolveIssuer(?string $configured, ?string $env, ?string $publishableKey): ?string
+    {
+        foreach ([$configured, $env] as $v) {
+            if (is_string($v) && trim($v) !== '') {
+                return trim($v);
+            }
+        }
+        return self::issuerFromPublishableKey($publishableKey);
     }
 
     /** "pk_test_<base64 of host$>" -> https://host (the Frontend API, which is the token issuer). */

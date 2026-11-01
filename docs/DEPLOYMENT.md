@@ -15,8 +15,8 @@ Reviewed 1 November 2026. Status: LIVE at https://flightdeck.gakinz.com.
 - Private server config: `~/flightdeck-private/config.php` (mode 600), created from `php/private/config.example.php`. Never edit server files by hand outside this file; everything else ships through a release.
 
 ## Optional paid features (off until the owner adds keys)
-- AeroDataBox (`aerodatabox_key`): schedules, gates, terminals, belts. Monthly and hourly caps in config.
-- Bright Data (`brightdata_key`, `brightdata_zone`, `brightdata_daily_cap`): "Latest from the web" links on a flight while the gate is unknown. Costs per search; cached 15 minutes per flight; capped per day.
+- AeroDataBox (`aerodatabox_key`): schedules, gates, terminals, belts. Monthly, hourly and per-user hourly caps in config.
+- Bright Data (`brightdata_key`, `brightdata_zone`, `brightdata_daily_cap`, optional `brightdata_user_daily_cap`): "Latest from the web" links on a flight while the gate is unknown. Costs per search; cached 15 minutes per flight; capped per day.
 
 ## Retired
 FTPS uploads, the `production` branch, `release.yml`, `release-static.py`, the hosting probe and the manual staging script (all in git history; evidence in docs/AUDIT.md).
