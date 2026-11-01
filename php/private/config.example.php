@@ -20,6 +20,10 @@ return [
     'ga_property_id' => '',      // numeric GA4 property id (Admin > Property details), for the console's Analytics tab
     'ga_service_account_file' => '', // path inside this private folder to the service-account JSON key (mode 600)
     'clerk_secret_key' => '',    // Clerk SECRET key (sk_live_...) for the Users view only; never commit it
+    // Optional "Latest from the web" links on a flight (Bright Data SERP API; costs money per search). Leave empty to keep it off.
+    'brightdata_key' => '',      // API token from the Bright Data dashboard; never commit it
+    'brightdata_zone' => '',     // the SERP API zone name, e.g. 'serp_api1'
+    'brightdata_daily_cap' => 150, // searches per day across all visitors; results are cached 15 minutes per flight
     'home_country_code' => 'GB', // flights are labelled Outbound/Inbound relative to this country
     // Per-visitor rate limits behind Cloudflare. The CF-Connecting-IP header is only trusted when the connection really comes from a Cloudflare range.
     'trust_cf_connecting_ip' => false,

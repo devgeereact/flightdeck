@@ -951,10 +951,17 @@ section {
   display: none;
 }
 .search-grid {
+  --search-h: 88px;
   display: grid;
   grid-template-columns: 1.15fr 1fr 1fr auto;
   gap: 12px;
-  align-items: stretch;
+  /* Every box keeps one height; a field error adds a line under its own box instead of stretching the row. */
+  align-items: start;
+}
+.search-grid > .field,
+.search-grid > .field-wrap > .field,
+.search-grid > .btn {
+  min-height: var(--search-h);
 }
 .search-grid.packing {
   grid-template-columns: 1.4fr 1fr 0.8fr auto;
@@ -963,7 +970,6 @@ section {
   min-width: 0;
 }
 .search-grid .btn {
-  min-height: 72px;
   padding: 0 44px;
   font-size: 17px;
 }

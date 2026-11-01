@@ -29,7 +29,7 @@ export const dismissedIds = (t: Trip | undefined | null) =>
         .map(([k]) => k.slice(4))
     : [];
 const KEEP_UNTICKS_MS = 60 * 24 * 3600 * 1000;
-export type Added = { id: string; sec: string; text: string };
+type Added = { id: string; sec: string; text: string };
 export type ChecklistData = {
   v: 1;
   rev: number; // server revision for conflict detection (0 = never synced)
@@ -38,7 +38,7 @@ export type ChecklistData = {
   gone: Record<string, number>; // deleted trip id -> time, so a delete survives a merge
   active: string | null;
 };
-export type ViewItem = { id: string; text: string; custom: boolean; done: boolean };
+type ViewItem = { id: string; text: string; custom: boolean; done: boolean };
 export type ViewSection = {
   id: string;
   title: string;

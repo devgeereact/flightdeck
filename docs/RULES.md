@@ -48,4 +48,4 @@ Implementation matches approved acceptance criteria; appropriate lint/type/test/
 
 
 ## Flightdeck exception
-Current React/TypeScript/Express/plain CSS implementation is retained. PHP is proposed, not implemented. No auth/DB is required yet. No blanket zero-any/lint claim: existing any and missing lint checks are documented debt, not silently fixed in this documentation-only task.
+Current stack: React/TypeScript/plain CSS with tokens, PHP API on cPanel (the Express server is retired, ADR-018). No auth/DB is required yet. No blanket zero-any/lint claim: existing any and missing lint checks are documented debt, not silently fixed in this documentation-only task.

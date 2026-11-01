@@ -1,7 +1,7 @@
 // Account sync for the checklist. localStorage stays the source of truth (it works offline); this only reconciles with the server copy.
 import { type ChecklistData, isBlank, merge, sanitize } from './checklistModel';
 
-export type PutResult = { ok: true; rev: number } | { ok: false; rev: number; data: unknown };
+type PutResult = { ok: true; rev: number } | { ok: false; rev: number; data: unknown };
 export type Api = {
   get(): Promise<{ rev: number; data: unknown }>;
   put(baseRev: number, data: ChecklistData): Promise<PutResult>;

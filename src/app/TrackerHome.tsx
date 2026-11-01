@@ -329,6 +329,12 @@ export default function TrackerHome(props: Props) {
             searchRef.current?.focus();
             return;
           }
+          const digits = number.replace(/\s+/g, '');
+          if (/^\d{1,4}$/.test(digits)) {
+            setNumErr(`Add the two-letter airline code before the number, such as BA${digits}.`);
+            searchRef.current?.focus();
+            return;
+          }
           setNumErr('');
           onSearch();
         }}

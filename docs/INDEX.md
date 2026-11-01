@@ -1,35 +1,31 @@
 # Flightdeck documentation
 
-Reviewed 25 October 2026.
+Reviewed 1 November 2026. One topic, one file; update the existing file rather than adding a new one.
 
-- [Prd](PRD.md)
-- [Design](DESIGN.md)
-- [CMS (owner console)](CMS.md)
-- [Restructure plan (rebrand and CMS)](RESTRUCTURE-PLAN.md)
-- [Release plan: rebrand](RELEASE-PLAN-REBRAND.md)
-- [Architecture](ARCHITECTURE.md)
-- [Schema](SCHEMA.md)
-- [Api](API.md)
-- [Hooks](HOOKS.md)
-- [Testing](TESTING.md)
-- [Security](SECURITY.md)
-- [Project Memory](PROJECT-MEMORY.md)
-- [Roadmap](ROADMAP.md)
-- [Deployment](DEPLOYMENT.md)
-- [Migration Php](MIGRATION-PHP.md)
-- [Runbook](RUNBOOK.md)
-- [Privacy](PRIVACY.md)
-- [Terms](TERMS.md)
-- [Ai Automation](AI-AUTOMATION.md)
-- [Integrations](INTEGRATIONS.md)
-- [Decisions](DECISIONS.md)
+**Product and design**
+- [PRD](PRD.md): what the product does and for whom
+- [Design](DESIGN.md): the design system (agent form: `.claude/skills/flightdeck-design`)
 - [Accessibility](ACCESSIBILITY.md)
-- [Rules](RULES.md)
-- [Repository Hygiene](REPOSITORY-HYGIENE.md)
-- [Verification](VERIFICATION.md)
+- [Monetisation](MONETISATION.md): ads, built but off
 
-Root README/AGENTS/CLAUDE and .agent metadata stay at project root. Detailed canonical docs are here. Historical files under history/ are evidence, not current instructions. No duplicate live rules or real secrets are stored in docs.
+**How it works**
+- [Architecture](ARCHITECTURE.md)
+- [API](API.md) and [schema](SCHEMA.md)
+- [CMS (owner console)](CMS.md)
+- [Integrations](INTEGRATIONS.md): data providers, limits and costs
 
-## History
+**Running it**
+- [Deployment](DEPLOYMENT.md) and [runbook](RUNBOOK.md)
+- [Local live login](LOCAL-LIVE-LOGIN.md)
+- [Testing](TESTING.md)
+- [Security](SECURITY.md), [privacy](PRIVACY.md), [terms](TERMS.md)
 
-The one-off hosting setup material of 24 October 2026 (readiness check, setup plan and prompt, manual staging script) is in [history/hosting-setup-2026-10-24/](history/hosting-setup-2026-10-24); its current facts are in DEPLOYMENT.md. The archived Node reference server is in [history/node-reference-2026-10-25/](history/node-reference-2026-10-25).
+**Records**
+- [Changelog](CHANGELOG.md)
+- [Audit log](AUDIT.md): every check and review, newest first
+- [Decisions](DECISIONS.md): ADRs
+- [Roadmap](ROADMAP.md)
+- [Project memory](PROJECT-MEMORY.md)
+- [Rules](RULES.md) and [repository hygiene](REPOSITORY-HYGIENE.md)
+
+Retired on 1 Nov 2026 (in git history): the October plans (restructure, rebrand release, overnight build, smoke test, PHP migration), HOOKS, AI-AUTOMATION (now in ROADMAP), VERIFICATION (now in AUDIT) and `docs/history/` including the archived Node reference server.

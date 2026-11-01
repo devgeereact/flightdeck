@@ -44,9 +44,9 @@
       }
     },
     {
-      "label": "Flightdeck: Production preview",
+      "label": "Flightdeck: Check (the CI gate)",
       "type": "shell",
-      "command": "/opt/homebrew/bin/mise exec -- pnpm start",
+      "command": "/opt/homebrew/bin/mise exec -- pnpm check",
       "options": {
         "cwd": "${workspaceFolder}"
       },

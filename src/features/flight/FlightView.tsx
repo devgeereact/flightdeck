@@ -26,7 +26,7 @@ import { fromAny, withMotion } from '../../shared/motion';
 import { nextTabIndex } from '../../shared/tabKeys';
 import type { Airport, Flight, FlightResponse } from '../../types';
 import { countdown } from './countdown';
-import { destinations } from './destinations';
+import { DiscoverCard, KeyTimesPanel, WeatherCard, WebCheckCard } from './DestinationPanels';
 import {
   airlines,
   day,
@@ -58,13 +58,11 @@ type Props = {
   onShare?: () => void;
   legPicker?: ReactNode;
 };
-type Panel = 'journey' | 'airport' | 'weather' | 'updates' | 'destination';
+type Panel = 'journey' | 'airport' | 'updates';
 const PANELS: { id: Panel; label: string; icon: typeof Clock }[] = [
   { id: 'journey', label: 'Journey', icon: Clock },
   { id: 'airport', label: 'Airport', icon: Luggage },
-  { id: 'weather', label: 'Weather', icon: CloudSun },
   { id: 'updates', label: 'Updates', icon: Radio },
-  { id: 'destination', label: 'Destination', icon: Compass },
 ];
 const here = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 const NR = 'Not reported yet';
@@ -156,182 +154,6 @@ function Clock24({ airport, now }: { airport: Airport; now: Date }) {
     <span className="clock fd-data">
       {time(now.toISOString(), airport.timezone)} {zoneAbbr(now, airport.timezone)}
     </span>
-  );
-}
-
-function Weather({ airport, now }: { airport: Airport; now: Date }) {
-  const [weather, setWeather] = useState<any>(null),
-    [failed, setFailed] = useState(false),
-    [retry, setRetry] = useState(0);
-  useEffect(() => {
-    const c = new AbortController();
-    setWeather(null);
-    setFailed(false);
-    if (airport.lat === null || airport.lon === null) {
-      setFailed(true);
-      return;
-    }
-    apiFetch(`/api/weather?lat=${airport.lat}&lon=${airport.lon}`, { signal: c.signal })
-      .then(async (r) => {
-        if (!r.ok) throw Error();
-        setWeather(await r.json());
-      })
-      .catch((e) => {
-        if (e.name !== 'AbortError') setFailed(true);
-      });
-    return () => c.abort();
-  }, [airport.code, airport.lat, airport.lon, retry]);
-  const place = airport.city || airport.name;
-  if (!weather)
-    return (
-      <div className="state compact fv-weather">
-        <span className="tile">
-          <CloudSun size={24} aria-hidden="true" />
-        </span>
-        <h2>{failed ? 'Weather is not available right now.' : 'Getting the weather…'}</h2>
-        <p>
-          {place}, at the airport. From{' '}
-          <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">
-            Open-Meteo
-          </a>
-          .
-        </p>
-        {failed && (
-          <div className="acts">
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => setRetry((r) => r + 1)}
-            >
-              Try again
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  return (
-    <div className="wx fv-weather">
-      <div className="wxmain">
-        <span className="wx-place">
-          <MapPin size={16} aria-hidden="true" />
-          {place} · {airport.name}
-        </span>
-        <div className="t fd-data">
-          {Math.round(weather.temperature_2m)}
-          <span>°C</span>
-        </div>
-        <p>{weatherLabel(weather.weather_code)} right now.</p>
-        <small>
-          From{' '}
-          <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">
-            Open-Meteo
-          </a>
-          . This is the weather around the airport now, not a forecast for when you land.
-        </small>
-      </div>
-      <div className="grid2 wx-stats">
-        <div className="stat">
-          <span>
-            <Wind size={16} aria-hidden="true" />
-            Wind
-          </span>
-          <b className="fd-data">{weather.wind_speed_10m} km/h</b>
-        </div>
-        <div className="stat">
-          <span>
-            <CloudSun size={16} aria-hidden="true" />
-            Conditions
-          </span>
-          <b>{weatherLabel(weather.weather_code)}</b>
-        </div>
-        <div className="stat">
-          <span>
-            <Timer size={16} aria-hidden="true" />
-            Observed
-          </span>
-          <b className="fd-data">{String(weather.time || '').slice(11, 16) || NR}</b>
-        </div>
-        <div className="stat">
-          <span>
-            <Clock size={16} aria-hidden="true" />
-            Local time
-          </span>
-          <b className="fd-data">{time(now.toISOString(), airport.timezone)}</b>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Destination({ airport }: { airport: Airport }) {
-  const d = destinations[airport.code];
-  const photo = DEST_PHOTO[airport.code];
-  const places = d?.places || [
-    {
-      name: `Explore ${airport.city || airport.code}`,
-      kind: 'Local ideas',
-      description:
-        'The official tourism website lists current attractions and practical visitor information.',
-      url: `https://www.google.com/search?q=${encodeURIComponent(airport.city + ' official tourism')}`,
-    },
-  ];
-  return (
-    <div className="destpanel fv-destination">
-      <div className="ph">
-        {photo ? (
-          <img src={photo.src} alt={photo.alt} loading="lazy" />
-        ) : (
-          <CodeTile code={airport.code} />
-        )}
-      </div>
-      <div>
-        <p className="label">
-          {airport.code} · {airport.name} ·{' '}
-          {airport.country || regionName(airport.countryCode) || airport.city}
-        </p>
-        <h3>{d?.greeting || `Welcome to ${airport.city || airport.name}.`}</h3>
-        <p className="muted">
-          {d?.intro ||
-            'Your trip starts in the arrivals hall. The local visitor guide is a good place to plan your stay.'}
-        </p>
-        {d && (
-          <div className="grid2 dest-stats">
-            <div className="stat">
-              <span>Currency</span>
-              <b>{d.currency}</b>
-            </div>
-            <div className="stat">
-              <span>Language</span>
-              <b>{d.language}</b>
-            </div>
-          </div>
-        )}
-        <p className="dest-tip">
-          <b>Getting from the airport. </b>
-          {d?.tip ||
-            "Check the airport's own website for transport options, and confirm opening times before you travel."}
-        </p>
-        <ul className="places">
-          {places.map((p) => (
-            <li key={p.name}>
-              <a href={p.url} target="_blank" rel="noreferrer">
-                <span>
-                  <b>{p.name}</b>
-                  <small>
-                    {p.kind} · {p.description}
-                  </small>
-                </span>
-                <ArrowUpRight size={20} aria-hidden="true" />
-              </a>
-            </li>
-          ))}
-        </ul>
-        <p className="destination-note">
-          These are hand-picked ideas for the city, not ranked by distance. Check official sources
-          for opening times, tickets and access.
-        </p>
-      </div>
-    </div>
   );
 }
 
@@ -659,6 +481,19 @@ export default function FlightView({
           </span>
         </div>
       </section>
+      <KeyTimesPanel flight={flight} />
+      <aside className="fv-side" aria-label={`Your destination, ${d.city || d.code}`}>
+        <WeatherCard
+          airport={d}
+          arrival={
+            flight.usualRouteOnly
+              ? null
+              : flight.actualIn || flight.estimatedIn || flight.scheduledIn
+          }
+        />
+        <DiscoverCard airport={d} />
+        {data.mode === 'live' && <WebCheckCard flight={flight} />}
+      </aside>
       <section className="panel position" aria-label="Aircraft position">
         <span className="tile">
           <Radio size={20} aria-hidden="true" />
@@ -693,184 +528,185 @@ export default function FlightView({
           </div>
         )}
       </section>
-      <div className="tabs-row">
-        <div className="tabs fv-tablist" role="tablist" aria-label="Flight details">
-          {PANELS.map((p, i) => (
-            <button
-              key={p.id}
-              type="button"
-              ref={(el) => {
-                tabRefs.current[i] = el;
-              }}
-              role="tab"
-              id={'fv-t-' + p.id}
-              aria-selected={panel === p.id}
-              aria-controls="fv-panel"
-              tabIndex={panel === p.id ? 0 : -1}
-              onClick={() => setPanel(p.id)}
-              onKeyDown={(e) => onTabKey(e, i)}
-            >
-              <p.icon size={16} aria-hidden="true" />
-              {p.label}
-            </button>
-          ))}
-        </div>
-      </div>
-      <section
-        className="panel tabpanel fv-body"
-        id="fv-panel"
-        role="tabpanel"
-        tabIndex={0}
-        aria-labelledby={'fv-t-' + panel}
-      >
-        {panel === 'journey' && (
-          <ol className="journey timeline">
-            {steps.map((step) => (
-              <li className={'timeline-row' + (step.done ? ' done' : '')} key={step.key}>
-                <i aria-hidden="true" />
-                <div>
-                  <strong>{step.label}</strong>
-                  <span className="step-note">{step.note}</span>
-                </div>
-                <small className={badgeFor(step.kind)}>{step.kind}</small>
-                <span className="step-time fd-data">
-                  {step.t ? `${time(step.t, step.tz)}${step.tz ? '' : ' UTC'}` : '—'}
-                  {step.t && <small className="step-day">{day(step.t, step.tz)}</small>}
-                </span>
-              </li>
+      <div className="fv-details">
+        <div className="tabs-row">
+          <div className="tabs fv-tablist" role="tablist" aria-label="Flight details">
+            {PANELS.map((p, i) => (
+              <button
+                key={p.id}
+                type="button"
+                ref={(el) => {
+                  tabRefs.current[i] = el;
+                }}
+                role="tab"
+                id={'fv-t-' + p.id}
+                aria-selected={panel === p.id}
+                aria-controls="fv-panel"
+                tabIndex={panel === p.id ? 0 : -1}
+                onClick={() => setPanel(p.id)}
+                onKeyDown={(e) => onTabKey(e, i)}
+              >
+                <p.icon size={16} aria-hidden="true" />
+                {p.label}
+              </button>
             ))}
-          </ol>
-        )}
-        {panel === 'airport' && (
-          <div className="fv-airport">
-            <div className="grid2">
-              <div>
-                <div className="aphead">
-                  <h3>
-                    {o.city || o.name} {o.code}
-                  </h3>
-                  <Clock24 airport={o} now={now} />
+          </div>
+        </div>
+        <section
+          className="panel tabpanel fv-body"
+          id="fv-panel"
+          role="tabpanel"
+          tabIndex={0}
+          aria-labelledby={'fv-t-' + panel}
+        >
+          {panel === 'journey' && (
+            <ol className="journey timeline">
+              {steps.map((step) => (
+                <li className={'timeline-row' + (step.done ? ' done' : '')} key={step.key}>
+                  <i aria-hidden="true" />
+                  <div>
+                    <strong>{step.label}</strong>
+                    <span className="step-note">{step.note}</span>
+                  </div>
+                  <small className={badgeFor(step.kind)}>{step.kind}</small>
+                  <span className="step-time fd-data">
+                    {step.t ? `${time(step.t, step.tz)}${step.tz ? '' : ' UTC'}` : '—'}
+                    {step.t && <small className="step-day">{day(step.t, step.tz)}</small>}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
+          {panel === 'airport' && (
+            <div className="fv-airport">
+              <div className="grid2">
+                <div>
+                  <div className="aphead">
+                    <h3>
+                      {o.city || o.name} {o.code}
+                    </h3>
+                    <Clock24 airport={o} now={now} />
+                  </div>
+                  <div className="kv">
+                    <Detail
+                      label="Departure terminal"
+                      value={withHint(flight.terminalOut, flight.terminalOutHint)}
+                    />
+                    <Detail label="Departure gate" value={flight.gateOut} />
+                    <Detail label="Aircraft type" value={flight.aircraft} />
+                  </div>
                 </div>
-                <div className="kv">
-                  <Detail
-                    label="Departure terminal"
-                    value={withHint(flight.terminalOut, flight.terminalOutHint)}
-                  />
-                  <Detail label="Departure gate" value={flight.gateOut} />
-                  <Detail label="Aircraft type" value={flight.aircraft} />
+                <div>
+                  <div className="aphead">
+                    <h3>
+                      {d.city || d.name} {d.code}
+                    </h3>
+                    <Clock24 airport={d} now={now} />
+                  </div>
+                  <div className="kv">
+                    <Detail
+                      label="Arrival terminal"
+                      value={withHint(flight.terminalIn, flight.terminalInHint)}
+                    />
+                    <Detail label="Arrival gate" value={flight.gateIn} />
+                    <Detail label="Baggage belt" value={flight.baggage} />
+                  </div>
                 </div>
               </div>
-              <div>
-                <div className="aphead">
-                  <h3>
-                    {d.city || d.name} {d.code}
-                  </h3>
-                  <Clock24 airport={d} now={now} />
-                </div>
-                <div className="kv">
-                  <Detail
-                    label="Arrival terminal"
-                    value={withHint(flight.terminalIn, flight.terminalInHint)}
-                  />
-                  <Detail label="Arrival gate" value={flight.gateIn} />
-                  <Detail label="Baggage belt" value={flight.baggage} />
-                </div>
+              <p className="note">
+                <Info size={16} aria-hidden="true" />
+                <span>
+                  {flight.baggage ? 'Belts can change, so check the airport screens. ' : ''}
+                  Airports often assign gates and belts late, and some never publish them.
+                  Flightdeck shows them as soon as they are reported. Always follow the screens at
+                  the airport.
+                  {flight.registration ? ` Aircraft registration ${flight.registration}.` : ''}
+                </span>
+              </p>
+              <a
+                className="btn btn-ghost btn-sm official-link"
+                href={
+                  airlines[flight.number.slice(0, 2)] ||
+                  `https://www.google.com/search?q=${encodeURIComponent(flight.airline + ' official flight status')}`
+                }
+                target="_blank"
+                rel="noreferrer"
+              >
+                {airlines[flight.number.slice(0, 2)]
+                  ? "Check the airline's flight status"
+                  : "Find the airline's official status page"}
+                <ArrowUpRight size={16} aria-hidden="true" />
+              </a>
+            </div>
+          )}
+          {panel === 'updates' && (
+            <div className="fv-updates">
+              <div aria-live="polite">
+                {changes.length ? (
+                  <ul className="upd">
+                    {changes.map((c, i) => (
+                      <li key={i}>
+                        <span className="dot" aria-hidden="true" />
+                        <span>{c}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="muted">
+                    {auto
+                      ? 'Watching for changes while this page is open. Changes to the status, gates, belt and arrival time appear here.'
+                      : 'Switch on Refresh automatically above (every minute), or use Refresh, to see changes here.'}
+                  </p>
+                )}
+              </div>
+              <div className="sources">
+                <small>
+                  {data.source}. Fetched{' '}
+                  {new Intl.DateTimeFormat('en-GB', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZoneName: 'short',
+                  }).format(new Date(data.fetchedAt))}
+                  {data.cached ? `, kept for up to ${data.refreshSeconds} seconds` : ''}.{' '}
+                  {data.mode === 'live'
+                    ? 'Provider data can lag behind what is really happening.'
+                    : ''}
+                </small>
+                {data.sources?.includes('AeroDataBox') && (
+                  <small>
+                    Schedule data from{' '}
+                    <a href="https://aerodatabox.com/" target="_blank" rel="noreferrer">
+                      AeroDataBox
+                    </a>
+                    .
+                  </small>
+                )}
+                {data.sources?.includes('OpenSky Network') && (
+                  <small>
+                    Live aircraft positions from{' '}
+                    <a href="https://opensky-network.org/" target="_blank" rel="noreferrer">
+                      The OpenSky Network
+                    </a>
+                    .
+                  </small>
+                )}
+                {data.sources?.includes('adsbdb routes') && (
+                  <small>
+                    Routes from{' '}
+                    <a href="https://www.adsbdb.com/" target="_blank" rel="noreferrer">
+                      adsbdb
+                    </a>
+                    .
+                  </small>
+                )}
               </div>
             </div>
-            <p className="note">
-              <Info size={16} aria-hidden="true" />
-              <span>
-                {flight.baggage ? 'Belts can change, so check the airport screens. ' : ''}
-                Airports often assign gates and belts late, and some never publish them. Flightdeck
-                shows them as soon as they are reported. Always follow the screens at the airport.
-                {flight.registration ? ` Aircraft registration ${flight.registration}.` : ''}
-              </span>
-            </p>
-            <a
-              className="btn btn-ghost btn-sm official-link"
-              href={
-                airlines[flight.number.slice(0, 2)] ||
-                `https://www.google.com/search?q=${encodeURIComponent(flight.airline + ' official flight status')}`
-              }
-              target="_blank"
-              rel="noreferrer"
-            >
-              {airlines[flight.number.slice(0, 2)]
-                ? "Check the airline's flight status"
-                : "Find the airline's official status page"}
-              <ArrowUpRight size={16} aria-hidden="true" />
-            </a>
-          </div>
-        )}
-        {panel === 'weather' && <Weather airport={d} now={now} />}
-        {panel === 'updates' && (
-          <div className="fv-updates">
-            <div aria-live="polite">
-              {changes.length ? (
-                <ul className="upd">
-                  {changes.map((c, i) => (
-                    <li key={i}>
-                      <span className="dot" aria-hidden="true" />
-                      <span>{c}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="muted">
-                  {auto
-                    ? 'Watching for changes while this page is open. Changes to the status, gates, belt and arrival time appear here.'
-                    : 'Switch on Refresh automatically above (every minute), or use Refresh, to see changes here.'}
-                </p>
-              )}
-            </div>
-            <div className="sources">
-              <small>
-                {data.source}. Fetched{' '}
-                {new Intl.DateTimeFormat('en-GB', {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  timeZoneName: 'short',
-                }).format(new Date(data.fetchedAt))}
-                {data.cached ? `, kept for up to ${data.refreshSeconds} seconds` : ''}.{' '}
-                {data.mode === 'live'
-                  ? 'Provider data can lag behind what is really happening.'
-                  : ''}
-              </small>
-              {data.sources?.includes('AeroDataBox') && (
-                <small>
-                  Schedule data from{' '}
-                  <a href="https://aerodatabox.com/" target="_blank" rel="noreferrer">
-                    AeroDataBox
-                  </a>
-                  .
-                </small>
-              )}
-              {data.sources?.includes('OpenSky Network') && (
-                <small>
-                  Live aircraft positions from{' '}
-                  <a href="https://opensky-network.org/" target="_blank" rel="noreferrer">
-                    The OpenSky Network
-                  </a>
-                  .
-                </small>
-              )}
-              {data.sources?.includes('adsbdb routes') && (
-                <small>
-                  Routes from{' '}
-                  <a href="https://www.adsbdb.com/" target="_blank" rel="noreferrer">
-                    adsbdb
-                  </a>
-                  .
-                </small>
-              )}
-            </div>
-          </div>
-        )}
-        {panel === 'destination' && <Destination airport={d} />}
-      </section>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

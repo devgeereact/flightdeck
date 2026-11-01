@@ -1,20 +1,20 @@
 # Flightdeck architecture
 
-Reviewed 25 October 2026. "Live" means the production release of 25 Oct (731dae7). "Local" means committed on `main` after it and not released (rebrand and CMS, see RESTRUCTURE-PLAN.md).
+Reviewed 1 November 2026. Everything below is live; `main` deploys on every push (DEPLOYMENT.md).
 
 ## Shape
 
 ```text
 flightdeck.gakinz.com (Cloudflare Full strict -> cPanel, LiteSpeed/Apache rules in public/.htaccess)
-  /                 public website   -> site.php -> ~/flightdeck-private/src/Site (PHP renders CMS content)   [local]
-  /guides/ /help/…  public website   -> site.php                                                              [local]
-  /app/             signed-in app    -> app/index.html (React SPA, hash routes)                               [local; live at /]
-  /api/*            API              -> api/index.php -> ~/flightdeck-private/src (App, Cms, providers)       [live + local CMS routes]
-  /media/<hash>     branding images  -> site.php (from private var/content/media)                             [local]
+  /                 public website   -> site.php -> ~/flightdeck-private/src/Site (PHP renders CMS content)
+  /guides/ /help/…  public website   -> site.php
+  /app/             signed-in app    -> app/index.html (React SPA, hash routes)
+  /api/*            API              -> api/index.php -> ~/flightdeck-private/src (App, Cms, providers)
+  /media/<hash>     branding images  -> site.php (from private var/content/media)
 Private, outside every webroot: ~/flightdeck-private/{src, config.php, var/}
 ```
 
-No database: shared state is small JSON files under private `var/` written with a lock, a unique temp file and a rename (cache, rate limits, counters, checklists, enquiries, CMS content, provider health). Clerk handles accounts; the API verifies its session tokens itself (JWKS, no Clerk secret needed for that). Releases: push to `production` -> GitHub Actions tests, builds, rsyncs `php/private/src` over a restricted key, then uploads `dist/` over FTPS additively (DEPLOYMENT.md).
+No database: shared state is small JSON files under private `var/` written with a lock, a unique temp file and a rename (cache, rate limits, counters, checklists, enquiries, CMS content, provider health). Clerk handles accounts; the API verifies its session tokens itself (JWKS, no Clerk secret needed for that). Releases: push to `main` -> `.github/workflows/deploy.yml` checks, builds and uploads over SSH with snapshots and automatic restore (DEPLOYMENT.md).
 
 ## Public website (server-rendered)
 
@@ -30,7 +30,8 @@ React 19 + strict TypeScript + Vite, PWA via vite-plugin-pwa (manifest `id: '/'`
 src/main.tsx                   app shell: router, dashboard, PWA update, Clerk provider
 src/app/                       sign-in screen, Clerk glue (token bridge, account bar, saved-flight sync, shared-device clean-up),
                                saved-flight and offline helpers, install help, announcements, feedback
-src/features/flight/           flight view, formatting (time rules ADR-012), summary, countdown, calendar file, destinations
+src/features/flight/           flight view, key times (keyTimes.ts: boarding, gate close, runway times; typical values labelled),
+                               destination panels (weather, Discover, web check), formatting (ADR-012), summary, countdown, calendar file
 src/features/checklist/        packing list UI, model, storage, sync, rules, template, board styles
 src/console/                   owner console: shell, operations (Ops.tsx), inbox, provider health, audit, content editor
 src/shared/                    API client (token in Authorization and X-Session-Token), tracking, motion, tab keys, smooth scroll
@@ -41,11 +42,15 @@ src/siteNav.ts                 default links (app footer, CMS seed)    src/types
 
 ## PHP (`php/private/src`)
 
-`bootstrap.php` (API) and `site-bootstrap.php` (site) share `loadConfig.php` (private config.php, environment, and locally only the project's .env). API: `App.php` (routing, limits, auth gate, owner gate), `Cms.php` (console content, preview, media, health, audit routes), `ClerkAuth.php`, `Admin.php`, `Metrics.php`, `Health.php`, `Enquiries.php`, `Mailer.php`, `Checklists.php`, `ClerkApi.php`, `GoogleAnalytics.php`; flight data: `AeroDataBox.php`, `OpenSky.php`, `RouteLookup.php` (adsbdb), `Flight.php`, `Geo.php`; storage: `Store.php`. CMS: `Content/{Markdown,Validator,ContentStore,Media}.php`, `Content/seed.json`. Site: `Site/Site.php`.
+`bootstrap.php` (API) and `site-bootstrap.php` (site) share `loadConfig.php` (private config.php, environment, and locally only the project's .env). API: `App.php` (routing, limits, auth gate, owner gate), `Cms.php` (console content, preview, media, health, audit routes), `ClerkAuth.php`, `Admin.php`, `Metrics.php`, `Health.php`, `Enquiries.php`, `Mailer.php`, `Checklists.php`, `ClerkApi.php`, `GoogleAnalytics.php`; flight data: `AeroDataBox.php`, `OpenSky.php`, `RouteLookup.php` (adsbdb), `Flight.php`, `Geo.php`; destination: `Place.php` (Wikivoyage/Wikipedia travel guide, cached a week), `WebCheck.php` (Bright Data search links, off unless configured); weather in `App.php` (Open-Meteo current, hourly and 7-day); storage: `Store.php`. CMS: `Content/{Markdown,Validator,ContentStore,Media}.php`, `Content/seed.json`. Site: `Site/Site.php`.
 
-## Node reference server (archived)
+## Flight page layout (1 Nov 2026)
 
-The original Express prototype and the parity script were archived to `docs/history/node-reference-2026-10-25/` on 25 Oct 2026 (ADR-018). `pnpm dev` runs Vite with the PHP dev router; there is no Node API any more.
+Summary (route, scheduled/estimated/actual times) → Gates and key times (two rows of four: departure gate, boarding starts, gate closes, take-off; landing, reaches the gate, arrival gate, baggage belt) → aircraft position → tabs (Journey, Airport, Updates). On screens 1280px and wider the destination column (weather now and at landing, 4-day forecast, Discover, optional web links) sits alongside; narrower, it follows the key times.
+
+## Node reference server (retired)
+
+Removed from the app on 25 Oct 2026 (ADR-018) and from `docs/history` on 1 Nov 2026; it is in git history only. `pnpm dev` runs Vite with the PHP dev router.
 
 ## Known limits
 

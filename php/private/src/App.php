@@ -43,7 +43,7 @@ final class App
         $auth = new ClerkAuth($config['clerk_issuer'] ?? null, $store, null, is_array($config['clerk_authorized_parties'] ?? null) ? $config['clerk_authorized_parties'] : []);
         $isAdminRoute = strpos($route, '/admin/') === 0;
         $sub = null;
-        if (in_array($route, ['/flights', '/weather', '/checklist', '/me'], true) || $isAdminRoute) {
+        if (in_array($route, ['/flights', '/weather', '/place', '/web-check', '/checklist', '/me'], true) || $isAdminRoute) {
             if (!$auth->enabled()) {
                 if ($route === '/me') {
                     Http::json(200, ['signedIn' => false, 'isAdmin' => false]);
@@ -82,6 +82,7 @@ final class App
                     'provider' => $adb->configured() ? 'AeroDataBox + OpenSky Network' : 'OpenSky Network',
                     'providers' => ['opensky' => $opensky->configured(), 'aerodatabox' => $adb->configured(), 'routes' => true],
                     'signInRequired' => $auth->enabled(),
+                    'webCheck' => WebCheck::enabled($config),
                 ]);
                 return;
             case $route === '/flights':
@@ -89,6 +90,13 @@ final class App
                 return;
             case $route === '/weather':
                 self::weather($store);
+                return;
+            case $route === '/place':
+                $place = Place::lookup($store, self::param('city'), self::param('country'));
+                Http::json($place === null || isset($place['missing']) ? 404 : 200, $place === null || isset($place['missing']) ? ['error' => 'No travel guide found for this place.'] : $place);
+                return;
+            case $route === '/web-check':
+                self::webCheck($config, $store);
                 return;
             case $route === '/checklist':
                 self::checklist(new Checklists($varDir), (string) $sub);
@@ -155,7 +163,7 @@ final class App
     public static function rateBucket(string $route, int $perMinute): array
     {
         $per = max(1, $perMinute);
-        if ($route === '/flights' || $route === '/weather') {
+        if ($route === '/flights' || $route === '/weather' || $route === '/web-check') {
             return ['p:', $per];
         }
         if (strpos($route, '/admin') === 0) {
@@ -542,7 +550,8 @@ final class App
         };
         [$status, $body] = Http::request(
             'GET',
-            'https://api.open-meteo.com/v1/forecast?latitude=' . $fmt($lat) . '&longitude=' . $fmt($lon) . '&current=temperature_2m,weather_code,wind_speed_10m&timezone=auto',
+            'https://api.open-meteo.com/v1/forecast?latitude=' . $fmt($lat) . '&longitude=' . $fmt($lon) . '&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m'
+                . '&hourly=temperature_2m,weather_code,precipitation_probability&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset&forecast_days=7&timezone=auto',
             [],
             null,
             10
@@ -553,8 +562,45 @@ final class App
             Http::json(502, ['error' => 'Weather is temporarily unavailable.']);
             return;
         }
-        $data = $d['current'] + ['timezone' => $d['timezone'] ?? null, 'source' => 'Open-Meteo', 'fetchedAt' => Flight::iso(Store::nowMs())];
+        $data = $d['current'] + [
+            'timezone' => $d['timezone'] ?? null,
+            'hourly' => self::columns($d['hourly'] ?? null, ['time' => 'time', 'temperature_2m' => 't', 'weather_code' => 'code', 'precipitation_probability' => 'rain']),
+            'daily' => self::columns($d['daily'] ?? null, ['time' => 'date', 'weather_code' => 'code', 'temperature_2m_max' => 'max', 'temperature_2m_min' => 'min', 'precipitation_probability_max' => 'rain', 'sunrise' => 'sunrise', 'sunset' => 'sunset']),
+            'source' => 'Open-Meteo',
+            'fetchedAt' => Flight::iso(Store::nowMs()),
+        ];
         $store->put($key, $data, 600000);
         Http::json(200, $data);
+    }
+
+    /** Open-Meteo returns parallel arrays per field; turn them into rows with short names. Missing data gives an empty list. */
+    public static function columns($block, array $names): array
+    {
+        if (!is_array($block) || !is_array($block['time'] ?? null)) {
+            return [];
+        }
+        $rows = [];
+        foreach ($block['time'] as $i => $_) {
+            $row = [];
+            foreach ($names as $from => $to) {
+                $row[$to] = is_array($block[$from] ?? null) ? ($block[$from][$i] ?? null) : null;
+            }
+            $rows[] = $row;
+        }
+        return $rows;
+    }
+
+    private static function webCheck(array $config, Store $store): void
+    {
+        $number = strtoupper(preg_replace('/\s+/', '', self::param('number')) ?? '');
+        $date = self::param('date');
+        $from = strtoupper(self::param('from'));
+        $to = strtoupper(self::param('to'));
+        if (!preg_match('/^[A-Z0-9]{2,3}\d{1,4}[A-Z]?$/', $number) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)
+            || !preg_match('/^[A-Z]{3}$|^$/', $from) || !preg_match('/^[A-Z]{3}$|^$/', $to)) {
+            Http::json(400, ['error' => 'A flight number and date are required.']);
+            return;
+        }
+        Http::json(200, WebCheck::lookup($config, $store, $number, $date, $from, $to));
     }
 }

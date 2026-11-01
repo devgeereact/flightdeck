@@ -170,12 +170,40 @@ async function boot({ config, storedMode, hash = '', storage = {}, fixtures = fa
       return new Response(
         JSON.stringify({
           temperature_2m: 15.2,
+          apparent_temperature: 13.8,
+          relative_humidity_2m: 71,
           weather_code: 2,
           wind_speed_10m: 14.9,
           time: '2026-10-25T01:30',
+          timezone: 'Africa/Johannesburg',
+          hourly: [],
+          daily: [0, 1, 2, 3, 4, 5, 6].map((i) => ({
+            date: new Date(Date.now() + i * 86400000).toISOString().slice(0, 10),
+            code: 1,
+            max: 22,
+            min: 12,
+            rain: 10,
+          })),
         }),
         { headers: { 'content-type': 'application/json' } },
       );
+    if (fixtures && u.pathname === '/api/place')
+      return new Response(
+        JSON.stringify({
+          title: 'Cape Town',
+          summary: 'Cape Town is the oldest city in South Africa, under Table Mountain.',
+          image: null,
+          url: 'https://en.wikivoyage.org/wiki/Cape_Town',
+          source: 'Wikivoyage',
+          licence: 'CC BY-SA 4.0',
+          sections: [{ label: 'See', url: 'https://en.wikivoyage.org/wiki/Cape_Town#See' }],
+        }),
+        { headers: { 'content-type': 'application/json' } },
+      );
+    if (fixtures && u.pathname === '/api/web-check')
+      return new Response(JSON.stringify({ status: 'off' }), {
+        headers: { 'content-type': 'application/json' },
+      });
     if (config && u.pathname === '/api/config')
       return new Response(JSON.stringify(config), {
         headers: { 'content-type': 'application/json' },
@@ -356,13 +384,50 @@ try {
       /Departure terminal5/.test(a.text()) && /Baggage belt2/.test(a.text()),
       a.text().slice(0, 300),
     );
-    await tabClick('Weather');
     check(
-      'B11 Weather tab shows the destination weather in plain words',
-      /Cape Town/.test(a.text()) && /15°C/.test(a.text()) && /Partly cloudy/.test(a.text()),
+      'B11 the destination weather shows beside the flight without opening a tab, in plain words',
+      /Weather in Cape Town/.test(a.text()) &&
+        /15°C/.test(a.text()) &&
+        /Partly cloudy/.test(a.text()) &&
+        /feels like 14°/.test(a.text()) &&
+        d.querySelectorAll('.wx-days li').length === 4,
+      d.querySelector('.wxcard')?.textContent,
     );
+    check(
+      'B11b Discover shows a travel guide for any destination, with its source and licence',
+      /Discover Cape Town/.test(a.text()) &&
+        /oldest city in South Africa/.test(a.text()) &&
+        /Wikivoyage/.test(d.querySelector('.discover')?.textContent || '') &&
+        /CC BY-SA/.test(d.querySelector('.discover')?.textContent || ''),
+      d.querySelector('.discover')?.textContent,
+    );
+    check(
+      'B11c gates and key times: boarding, gate closes, take-off and landing are on the page; typical times are labelled, unknown gates say so',
+      (() => {
+        const kt = d.querySelector('.keytimes')?.textContent || '';
+        return (
+          /Boarding starts/.test(kt) &&
+          /Gate closes/.test(kt) &&
+          /Take-off/.test(kt) &&
+          /Landing/.test(kt) &&
+          /Departure gate/.test(kt) &&
+          /Arrival gate/.test(kt) &&
+          /T5/.test(kt) &&
+          /Belt 2/.test(kt) &&
+          /Typical/.test(kt) &&
+          /Not reported yet/.test(kt) &&
+          /Usually 50 min before departure/.test(kt)
+        );
+      })(),
+      d.querySelector('.keytimes')?.textContent,
+    );
+    check(
+      'B11d the web-check card stays hidden while the server has it switched off',
+      !d.querySelector('.webcheck'),
+    );
+    await tabClick('Updates');
     {
-      // flight detail tabs: five tabs, roving tabindex, arrow/Home/End keys, focusable panel
+      // flight detail tabs: three tabs, roving tabindex, arrow/Home/End keys, focusable panel
       const tabs = () => [...d.querySelectorAll('.fv-tablist [role="tab"]')];
       const sel = () => tabs().find((b) => b.getAttribute('aria-selected') === 'true');
       const key = async (k) => {
@@ -373,15 +438,15 @@ try {
       };
       const roving = () =>
         tabs().filter((b) => b.getAttribute('tabindex') === '0').length === 1 &&
-        tabs().filter((b) => b.getAttribute('tabindex') === '-1').length === 4 &&
+        tabs().filter((b) => b.getAttribute('tabindex') === '-1').length === 2 &&
         sel().getAttribute('tabindex') === '0';
       check(
-        'T1 the flight details have five tabs with short labels and a roving tabindex',
+        'T1 the flight details have three tabs with short labels and a roving tabindex',
         tabs()
           .map((b) => b.textContent)
-          .join('|') === 'Journey|Airport|Weather|Updates|Destination' &&
+          .join('|') === 'Journey|Airport|Updates' &&
           roving() &&
-          sel().textContent === 'Weather',
+          sel().textContent === 'Updates',
         tabs()
           .map((b) => `${b.textContent}:${b.getAttribute('tabindex')}`)
           .join(' '),
@@ -396,11 +461,11 @@ try {
       await key('ArrowLeft');
       check(
         'T2 Right, End, Home and Left (wrapping) move the selection and the focus, keeping one tab in the Tab order',
-        afterRight === 'Updates' &&
+        afterRight === 'Journey' &&
           focusRight &&
-          afterEnd === 'Destination' &&
+          afterEnd === 'Updates' &&
           afterHome === 'Journey' &&
-          sel()?.textContent === 'Destination' &&
+          sel()?.textContent === 'Updates' &&
           d.activeElement === sel() &&
           roving(),
         [afterRight, focusRight, afterEnd, afterHome, sel()?.textContent].join(','),

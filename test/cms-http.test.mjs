@@ -476,8 +476,10 @@ test('operations: health and cache show real state only; media lists uploads and
   assert.deepEqual(Object.keys(h.providers).sort(), [
     'adsbdb',
     'aerodatabox',
+    'brightdata',
     'openmeteo',
     'opensky',
+    'wikimedia',
   ]);
   for (const p of Object.values(h.providers))
     assert.equal(p.lastOk, null, 'nothing was called, so nothing is claimed');

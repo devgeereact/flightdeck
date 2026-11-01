@@ -57,10 +57,3 @@ export const gaPageview = () => {
     /* ignore */
   }
 };
-export const cookieSettingsAvailable = () => {
-  try {
-    return !!(window as any).fdConsent?.enabled;
-  } catch {
-    return false;
-  }
-};

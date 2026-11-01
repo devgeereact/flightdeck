@@ -295,6 +295,8 @@
       var v = (num.value || '').toUpperCase().replace(/\s+/g, '');
       var msg = '';
       if (!v) msg = 'Enter the flight number from your booking, such as BA117.';
+      else if (/^\d{1,4}$/.test(v))
+        msg = 'Add the two-letter airline code before the number, such as BA' + v + '.';
       else if (!/^[A-Z0-9]{2,3}\d{1,4}[A-Z]?$/.test(v) || v.length < 3 || v.length > 8)
         msg =
           'That does not look like a flight number. Use the airline code and number, such as BA117.';

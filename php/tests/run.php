@@ -4,7 +4,7 @@ declare(strict_types=1);
 foreach (['Http', 'DevEnv', 'ClerkAuth', 'Checklists', 'Metrics', 'Mailer', 'Enquiries', 'ClerkApi', 'Admin', 'GoogleAnalytics', 'Store', 'CloudflareIps', 'Geo', 'Flight', 'OpenSky', 'RouteLookup', 'AeroDataBox', 'App'] as $f) {
     require __DIR__ . '/../private/src/' . $f . '.php';
 }
-foreach (['Health', 'Content/Markdown', 'Content/Validator', 'Content/ContentStore', 'Content/Media', 'Site/Site', 'Cms'] as $f) {
+foreach (['Health', 'Content/Markdown', 'Content/Validator', 'Content/ContentStore', 'Content/Media', 'Site/Site', 'Cms', 'Place', 'WebCheck'] as $f) {
     require __DIR__ . '/../private/src/' . $f . '.php';
 }
 
@@ -775,6 +775,51 @@ $sent = $enqT->submit(['kind' => 'contact', 'message' => 'Hello there, a questio
 $eid = (string) $sent['id'];
 check('enquiries: resolved is a status and records when', $enqT->setStatus($eid, 'resolved') && ($enqT->list()['items'][0]['resolvedAt'] ?? null) !== null);
 check('enquiries: a private note can be added, is length-limited, and an empty note removes it', $enqT->setNote($eid, "Called back.\nAll sorted.") && $enqT->list()['items'][0]['note'] === "Called back.\nAll sorted." && !$enqT->setNote($eid, str_repeat('x', Enquiries::MAX_NOTE + 1)) && $enqT->setNote($eid, '') && !isset($enqT->list()['items'][0]['note']));
+
+// ---- destination guide, web check and forecast rows (1 Nov 2026)
+$pdir = sys_get_temp_dir() . '/fd-place-' . bin2hex(random_bytes(3));
+$pstore = new \Flightdeck\Store($pdir);
+$calls = [];
+$fakeGet = static function (string $url) use (&$calls): array {
+    $calls[] = $url;
+    if (strpos($url, 'wikivoyage.org/w/api.php') !== false) {
+        return [200, json_encode(['query' => ['search' => [['title' => 'Lagos City']]]])];
+    }
+    if (strpos($url, 'wikivoyage.org/api/rest_v1/page/summary/Lagos_City') !== false) {
+        return [200, json_encode(['type' => 'standard', 'title' => 'Lagos City', 'extract' => 'Lagos is the most populous city in Nigeria.', 'thumbnail' => ['source' => 'https://thumb.wikimedia.org/a/330px-Lagos.jpg?utm_source=x'], 'content_urls' => ['desktop' => ['page' => 'https://en.wikivoyage.org/wiki/Lagos_City']]])];
+    }
+    return [404, ''];
+};
+$pl = \Flightdeck\Place::lookup($pstore, 'Lagos', 'Nigeria', $fakeGet);
+check('place: a Wikivoyage guide comes back with summary, 640px Wikimedia image, link, licence and section links', is_array($pl) && $pl['source'] === 'Wikivoyage' && $pl['image'] === 'https://thumb.wikimedia.org/a/640px-Lagos.jpg' && $pl['licence'] === 'CC BY-SA 4.0' && $pl['sections'][2]['url'] === 'https://en.wikivoyage.org/wiki/Lagos_City#See');
+$n = count($calls);
+\Flightdeck\Place::lookup($pstore, 'Lagos', 'Nigeria', $fakeGet);
+check('place: the second look-up is served from the cache', count($calls) === $n);
+check('place: an empty or over-long city is refused without a request', \Flightdeck\Place::lookup($pstore, '', '', $fakeGet) === null && \Flightdeck\Place::lookup($pstore, str_repeat('a', 81), '', $fakeGet) === null);
+$miss = \Flightdeck\Place::lookup($pstore, 'Nowhere', '', static fn () => [404, '']);
+check('place: an unknown city returns nothing (and the miss is cached)', $miss === null && is_array($pstore->get('place-' . substr(sha1('nowhere|'), 0, 20))));
+
+check('web check: off unless both the Bright Data key and zone are set', \Flightdeck\WebCheck::lookup([], $pstore, 'BA117', '2026-11-01', 'LHR', 'JFK')['status'] === 'off' && !\Flightdeck\WebCheck::enabled(['brightdata_key' => 'k']));
+$posts = 0;
+$fakePost = static function (string $url, array $h, string $body) use (&$posts): array {
+    $posts++;
+    return [200, json_encode(['organic' => [
+        ['link' => 'https://www.flightaware.com/live/flight/BAW117', 'title' => 'tracker'],
+        ['link' => 'https://www.heathrow.com/departures/terminal-5/flight-details/BA117', 'title' => 'Flight BA117 to New York', 'description' => 'Latest status'],
+        ['link' => '/goto?url=x', 'title' => 'relative'],
+        ['link' => 'http://insecure.example/x', 'title' => 'http'],
+    ]])];
+};
+$wcfg = ['brightdata_key' => 'test-key', 'brightdata_zone' => 'serp', 'brightdata_daily_cap' => 1];
+$wc = \Flightdeck\WebCheck::lookup($wcfg, $pstore, 'BA117', '2026-11-01', 'LHR', 'JFK', $fakePost);
+check('web check: results are https links, trackers dropped, with the site name', $wc['status'] === 'ok' && count($wc['results']) === 1 && $wc['results'][0]['site'] === 'heathrow.com');
+\Flightdeck\WebCheck::lookup($wcfg, $pstore, 'BA117', '2026-11-01', 'LHR', 'JFK', $fakePost);
+check('web check: a repeat for the same flight and date is cached', $posts === 1);
+check('web check: the daily cap stops further searches', \Flightdeck\WebCheck::lookup($wcfg, $pstore, 'BA118', '2026-11-01', 'JFK', 'LHR', $fakePost)['status'] === 'cap' && $posts === 1);
+check('rate buckets: the web check counts against the strict look-up limit', \Flightdeck\App::rateBucket('/web-check', 30) === ['p:', 30] && \Flightdeck\App::rateBucket('/place', 30)[0] === 'g:');
+check('weather: Open-Meteo parallel arrays become short rows', \Flightdeck\App::columns(['time' => ['a', 'b'], 'temperature_2m' => [1.5, 2]], ['time' => 'time', 'temperature_2m' => 't', 'weather_code' => 'code']) === [['time' => 'a', 't' => 1.5, 'code' => null], ['time' => 'b', 't' => 2, 'code' => null]] && \Flightdeck\App::columns(null, ['time' => 'time']) === []);
+array_map('unlink', glob($pdir . '/*') ?: []);
+@rmdir($pdir);
 
 echo $failed ? "\n$failed FAILED\n" : "\nAll passed\n";
 exit($failed ? 1 : 0);

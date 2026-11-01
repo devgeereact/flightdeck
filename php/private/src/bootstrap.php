@@ -21,6 +21,8 @@ require __DIR__ . '/OpenSky.php';
 require __DIR__ . '/RouteLookup.php';
 require __DIR__ . '/AeroDataBox.php';
 require __DIR__ . '/Health.php';
+require __DIR__ . '/Place.php';
+require __DIR__ . '/WebCheck.php';
 require __DIR__ . '/Content/Markdown.php';
 require __DIR__ . '/Content/Validator.php';
 require __DIR__ . '/Content/ContentStore.php';

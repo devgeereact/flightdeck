@@ -448,15 +448,22 @@ main#main {
   padding: 24px;
 }
 .lookup-grid {
+  --search-h: 88px;
   display: grid;
   grid-template-columns: 1fr 1fr 1.25fr auto;
   gap: 12px;
+  /* Every box keeps one height; a field error adds a line under its own box instead of stretching the row. */
+  align-items: start;
+}
+.lookup-grid > .field,
+.lookup-grid > .field-wrap > .field,
+.lookup-grid > .btn {
+  min-height: var(--search-h);
 }
 .lookup-grid > * {
   min-width: 0;
 }
 .lookup-grid .btn {
-  min-height: 72px;
   padding: 0 40px;
   font-size: 17px;
 }
@@ -1971,28 +1978,6 @@ main#main {
   display: none;
 }
 
-/* ---- Owner console inside the app: KPI cards in whole rows ---- */
-.app .ad-kpis {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 20px;
-  align-items: stretch;
-}
-.app .ad-kpis > * {
-  grid-column: span 2;
-  min-width: 0;
-  height: 100%;
-}
-.app .ad-kpis:has(> :last-child:nth-child(3n + 1)) > :nth-last-child(-n + 4) {
-  grid-column: span 3;
-}
-.app .ad-kpis:has(> :last-child:nth-child(3n + 2)) > :nth-last-child(-n + 2) {
-  grid-column: span 3;
-}
-.app .ad-kpis > :only-child {
-  grid-column: 1 / -1 !important;
-}
-
 /* ---- Sign-in: photo panel beside Clerk's sign-in ---- */
 .signin {
   min-height: 100vh;
@@ -2614,5 +2599,380 @@ main#main {
   }
   .plist .tick:checked + .ck-text {
     color: #444;
+  }
+}
+
+/* ---- Flight result: gates and key times, and the destination column (1 Nov 2026) ---- */
+/* Wide screens: flight details on the left, weather and discovery alongside on the right. Below 1280px everything stacks with
+   the destination straight after the key times, so weather is never buried under tabs. */
+@media (min-width: 1280px) {
+  .fv {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 400px);
+    grid-auto-flow: row dense;
+    align-items: start;
+    gap: 24px;
+  }
+  .fv > * {
+    grid-column: 1;
+  }
+  .fv > .fhead,
+  .fv > .flight-picker {
+    grid-column: 1 / -1;
+  }
+  .fv > .fv-side {
+    grid-column: 2;
+    grid-row: span 4;
+    position: sticky;
+    top: 24px;
+  }
+}
+.fv-side,
+.fv-details {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+.keytimes {
+  padding: 28px 32px;
+  display: grid;
+  gap: 16px;
+}
+.kt-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.kt-head h2 {
+  font: 600 var(--fd-text-xl) / 1.2 var(--fd-font-head);
+  letter-spacing: -0.01em;
+}
+.kt-head p {
+  color: var(--fd-muted);
+  font-size: var(--fd-text-sm);
+}
+.kt-row {
+  display: grid;
+  grid-template-columns: 64px repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+.kt-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: var(--fd-radius-md);
+  background: var(--fd-blue-50);
+  color: var(--fd-link);
+  font: 600 15px / 1 var(--fd-font-head);
+}
+.kt-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 16px 18px;
+  border-radius: var(--fd-radius-md);
+  background: var(--fd-surface-raised);
+  border: 1px solid transparent;
+}
+.kt-place:not(.empty) {
+  background: #fff;
+  border-color: var(--fd-blue-100);
+}
+.kt-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fd-muted);
+}
+.kt-tile > b {
+  font: 600 26px / 1.15 var(--fd-font-head);
+  letter-spacing: -0.01em;
+  color: var(--fd-heading);
+  overflow-wrap: anywhere;
+}
+.kt-tile > b small {
+  font: 500 13px var(--fd-font-body);
+  color: var(--fd-muted);
+  margin-left: 4px;
+}
+.kt-tile > b.nr {
+  font: 500 15px / 1.4 var(--fd-font-body);
+  color: var(--fd-amber-ink);
+  padding-top: 4px;
+}
+.kt-foot {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--fd-muted);
+}
+.kt-note {
+  font-size: 13px;
+  color: var(--fd-muted);
+  line-height: 1.5;
+}
+.side-card {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+.side-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 600 18px / 1.3 var(--fd-font-head);
+  color: var(--fd-heading);
+}
+.side-h svg {
+  color: var(--fd-blue);
+}
+.side-src {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--fd-muted);
+}
+.wx-now {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.wx-temp {
+  font: 600 56px / 1 var(--fd-font-head);
+  letter-spacing: -0.04em;
+  color: var(--fd-heading);
+}
+.wx-temp span {
+  font-size: 0.45em;
+  vertical-align: top;
+  margin-left: 2px;
+  color: var(--fd-muted);
+}
+.wx-now > div:last-child {
+  display: grid;
+  gap: 2px;
+}
+.wx-now b {
+  font-size: 17px;
+}
+.wx-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+.wx-facts > div,
+.disc-facts > div {
+  background: var(--fd-surface-raised);
+  border-radius: var(--fd-radius-sm);
+  padding: 10px 12px;
+  min-width: 0;
+}
+.wx-facts dt,
+.disc-facts dt {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  color: var(--fd-muted);
+}
+.wx-facts dd,
+.disc-facts dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--fd-heading);
+}
+.wx-land {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: var(--fd-radius-sm);
+  background: var(--fd-blue-50);
+  color: var(--fd-ink);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.wx-land svg {
+  flex: none;
+  color: var(--fd-link);
+  margin-top: 2px;
+}
+.wx-days {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.wx-days li {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 10px 6px;
+  border: 1px solid var(--fd-line);
+  border-radius: var(--fd-radius-sm);
+  text-align: center;
+  min-width: 0;
+}
+.wx-days li > span {
+  font-size: 13px;
+  font-weight: 600;
+}
+.wx-days b {
+  font-size: 17px;
+}
+.wx-days small {
+  font-size: 12px;
+  color: var(--fd-muted);
+  line-height: 1.3;
+}
+.disc-ph {
+  position: relative; /* contains the code-tile fallback, which fills its frame */
+  margin: -24px -24px 0;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: var(--fd-radius-lg) var(--fd-radius-lg) 0 0;
+  background: var(--fd-surface-raised);
+  display: grid;
+  place-items: center;
+}
+.disc-ph img {
+  position: absolute; /* the frame's aspect ratio sets the height, not the photo's own size */
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.discover .label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--fd-muted);
+  margin-top: -6px;
+}
+.disc-text {
+  font-size: 15px;
+  line-height: 1.6;
+}
+.disc-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0;
+}
+.disc-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.disc-links a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--fd-line);
+  border-radius: var(--fd-radius-sm);
+  color: var(--fd-ink);
+  text-decoration: none;
+  min-height: 44px;
+}
+.disc-links a:hover {
+  border-color: var(--fd-line-hover);
+}
+.disc-links a > span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.disc-links small {
+  color: var(--fd-muted);
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+.disc-links svg {
+  flex: none;
+  color: var(--fd-link);
+}
+.disc-chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.disc-chips a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid var(--fd-line-strong);
+  border-radius: var(--fd-radius-pill);
+  color: var(--fd-link);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+}
+.disc-chips a:hover {
+  background: var(--fd-blue-50);
+}
+@media (max-width: 1279px) and (min-width: 760px) {
+  /* Tablet: the destination cards stack full width (side by side left a gap under the shorter one); a wide, short photo. */
+  .disc-ph {
+    aspect-ratio: 21 / 8;
+  }
+}
+@media (max-width: 560px) {
+  .keytimes {
+    padding: 20px 16px;
+  }
+  .kt-tile {
+    padding: 14px;
+  }
+  .kt-tile > b {
+    font-size: 22px;
+  }
+  .side-card {
+    padding: 20px;
+  }
+  .disc-ph {
+    margin: -20px -20px 0;
+  }
+}
+/* The key-times panel follows its own width (narrow beside the destination column at 1280–1600px): two tiles a row when tight. */
+.keytimes {
+  container-type: inline-size;
+}
+@container (max-width: 720px) {
+  .kt-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .kt-side {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 10px 14px;
   }
 }

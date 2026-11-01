@@ -10,7 +10,7 @@ namespace Flightdeck;
  */
 final class Health
 {
-    public const PROVIDERS = ['opensky' => 'OpenSky Network', 'aerodatabox' => 'AeroDataBox', 'adsbdb' => 'adsbdb', 'openmeteo' => 'Open-Meteo'];
+    public const PROVIDERS = ['opensky' => 'OpenSky Network', 'aerodatabox' => 'AeroDataBox', 'adsbdb' => 'adsbdb', 'openmeteo' => 'Open-Meteo', 'wikimedia' => 'Wikivoyage / Wikipedia', 'brightdata' => 'Bright Data'];
 
     private static $file;
     private static $events = [];

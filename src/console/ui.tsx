@@ -204,7 +204,7 @@ export function Empty({
 }
 
 /** A thin line of the shape of a series, in the tile's corner colour. Decorative: the number beside it says the same. */
-export function Spark({ values, tone = 1 }: { values: number[]; tone?: 1 | 2 }) {
+function Spark({ values, tone = 1 }: { values: number[]; tone?: 1 | 2 }) {
   if (values.length < 2) return <span className="cs-spark-none" aria-hidden="true" />;
   const mx = Math.max(...values),
     mn = Math.min(...values);
@@ -286,7 +286,7 @@ export function Kpi({
   );
 }
 
-export const shortDay = (d: string) =>
+const shortDay = (d: string) =>
   new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(
     new Date(`${d}T12:00:00Z`),
   );

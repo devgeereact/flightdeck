@@ -2,6 +2,14 @@
 
 Newest first. Dates are UK dates.
 
+## 1 November 2026: gates and key times, weather and Discover beside the flight, cleanup
+- Flight page: a **Gates and key times** panel under the summary shows departure gate, boarding starts, gate closes, take-off, landing, reaches the gate, arrival gate and baggage belt. Times the airline reports show as reported; boarding and gate-closing times, which airlines rarely publish, are worked out from the departure time and badged **Typical** (they move with a delay). Unknown gates say when they usually appear.
+- **Weather in [city]** (now, feels like, wind, humidity, the forecast for when you land, four days from your arrival) and **Discover [city]** (a travel guide for any destination from Wikivoyage or Wikipedia, with photo, summary, guide links and credit) now sit beside the flight on wide screens and straight after the key times on tablets and phones. The Weather and Destination tabs are gone; Journey, Airport and Updates remain.
+- Optional **Latest from the web** card (Bright Data search links while the gate is unknown, never copied into gate fields): built and tested, off until the owner adds a key (it costs money per search).
+- Search boxes (website and app) keep one height when the flight-number error shows; the error sits under its own box. Typing only digits (e.g. "75") now asks for the airline code ("such as BA75").
+- API: `/api/weather` adds hourly and 7-day forecasts; new `/api/place` and `/api/web-check`; provider health lists Wikimedia and Bright Data; CSP allows Wikimedia images.
+- Cleanup: removed the three merged agent worktrees and four merged local branches; about 640 lines of dead CSS (old admin styles, `.icon-button`, `.ad-kpis`), an unused helper and needless exports; the FTPS hosting probe and its workflow; the empty VS Code workspace file; outdated docs (October plans, HOOKS, MIGRATION-PHP, `docs/history`, VERIFICATION merged into AUDIT, AI-AUTOMATION into ROADMAP). README, AGENTS, DEPLOYMENT, RUNBOOK, TESTING, PROJECT-MEMORY, ARCHITECTURE, PRD, API and ROADMAP rewritten to match what runs today. Task history moved to `.agent/HANDOFF.md`.
+
 ## 31 October 2026 (later): design system as an agent skill
 - New project skill `.claude/skills/flightdeck-design/` (SKILL.md plus tokens, surfaces, patterns and verification references, and the logo) so every agent builds UI the same way. `AGENTS.md` points to it.
 
