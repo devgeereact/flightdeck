@@ -42,3 +42,9 @@ Still open (needs the owner): set `clerk_authorized_parties` to `['https://fligh
 - **Integrity and recovery:** one lock for CMS writes, atomic renames, immutable revisions, stale-editor conflicts refused (409), audit log with a hashed account fingerprint. Restore from history, or fall back to the seed by moving `published.json` aside.
 - **Test-only switches:** `FLIGHTDECK_RATE_PER_MINUTE` (server environment only, never a request) raises the limit for local test runs; `FLIGHTDECK_DIST` lets the dev router serve a test build. Neither exists in the production config.
 - **Still open:** audit-log rotation; Turnstile on the contact form (owner decision); confirm GD on the server.
+
+## Go-live review (1 Nov 2026)
+No Critical or High findings (details: docs/AUDIT.md, 1 Nov 2026 go-live entry). Open for the owner:
+- Before adding a Bright Data key: make the daily cap count under a lock (`WebCheck.php`), otherwise concurrent searches can exceed it.
+- Make sign-in fail closed: a missing or malformed `clerk_issuer` (for example a trailing slash) currently opens `/flights`, `/weather`, `/place` and `/web-check` to anonymous visitors. The live config was correct on 24 Oct.
+- Low: a per-user allowance for paid look-ups; lock wait timeouts around provider calls; keep the checklist `.lock` file on erase; add `from`/`to` to the web-check cache key; restrict guide page links to the Wikimedia hosts.
