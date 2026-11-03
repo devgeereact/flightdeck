@@ -167,8 +167,8 @@ importers:
   .:
     dependencies:
       '@clerk/react':
-        specifier: 6.17.8
-        version: 6.17.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+        specifier: 6.18.1
+        version: 6.18.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@gsap/react':
         specifier: 2.1.2
         version: 2.1.2(gsap@3.15.0)(react@19.3.1)
@@ -827,8 +827,8 @@ packages:
     resolution: {integrity: sha512-0GEz8qJWokkUVYQYRukmkSHIFNoBH8QTreeHrAFbvz1XFYc3Y+puhMs8PQ5x8GNugiC2l5jvDBXKLbBIByeSBw==}
     hasBin: true
 
-  '@clerk/react@6.17.8':
-    resolution: {integrity: sha512-sNeMe+5ArLshOJgNtqUGHb7cLHjDjRhumBHBN2ovg4uHpL49kQ2UfDUTtxpRUdMNikUg0Oc1CwzLFBlUv1umXA==}
+  '@clerk/react@6.18.1':
+    resolution: {integrity: sha512-vCd3qctGaBJ7p7bnf2SLI4ynweaDHqiEgXbFaPVHjY3kduG5uPzHAFE42VwJazXbV81P56rhus3BYna0D1l62g==}
     engines: {node: '>=20.9.0'}
     peerDependencies:
       react: ^18.0.0 || ~19.0.3 || ~19.1.4 || ~19.2.3 || ~19.3.0-0
@@ -3223,7 +3223,7 @@ snapshots:
     dependencies:
       css-tree: 3.2.1
 
-  '@clerk/react@6.17.8(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+  '@clerk/react@6.18.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
       '@clerk/shared': 4.41.1(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       react: 19.3.1
