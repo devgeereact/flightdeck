@@ -15,6 +15,12 @@ Get Flightdeck ready for live on branch `golive/2026-11`: security review, then 
 ## Checks re-run on the same commit 971ce58 (8 Nov 2026, Phase 1 gate)
 `npm run verify` PASS (node 116/116, PHP all passed, build, upload guard); Biome PASS; `tsc --noEmit` PASS; `php -l` 38 files, 0 errors; gitleaks 131 commits, no leaks; `scripts/check-apache-routes.sh` PASS; `pnpm test:ui` PASS; `pnpm test:console` PASS. Semgrep not re-run. Not run: anything against the live server. Details: docs/AUDIT.md.
 
+## Owner decisions (8 Nov 2026)
+- **Restrict Clerk sign-up: yes.** Personal-use app with provider terms (AeroDataBox free tier, OpenSky) to respect. Owner changes it in the Clerk dashboard (restricted sign-up / allowlist); not done from the repo. Record here when done.
+- **`.planning/` stays local**, untracked (excluded through `.git/info/exclude`, not `.gitignore`).
+- **Bright Data stays ON.** Needs `brightdata_key` and `brightdata_zone` in the private server config; caps are `brightdata_daily_cap` (150/day) and `brightdata_user_daily_cap` (20/user/day). Not checked on the server; confirm in Provider health after deploy.
+- **Workspace cleanup done:** deleted `.local-test/pw` and `.local-test/ff` (unused Firefox/WebKit downloads, about 1 GB, nothing in `package.json`, `test/`, `scripts/` or workflows referenced them), the stale `graphify-out/` (27 Oct) and two `.DS_Store` files. `.local-test` went from 1.1 GB to 75 MB. Nothing tracked was touched.
+
 ## Next (Phase 1: land the security release; each step marked * needs the owner's explicit "approved")
 1. Owner: look at the bare non `NAME=value` line in `.env` (reading `.env` was blocked). If it is the Clerk secret key, name it `CLERK_SECRET_KEY` or remove it.
 2. * Push the branch `golive/2026-11` (does not deploy) and open a PR so CI runs the whole gate. Only when CI is green on the pushed commit (`gh pr checks`), run `git fetch origin`, confirm `origin/main` is still 31f6851, then fast-forward `main` (`git merge --ff-only`) and push `main` (this deploys). The deploy itself runs only `pnpm test`, `pnpm test:php` and the build, so the PR's CI is the only full gate before it (until Phase 2).
