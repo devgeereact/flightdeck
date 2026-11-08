@@ -43,11 +43,16 @@ foreach ($in as $k => $v) {
             return $m[1] . $line . $m[2];
         }, $new, 1);
     } else {
-        $end = strrpos($new, '];');
-        if ($end === false) {
-            $fail('could not find the closing ]; of the config array');
+        // The array ends with `];` (short style) or `);` (the older `return array (` style a tool wrote on the live server).
+        $closeShort = strrpos($new, '];');
+        $closeLong = strrpos($new, ');');
+        $end = max($closeShort === false ? -1 : $closeShort, $closeLong === false ? -1 : $closeLong);
+        if ($end < 0) {
+            $fail('could not find the closing ]; or ); of the config array');
         }
-        $new = substr($new, 0, $end) . '    ' . $line . "\n" . substr($new, $end);
+        // Use the file's own indent for a new key line.
+        $indent = preg_match('/^([ \t]+)\'[A-Za-z0-9_]+\'[ \t]*=>/m', $new, $im) === 1 ? $im[1] : '    ';
+        $new = substr($new, 0, $end) . $indent . $line . "\n" . substr($new, $end);
     }
 }
 

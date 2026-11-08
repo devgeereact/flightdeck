@@ -163,3 +163,55 @@ test('scripts/set-bright-data.sh refuses a bad zone before sending anything', ()
   assert.notEqual(r.status, 0);
   assert.ok(!r.stderr.includes('SSH-WAS-CALLED'));
 });
+
+// The real server config.php (written by a tool on 25 Oct 2026) uses the older `return array ( ... );` style with a few
+// short-array values. The first live run of set-bright-data.sh refused it with "could not find the closing ];".
+const OLD_STYLE = `<?php
+return array (
+  'owner_email' => 'a@b.example',
+  'aerodatabox_key' => 'x',
+  'admin_user_ids' => ['user_one'],
+  'clerk_authorized_parties' => ['https://flightdeck.gakinz.com'],
+  'home_country_code' => 'GB',
+);
+`;
+
+test('works on a config in the older array ( ... ); style, adds the keys and keeps the short arrays', () => {
+  const { file } = tmpConfig(OLD_STYLE);
+  const r = run(file, { brightdata_key: KEY, brightdata_zone: 'mcp_serp' });
+  assert.equal(r.status, 0, r.stderr + r.stdout);
+  const c = load(file);
+  assert.equal(c.brightdata_key, KEY);
+  assert.equal(c.brightdata_zone, 'mcp_serp');
+  assert.deepEqual(c.admin_user_ids, ['user_one']);
+  assert.equal(c.owner_email, 'a@b.example');
+  assert.equal(c.home_country_code, 'GB');
+  const text = fs.readFileSync(file, 'utf8');
+  assert.match(text, /\n {2}'brightdata_key' => /, "new lines use the file's own two-space indent");
+  assert.ok(text.trimEnd().endsWith(');'));
+});
+
+test('replaces existing Bright Data values in the older style, once', () => {
+  const { file } = tmpConfig(
+    OLD_STYLE.replace(
+      ');\n',
+      "  'brightdata_zone' => 'old_zone',\n  'brightdata_key' => '',\n);\n",
+    ),
+  );
+  const r = run(file, { brightdata_key: KEY, brightdata_zone: 'mcp_serp' });
+  assert.equal(r.status, 0, r.stderr + r.stdout);
+  const text = fs.readFileSync(file, 'utf8');
+  assert.equal([...text.matchAll(/'brightdata_zone'\s*=>/g)].length, 1);
+  assert.equal(load(file).brightdata_zone, 'mcp_serp');
+});
+
+test('a short-array config with nested ); inside strings is still patched at the real end', () => {
+  const { file } = tmpConfig(
+    "<?php\nreturn [\n    'note' => 'see foo(); bar);',\n    'owner_email' => 'a@b.example',\n];\n",
+  );
+  const r = run(file, { brightdata_key: KEY, brightdata_zone: 'z1' });
+  assert.equal(r.status, 0, r.stderr + r.stdout);
+  const c = load(file);
+  assert.equal(c.note, 'see foo(); bar);');
+  assert.equal(c.brightdata_zone, 'z1');
+});
