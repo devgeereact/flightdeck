@@ -322,6 +322,54 @@ test('NO ADS: the old ads settings in a server config change nothing (the ads pa
   }
 });
 
+/** Every browser-storage key the code uses: direct literals, constants, and prefixes built with `'fd-done-' + id`. */
+function storageKeysInCode() {
+  const keys = new Set();
+  const files = [];
+  const walk = (dir) => {
+    for (const e of fs.readdirSync(path.join(root, dir), { withFileTypes: true })) {
+      const rel = `${dir}/${e.name}`;
+      if (e.isDirectory()) walk(rel);
+      else if (/\.(ts|tsx|js)$/.test(e.name) && !/\.d\.ts$/.test(e.name)) files.push(rel);
+    }
+  };
+  walk('src');
+  files.push('public/consent.js');
+  for (const f of files) {
+    const text = fs.readFileSync(path.join(root, f), 'utf8');
+    for (const m of text.matchAll(/\b(?:get|set|remove)Item\(\s*['"`]([^'"`]+)['"`]/g))
+      keys.add(m[1]);
+    for (const m of text.matchAll(/\bstore\.(?:get|set)\(\s*['"]([^'"]+)['"]/g)) keys.add(m[1]);
+    for (const m of text.matchAll(/['"`]((?:flightdeck-[a-z-]+|fd\.[a-z]+))['"`]/g)) keys.add(m[1]);
+    for (const m of text.matchAll(/['"`](fd-[a-z]+-)['"`]\s*\+/g)) keys.add(m[1]);
+  }
+  keys.delete('fd-consent-gtag'); // not a storage key if it ever appears
+  return [...keys].sort();
+}
+
+test('COOKIES PAGE: it names every browser-storage key the code uses (a new key without an entry fails here)', () => {
+  const html = page('/cookies/');
+  const keys = storageKeysInCode();
+  assert.ok(keys.length >= 12, `found only ${keys.length} keys: ${keys.join(', ')}`);
+  const missing = keys.filter((k) => !html.includes(k));
+  assert.deepEqual(missing, [], `the cookies page does not mention: ${missing.join(', ')}`);
+});
+
+test('COOKIES PAGE: says what the rate limiter and the web links do with data, in plain words', () => {
+  const html = page('/cookies/') + page('/privacy/');
+  assert.match(
+    html,
+    /session storage/i,
+    'session storage is used (sign-in return page, once-per-visit counters)',
+  );
+  assert.match(
+    html,
+    /one-way|hash/i,
+    'rate limiting keeps only a one-way hash of the network address',
+  );
+  assert.match(html, /Bright Data/i, 'web links go through Bright Data when switched on');
+});
+
 test('Google Analytics ID: the build value reaches every page as a meta tag', () => {
   const r = render(ALL, { gaId: 'G-TESTABC123' });
   for (const p of ALL)

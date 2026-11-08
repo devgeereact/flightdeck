@@ -41,7 +41,7 @@ export const pages = (s) => [
 <tr><td><strong>Flight searches</strong>: the flight number and date you type are sent to our server, which asks flight-data providers about that flight.</td><td>To show you the flight.</td><td>Contract</td></tr>
 <tr><td><strong>Anonymous usage totals</strong>: counts such as searches per day, which airline codes and routes are searched, and how many different signed-in people used the app on a day. The "different people" figure uses a one-way scrambled code that changes every day, so one person cannot be followed from day to day, and the code is replaced by a plain number after two days.</td><td>To run and improve the service, and to keep within the limits of the paid data we use.</td><td>Legitimate interests (running a service safely and sustainably)</td></tr>
 <tr><td><strong>Messages you send us</strong> through the contact form or the Feedback button: your message, and your name and email if you give them.</td><td>To read and answer you, and to keep a short private note of what was done about it.</td><td>Legitimate interests / your request</td></tr>
-<tr><td><strong>Technical information</strong> such as your IP address, held briefly by our host, Cloudflare and our server to deliver the site and to stop abuse (for example, limiting how many requests one visitor can make).</td><td>Security and reliability.</td><td>Legitimate interests</td></tr>
+<tr><td><strong>Technical information</strong> such as your IP address, held briefly by our host, Cloudflare and our server to deliver the site and to stop abuse (for example, limiting how many requests one visitor can make). To do that our server keeps a small counter in a file named by a one-way scrambled code of your network address (for IPv6, of your wider network). The address itself is not stored in it, and the file is removed after about two hours.</td><td>Security and reliability.</td><td>Legitimate interests</td></tr>
 <tr><td><strong>Google Analytics</strong> (only if you accept): pages viewed and a few anonymous actions such as "searched for a flight" (never the flight number), with device, browser and approximate location that Google derives.</td><td>To understand how the app is used so we can improve it.</td><td>Consent. You can withdraw it at any time with "Cookie settings".</td></tr>
 </tbody>
 </table>
@@ -51,6 +51,7 @@ export const pages = (s) => [
 <li><strong>Clerk</strong> (sign-in and account storage). It may process data outside the UK; it is responsible for the security of the account details it holds.</li>
 <li><strong>Cloudflare</strong> (delivers the site and protects it from abuse) and our <strong>web host</strong>.</li>
 <li><strong>Flight-data providers</strong>: AeroDataBox (schedules, gates), The OpenSky Network (live aircraft position), adsbdb (usual routes) and Open-Meteo (weather). Our server contacts them for you. They receive the flight number or an airport location, <strong>not</strong> your name, email or IP address.</li>
+<li><strong>Bright Data</strong> (web search service). On a flight page our server may run a web search for the flight number and its airports through Bright Data and show you up to four result links. The search holds no name, email or IP address of yours. Results are links to check, never copied into the flight details.</li>
 <li><strong>Google</strong>: Google Analytics only if you accept it, as above. Our typefaces are hosted by us, so your browser does not contact Google just to display text.</li>
 <li>If sending you a reply needs an email provider, that provider handles the message in transit.</li>
 </ul>
@@ -89,11 +90,24 @@ export const pages = (s) => [
 <tbody>
 <tr><td>Clerk sign-in cookies (for example <code>__session</code>, <code>__client_uat</code>)</td><td>Keep you signed in and prove who you are to our server.</td><td>While you are signed in, up to about a week</td></tr>
 <tr><td><code>flightdeck-saved</code>, <code>flightdeck-checklist</code> (browser storage)</td><td>Keep your saved flights and packing list on this device so they work offline.</td><td>Until you sign out (if tied to an account) or clear your browser data</td></tr>
+<tr><td><code>flightdeck-saved-owner</code>, <code>flightdeck-checklist-owner</code> (browser storage)</td><td>Remember which signed-in account the saved flights and packing list on this device belong to, so someone else using the same device never sees them.</td><td>Removed when you sign out; otherwise until you clear your browser data</td></tr>
+<tr><td><code>fd-signed-in</code> (browser storage)</td><td>Remembers on this device whether you are signed in (just a 1 or a 0), so the public pages can show "Open the app" instead of "Sign in".</td><td>Until you clear your browser data</td></tr>
+<tr><td><code>fd.favs</code> (browser storage)</td><td>Remembers the destinations you starred on the home page. The names of the places only.</td><td>Until you clear your browser data</td></tr>
+<tr><td><code>fd-signin-back</code> (session storage)</td><td>Remembers which page to return to after you sign in.</td><td>Until you close the tab</td></tr>
 <tr><td><code>flightdeck-last-results</code> (browser storage)</td><td>Keeps the last few flight results you looked at, so a flight can still be read without a connection. It is always shown as "last fetched at", never as live.</td><td>Up to six results; cleared when you sign out</td></tr>
 <tr><td><code>flightdeck-dismissed</code> (browser storage)</td><td>Remembers which announcements you closed in the app, so they do not come back.</td><td>Until you clear your browser data; at most the last 20</td></tr>
 <tr><td><code>flightdeck-public-packing</code> (browser storage)</td><td>Remembers which boxes you ticked on the printable packing list page.</td><td>Until you clear your browser data</td></tr>
 <tr><td><code>fd-consent</code> (browser storage)</td><td>Remembers your cookie choice.</td><td>Until you change it or clear your browser data</td></tr>
 <tr><td>App files (service worker cache)</td><td>Lets the app load quickly and work without a connection.</td><td>Until the app updates</td></tr>
+</tbody></table>
+
+<h2>Always on: anonymous counting on our own server</h2>
+<p>We keep simple anonymous totals on our own server (see the privacy policy). Two small markers stop us counting the same thing twice. They hold no identifier and are not shared with anyone.</p>
+<table>
+<thead><tr><th>Name</th><th>What it is for</th><th>How long</th></tr></thead>
+<tbody>
+<tr><td><code>fd-once-&lt;name&gt;</code> (session storage)</td><td>Marks that a count such as a landing-page view was already sent in this tab, so one visit is counted once.</td><td>Until you close the tab</td></tr>
+<tr><td><code>fd-done-&lt;trip&gt;</code> (browser storage)</td><td>Marks that one of your packing lists has been fully ticked, so completing it is counted once.</td><td>Until you clear your browser data</td></tr>
 </tbody></table>
 
 <h2>Only if you accept: analytics</h2>
