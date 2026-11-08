@@ -15,7 +15,9 @@ namespace Flightdeck;
 final class WebCheck
 {
     /** Flight trackers whose terms forbid reuse; their links are dropped so the card points at airlines and airports. */
-    private const SKIP = ['flightaware.com', 'flightradar24.com', 'planefinder.net', 'radarbox.com', 'flightstats.com'];
+    private const SKIP = ['flightaware.com', 'flightradar24.com', 'planefinder.net', 'radarbox.com', 'flightstats.com',
+        // Social networks are not flight information (a Facebook page appeared among the first live results).
+        'facebook.com', 'instagram.com', 'twitter.com', 'x.com', 'tiktok.com', 'linkedin.com'];
 
     public static function enabled(array $config): bool
     {
@@ -63,10 +65,20 @@ final class WebCheck
             'format' => 'raw',
         ]);
         $headers = ['Authorization: Bearer ' . trim((string) $config['brightdata_key']), 'Content-Type: application/json'];
-        [$status, $body] = $post ? $post('https://api.brightdata.com/request', $headers, (string) $payload)
-            : Http::request('POST', 'https://api.brightdata.com/request', $headers, (string) $payload, 20);
-        $d = $status === 200 ? json_decode($body, true) : null;
-        Health::record('brightdata', is_array($d), $status);
+        $send = static function () use ($post, $headers, $payload): array {
+            [$status, $body] = $post ? $post('https://api.brightdata.com/request', $headers, (string) $payload)
+                : Http::request('POST', 'https://api.brightdata.com/request', $headers, (string) $payload, 20);
+            $d = $status === 200 ? json_decode($body, true) : null;
+            Health::record('brightdata', is_array($d), $status);
+            return [$status, $d];
+        };
+        [$status, $d] = $send();
+        // Google sometimes answers with a page that is not JSON; on 8 Nov 2026 the first search failed and the next worked. Try once
+        // more for that, a rate limit, a server error or a timeout. A refused key or zone (4xx) is not retried: it cannot help. The
+        // daily caps were already counted once above, so a retry never uses a second unit of them.
+        if (!is_array($d) && ($status === 200 || $status === 0 || $status === 429 || $status >= 500)) {
+            [$status, $d] = $send();
+        }
         if (!is_array($d)) {
             return ['status' => 'error'];
         }
@@ -90,11 +102,15 @@ final class WebCheck
                     continue 2;
                 }
             }
+            $site = preg_replace('/^www\./', '', $host);
+            if (in_array($site, array_column($out, 'site'), true)) {
+                continue; // one link per site: two Google results for the same flight added nothing
+            }
             $out[] = [
                 'title' => mb_substr(trim((string) ($r['title'] ?? $host)), 0, 120),
                 'snippet' => mb_substr(trim((string) ($r['description'] ?? '')), 0, 240),
                 'url' => $link,
-                'site' => preg_replace('/^www\./', '', $host),
+                'site' => $site,
             ];
             if (count($out) === 4) {
                 break;

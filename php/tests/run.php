@@ -573,6 +573,16 @@ check('admin: allowance forecast (100 units in 24 days -> about 4/day, enough un
 $store2->put('adb-units-2026-10', 340, 86400000);
 check('admin: allowance forecast warns when the month will run out early', Admin::allowance($store2, ['aerodatabox_monthly_units' => 360], $nowSec)['runsOutBeforeMonthEnd'] === true);
 check('admin: the console never reports secrets in the system view', strpos(json_encode(Admin::system(['aerodatabox_key' => 'SECRETKEY', 'clerk_secret_key' => 'sk_live_x', 'owner_email' => 'o@x.com'], $store2, true, false)), 'SECRET') === false && Admin::system(['owner_email' => 'o@x.com'], $store2, false, false)['emailNotifications'] === true);
+// Live smoke test, 8 Nov 2026: the System screen had no row for the web links (Bright Data) and a dead "AI features" row, and the Costs
+// screen had no Bright Data usage although it is the one provider that bills per search.
+$sysOn = Admin::system(['brightdata_key' => 'SECRETKEY', 'brightdata_zone' => 'serp'], $store2, false, false);
+$sysOff = Admin::system([], $store2, false, false);
+check('admin: the system view says whether the web links are on, from key AND zone, and never shows the key', ($sysOn['webCheck'] ?? null) === true && ($sysOff['webCheck'] ?? null) === false && ($sysOff['ai'] ?? 'absent') === 'absent' && strpos(json_encode($sysOn), 'SECRETKEY') === false);
+$store2->put('web-count-' . gmdate('Y-m-d', $nowSec), 7, 86400000);
+$wal = Admin::allowance($store2, ['brightdata_key' => 'k', 'brightdata_zone' => 'z', 'brightdata_daily_cap' => 40, 'brightdata_user_daily_cap' => 5], $nowSec)['web'] ?? [];
+check('admin: the allowance shows today\'s web searches against the daily cap', ($wal['enabled'] ?? null) === true && ($wal['usedToday'] ?? null) === 7 && ($wal['cap'] ?? null) === 40 && ($wal['userCap'] ?? null) === 5);
+$wdef = Admin::allowance($store2, [], $nowSec)['web'] ?? [];
+check('admin: with no Bright Data settings the web allowance is off and shows the default caps', ($wdef['enabled'] ?? null) === false && ($wdef['cap'] ?? null) === 150 && ($wdef['userCap'] ?? null) === 20);
 check('admin: the event whitelist contains only counter names', in_array('landing_view', Admin::EVENTS, true) && !in_array('search_total', Admin::EVENTS, true) && !in_array('admin_denied', Admin::EVENTS, true));
 
 // ---- Checklist erasure and Google Analytics numbers ----
@@ -891,6 +901,51 @@ $spy = static function (string $url, array $h, string $body) use (&$sent): array
 $searchUrl = (string) ($sent['body']['url'] ?? '');
 check('web check: the Google URL starts with q= (Bright Data guidance) and keeps the parsed-JSON, language and country options', strpos($searchUrl, 'https://www.google.com/search?q=') === 0 && strpos($searchUrl, 'brd_json=1') !== false && strpos($searchUrl, 'hl=en') !== false && strpos($searchUrl, 'gl=gb') !== false && strpos($searchUrl, 'BA117') !== false);
 check('web check: the request names the zone, asks for the raw body, and the key is only in the Authorization header', ($sent['body']['zone'] ?? '') === 'my_zone' && ($sent['body']['format'] ?? '') === 'raw' && strpos((string) $sent['raw'], 'test-key-abc') === false && strpos($searchUrl, 'test-key-abc') === false && in_array('Authorization: Bearer test-key-abc', $sent['headers'], true));
+
+// Live finding, 8 Nov 2026: the four links for BA117 were trip.com, facebook.com and google.com twice. One link per site, and social
+// networks are not flight information, so they are left out; the remaining order is kept.
+$mixed = \Flightdeck\WebCheck::results([
+    ['link' => 'https://www.facebook.com/BritishAirways/posts/1', 'title' => 'BA on Facebook'],
+    ['link' => 'https://www.google.com/travel/flights?q=BA117', 'title' => 'Google flights one'],
+    ['link' => 'https://www.google.com/search?q=ba117+status', 'title' => 'Google two'],
+    ['link' => 'https://www.britishairways.com/travel/flightstatus', 'title' => 'BA status'],
+    ['link' => 'https://www.instagram.com/p/x', 'title' => 'insta'],
+    ['link' => 'https://www.britishairways.com/other', 'title' => 'BA again'],
+    ['link' => 'https://www.flightaware.com/live/flight/BAW117', 'title' => 'tracker'],
+]);
+check('web check: social networks and the tracker sites are dropped and each site appears once, in the original order', array_column($mixed, 'site') === ['google.com', 'britishairways.com']);
+// Live finding, 8 Nov 2026: the first search for a flight came back "Unexpected answer" (Google's page was not JSON) and the next one,
+// a minute later, worked, so visitors saw no links about half the time. A non-JSON answer is retried once; a refused key is not
+// (retrying cannot help and costs money); and a retry never counts a second time against the daily caps.
+$tries = 0;
+$flaky = static function (string $url, array $h, string $body) use (&$tries): array {
+    $tries++;
+    return $tries === 1 ? [200, '<html>please verify you are human</html>'] : [200, json_encode(['organic' => [['link' => 'https://www.heathrow.com/departures/BA117', 'title' => 'BA117 departures']]])];
+};
+$rcfg = ['brightdata_key' => 'test-key', 'brightdata_zone' => 'serp', 'brightdata_daily_cap' => 2];
+$rstore = new Store($gdir . '-w3');
+$r1 = \Flightdeck\WebCheck::lookup($rcfg, $rstore, 'BA117', '2026-11-01', 'LHR', 'JFK', $flaky);
+check('web check: a first answer that is not JSON is retried once and the second answer is used', $r1['status'] === 'ok' && $tries === 2 && count($r1['results'] ?? []) === 1);
+$tries = 0;
+$fine = static function (string $url, array $h, string $body) use (&$tries): array {
+    $tries++;
+    return [200, json_encode(['organic' => []])];
+};
+check('web check: after a retried search the daily cap has been used once, not twice', \Flightdeck\WebCheck::lookup($rcfg, $rstore, 'BA118', '2026-11-01', 'JFK', 'LHR', $fine)['status'] === 'ok' && \Flightdeck\WebCheck::lookup($rcfg, $rstore, 'BA119', '2026-11-01', 'JFK', 'LHR', $fine)['status'] === 'cap');
+$tries = 0;
+$never = static function (string $url, array $h, string $body) use (&$tries): array {
+    $tries++;
+    return [200, 'still not json'];
+};
+$r3 = \Flightdeck\WebCheck::lookup(['brightdata_key' => 'test-key', 'brightdata_zone' => 'serp', 'brightdata_daily_cap' => 50], new Store($gdir . '-w4'), 'BA117', '2026-11-01', 'LHR', 'JFK', $never);
+check('web check: two bad answers in a row give up with an error, after exactly two tries, and nothing is cached', $r3['status'] === 'error' && $tries === 2);
+$tries = 0;
+$refused = static function (string $url, array $h, string $body) use (&$tries): array {
+    $tries++;
+    return [401, '{"error":"invalid token"}'];
+};
+$r4 = \Flightdeck\WebCheck::lookup(['brightdata_key' => 'bad-key', 'brightdata_zone' => 'serp', 'brightdata_daily_cap' => 50], new Store($gdir . '-w5'), 'BA117', '2026-11-01', 'LHR', 'JFK', $refused);
+check('web check: a refused key (401) is not retried', $r4['status'] === 'error' && $tries === 1);
 
 // L4 and L1 for the web check.
 $posts = 0;
