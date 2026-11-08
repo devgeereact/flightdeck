@@ -1,6 +1,6 @@
 # Flightdeck documentation
 
-Reviewed 1 November 2026. One topic, one file; update the existing file rather than adding a new one.
+Reviewed 8 November 2026. `pnpm docs:check` keeps these files honest. One topic, one file; update the existing file rather than adding a new one.
 
 **Product and design**
 - [PRD](PRD.md): what the product does and for whom

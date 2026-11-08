@@ -3,12 +3,13 @@
 | Integration | State | Data/config and limits |
 |---|---|---|
 | OpenSky Network (OAuth2 client credentials) | Adapter implemented; live position lookup VERIFIED 24 Oct 2026 (one real DL1 match, local) | Live ADS-B position only: no schedules, gates, baggage, delays or flight-number/date lookup. Credit-limited (global snapshot costs ~4 credits, cached 120 s). Check OpenSky terms for the intended public use before launch. FlightAware was removed (ADR-006) |
-| Open-Meteo | Current weather previously verified | Airport coordinates sent; current model data; public endpoint prototype/non-commercial usage must be checked before launch |
+| Open-Meteo | In use (flight page and Discover) | Airport or city coordinates sent; current, hourly and daily model data; cached 10 minutes; free endpoint for non-commercial use only |
 | Airline status links | Static links for sample carriers | Browser navigation; no airline API feed |
-| Tourism sources | Curated New York/Dubai/Paris links | Not geospatial ranked; do not claim global coverage |
-| Google Fonts | CSS import implemented | External request; offline/privacy review remains |
-| GitHub/cPanel/Cloudflare | Hosting target not configured | Prior host checks do not equal deployed integration |
-| Clerk/MariaDB | NOT IMPLEMENTED; not required by current V1 | Activate only for approved accounts/shared data |
+| Tourism sources | Hand-written links for New York, Dubai and Paris (`src/features/flight/destinations.ts`); Wikivoyage/Wikipedia travel guides for any city (`/api/place`) | Not geospatial ranked; do not claim global coverage |
+| Fonts | Inter, self-hosted (`public/fonts`, OFL licence) | No third-party font request |
+| GitHub/cPanel/Cloudflare | Live: Namecheap cPanel behind Cloudflare; GitHub Actions deploys over SSH | See docs/DEPLOYMENT.md |
+| Clerk | Live (production instance for flightdeck.gakinz.com) | Session tokens verified in PHP; no secret key needed to sign in. `clerk_secret_key` is optional and only feeds the console's Users panel |
+| MariaDB | Not used | Data lives in JSON files under the private `var/` folder (ADR-016) |
 
 Provider availability/licences may change. Before activation consult current official provider documentation; record source/date/limits and cost, without secret values. No source page is permission to buy a plan or send private data.
 
@@ -19,4 +20,4 @@ Provider availability/licences may change. Before activation consult current off
 - Google: no public flight API (QPX Express closed 2018).
 
 ## Clerk (accounts)
-Application "Flightdeck" in the owner's Clerk workspace, development instance, publishable key in .env as VITE_CLERK_PUBLISHABLE_KEY (public by design). Test user for local checks: flightdeck+clerk_test@example.com (Clerk's "+clerk_test" addresses accept the fixed development code 424242; this user has no password). Going to production needs a Clerk PRODUCTION instance for flightdeck.gakinz.com plus DNS records in the gakinz.com Cloudflare zone, then the new pk_live key as the GitHub variable VITE_CLERK_PUBLISHABLE_KEY (the release workflow already passes it to the build).
+Application "Flightdeck" in the owner's Clerk workspace. The live site uses the PRODUCTION instance (publishable key `pk_live…`, passed to the build by `release.json`; public by design); the server derives the token issuer from it unless `clerk_issuer` is set (ADR-022). Local development uses a separate DEVELOPMENT instance key in `.env.local`, with its own users. Test user for local checks: flightdeck+clerk_test@example.com (Clerk's "+clerk_test" addresses accept the fixed development code 424242 on the development instance only; this user has no password).

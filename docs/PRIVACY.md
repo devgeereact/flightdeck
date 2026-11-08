@@ -25,9 +25,13 @@ Not implemented: payments, precise location, AI processing of user text (phase 8
 | Public packing list ticks (`flightdeck-public-packing`, browser storage) | Which boxes were ticked on the printable list page | Browser data |
 | Shared flight links | The address contains only the flight number and date | Not stored by us |
 
-## Added 25 Oct 2026 (rebrand and CMS, not released)
+## Added 25 Oct 2026 (rebrand and CMS)
 
 - New device storage: `flightdeck-dismissed` (ids of app announcements the user closed, at most 20). Listed on the cookies page.
 - Enquiries can carry a private owner note and a resolved date. The privacy page now says messages are kept "to read and answer you, and to keep a short private note of what was done about it".
 - The CMS audit log and content history store a 10-character fingerprint of the owner's account, not the account id; they hold no visitor data.
 - Public website pages are rendered by our server and still load nothing from third parties. Uploaded branding images are re-encoded (metadata removed).
+
+## Device storage: full list (checked against the code, 8 Nov 2026)
+`flightdeck-saved`, `flightdeck-saved-owner`, `flightdeck-checklist`, `flightdeck-checklist-owner`, `flightdeck-last-results`, `flightdeck-public-packing`, `flightdeck-dismissed`, `fd-consent`, `fd-signed-in`, `fd.favs`, `fd-done-<id>`, `fd-once-<event>` (local storage) and `fd-signin-back` (session storage). Details: docs/SCHEMA.md.
+- **Known gap in the public page copy:** the live cookies and privacy pages (`php/private/src/Content/seed.json`, editable in the console) do not yet list `fd.favs`, `fd-signed-in`, the `-owner` keys, `fd-done-*` or `fd-once-*`, that rate limits keep a one-way hash of the visitor address (the IPv6 /64 network) for a few minutes, or that web-check links (when on) send a Google search query through Bright Data. This document is correct; the page copy is a content change for the owner to approve.

@@ -2,6 +2,11 @@
 
 Newest first. Dates are UK dates.
 
+## 8 November 2026 (later still): the written docs match the code
+- No behaviour change. The API reference now lists every route the server answers (`/me`, `/checklist`, `/event`, `/contact` and the owner overview, users, enquiry reply, system and analytics routes were missing) and says plainly which routes need sign-in. Several documents that still said "not released", "guest only", "Clerk not implemented", "Google Fonts" or "three demo destinations" were corrected, along with the product requirements, the integrations register, the data model's browser-storage list, the privacy notes, the runbook (new "when something breaks" section) and the decision records' statuses.
+- New check: `pnpm docs:check` (part of `pnpm check`, so CI runs it) fails if a route is missing from the API reference, a retired phrase returns to a live document, or a document names a file that no longer exists.
+- Still open: the public cookies and privacy page copy does not list every storage key (recorded in docs/PRIVACY.md); the off-server backup copy and restore drill need server access.
+
 ## 8 November 2026 (later): the deploy waits for the full gate (live)
 - A push to `main` now runs the whole CI gate first (lint, tests, PHP tests, build, UI and console smoke tests, PHP syntax, secret scan) and deploys only if it passes. Before, the deploy ran a smaller set of checks and did not wait for CI. Pull requests run the gate and can never deploy. A manual run deploys only from `main`.
 - After a deploy, the live check also confirms that sign-in is configured (`signInRequired` is true and an anonymous look-up is refused with 401, not 503), and that the home page, the app and the sitemap have their expected content. A failing check restores the previous release as before.

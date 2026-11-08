@@ -10,6 +10,11 @@ Reviewed 1 November 2026.
 ## Releasing and undoing
 See docs/DEPLOYMENT.md. Watch a run with `gh run watch`. Undo the last release with `pnpm release --rollback --go`. If a header or manifest looks stale after a fix, purge that single URL in Cloudflare, never the whole zone.
 
+## When something breaks
+- **Every signed-in route answers 503 / nobody can look anything up:** the server has no valid Clerk issuer (`clerk_issuer` in `config.php`, `CLERK_ISSUER`, or the one derived from the publishable key). It fails closed on purpose (ADR-022). Check `https://flightdeck.gakinz.com/api/config` (`signInRequired` should be `true`) and an anonymous `/api/weather` (should be 401, not 503). Fix the config on the server. Never set `FLIGHTDECK_AUTH=off` in production. If it began with a release, `pnpm release --rollback --go`.
+- **Flight look-ups stop or say a provider is busy:** the AeroDataBox allowance (free plan, 400 units a month) may be used up. Owner console → Overview shows the allowance and the forecast. Schedules stop, while OpenSky position and adsbdb routes still answer. Do not raise a cap without checking the plan and the cost. One signed-in user is limited to 6 paid look-ups an hour (the owner is exempt).
+- **A release looks wrong after deploy:** the deploy restores the previous files by itself when the smoke checks fail. If it passed but the app is wrong, `pnpm release --rollback --go` (code files only; server config is not restored).
+
 ## Providers
 - Owner console → Operations → Provider health shows when each source last answered and why it failed: AeroDataBox, OpenSky, adsbdb, Open-Meteo, Wikimedia (travel guides), Bright Data (if on).
 - Flights 503 / "not available": the provider key is missing or the monthly allowance is used. Never fake live data.

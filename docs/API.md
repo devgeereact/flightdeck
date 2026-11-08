@@ -1,6 +1,6 @@
 # Flightdeck API — implemented contracts
 
-Base: same-origin /api in browser; Vite proxies it during development. Guest endpoints, no authentication implemented.
+Base: same-origin /api in browser; Vite proxies it during development. Signed-in routes: `/flights`, `/weather`, `/place`, `/web-check`, `/checklist`, `/me` and every `/admin/*` route need a Clerk session token (`Authorization: Bearer …` or `X-Session-Token`); without it they answer 401. If the server has no valid Clerk issuer they answer 503 and never open (fail closed, ADR-022; only the local test switch `FLIGHTDECK_AUTH=off` opens the look-ups). `/config`, `/site`, `/event` and `/contact` are public.
 
 | Method/route | Input | Success | Errors/limits |
 |---|---|---|---|
@@ -9,6 +9,10 @@ Base: same-origin /api in browser; Vite proxies it during development. Guest end
 | GET /api/weather | lat, lon | current temperature_2m, apparent_temperature, relative_humidity_2m, weather_code, wind_speed_10m, time, timezone; `hourly` [{time (local), t, code, rain}] and `daily` [{date, code, max, min, rain, sunrise, sunset}] for 7 days; source, fetchedAt. Signed in. Cached 10 min per 0.1° | 400 coordinates; 502 upstream; 429 strict limiter |
 | GET /api/place | city, country | travel guide: title, summary, image (Wikimedia, 640 px), url, source (Wikivoyage or Wikipedia), licence, sections [{label, url}], fetchedAt. Signed in. Cached a week (misses a day) | 404 no guide; 429 limiter |
 | GET /api/web-check | number, date (YYYY-MM-DD), from, to (IATA, optional) | `{status: 'off'}` unless Bright Data is configured; else `{status: 'ok', results: [{title, snippet, url, site}] (max 4, trackers dropped), query, fetchedAt}`, or `cap` / `error`. Signed in. Cached 15 min per flight, date and airports; daily cap (site-wide and per user, counted under a lock) | 400 bad number or date; 429 strict limiter |
+| GET /api/me | none (signed in) | `{signedIn: true, isAdmin, unread}`; `unread` is the number of unread enquiries for the owner and `null` for everyone else | 401 |
+| GET, PUT, DELETE /api/checklist | PUT: `{baseRev: int, data}` | GET `{rev, data, limits{bytes, trips, items}}`; PUT `{rev}`; DELETE `{ok, deleted}` (erases the stored document) | 401 not signed in; 409 `{error: 'conflict', rev, data}` when `baseRev` is stale; 413 too large; 422 not valid |
+| POST /api/event | `{name}`, one of `landing_view`, `cta_click`, `pwa_install`, `consent_accept`, `consent_reject`, `checklist_created`, `checklist_completed`, `feedback_opened`, `signup_started` | `{ok: true}`; a counter only, no cookie or identifier | 403 request from another site; 422 unknown event |
+| POST /api/contact | `{kind, message, name?, email?, elapsed, website}`; `website` is a honeypot, `elapsed` the time the form was open | `{ok, message}` | 403 another site; 422 invalid; 429 after 3 messages an hour from one network. At most 20 messages an hour are emailed to the owner site-wide; the rest are still kept for the console |
 
 Unknown /api paths return JSON 404. Rate limits per visitor (Cloudflare-verified client address), per minute, in the server file store (`App::rateBucket`): `/flights` and `/weather` use `rate_per_minute` from the server config (default 30), because they reach the data providers; `/admin/*` at least 240; everything else at least 120. Over the limit: 429 `{error: "Too many requests. Please wait a minute."}`. Contact messages have their own hourly limits. Paid look-ups also have per-user allowances (ADR-022): a signed-in user may cause at most `aerodatabox_user_hourly_calls` AeroDataBox calls an hour (default half of `aerodatabox_hourly_calls`) and `brightdata_user_daily_cap` web searches a day (default 20); the owner is exempt and cached answers cost nothing. Sign-in: protected routes (`/flights`, `/weather`, `/place`, `/web-check`, `/checklist`, `/me`, `/admin/*`) need a verified Clerk token (401 without); if the server has no valid Clerk issuer they answer 503 (fail closed), `/me` answers signed out.
 
@@ -35,7 +39,7 @@ Runtime schema validation, documented input enums, cost controls, bounded shared
 ## Flight fields added 24 Oct 2026
 `direction` {type outbound|inbound|domestic|overseas, basis route|number, home (country code, default GB, config home_country_code), place}: from the route's country codes; only when the route is unknown a flight-number convention is used (BA odd = outbound from the UK, even = inbound) and it is labelled basis "number" with no place. `terminalOutHint`/`terminalInHint`: the airline's usual terminal (only British Airways at LHR, Terminal 5) and ONLY when the provider reports no terminal; the UI shows it as "usual, not confirmed". `estimatedTakeoff`/`estimatedLanding`: runway times before they happen (after they happen they are takeoff/landing, the actuals). `usualRouteOnly`: no schedule for that date; origin and destination come from adsbdb and nothing else is invented. Airports carry `countryCode`. Flights are matched on the SCHEDULED DEPARTURE DATE at the departure airport: the provider also returns the flight that merely arrives on that date, so those are filtered out (if nothing matches, the nearest departures are returned with a note). Flight ids include the departure time.
 
-## Website, CMS and console routes (25 Oct 2026, local, not released)
+## Website, CMS and console routes (live)
 
 Public website paths (`/`, `/<slug>/`, `/guides/<slug>/`, `/sitemap.xml`, `/ads.txt`, `/media/<sha256>.<ext>`) are served by `public/site.php` (HTML, ETag, `no-cache`; 404/405/503 pages). The app moved to `/app/`.
 
@@ -53,6 +57,12 @@ Public website paths (`/`, `/<slug>/`, `/guides/<slug>/`, `/sitemap.xml`, `/ads.
 | POST /api/admin/media | owner | raw body, Content-Type image/png, image/jpeg or image/webp, ≤ 2 MB, 600×315..4000×4000 | `{url, width, height}` | 413, 415, 422, 429 (20/hour), 503 no GD |
 | GET /api/admin/health | owner | none | `{providers{opensky,aerodatabox,adsbdb,openmeteo:{name,lastOk,lastFail,lastFailCategory,consecutiveFailures}}, cache{files,bytes,snapshotFetchedAt,snapshotAircraft}, allowance}` | |
 | GET /api/admin/audit | owner | `?offset=` | `{entries[{at,by,action}] (100, newest first), you}` | |
+| GET /api/admin/overview | owner | `?days=` (1 to 90, default 30) | `{overview, allowance, unread}`: anonymous usage totals, the AeroDataBox allowance and unread enquiries | |
+| GET /api/admin/users | owner | none | Clerk account summary from the Clerk API (`{configured: false}` without `clerk_secret_key`); the newest 10 users only | |
+| GET /api/admin/enquiries | owner | `?offset=` (50 a page) | the enquiries, newest first, with the unread count | |
+| POST /api/admin/enquiries/{id}/reply | owner | `{message}` | `{ok, unread}`; emails the sender from `mail_from` with Reply-To `owner_email` | 422, 429 (30 an hour) |
+| GET /api/admin/system | owner | none | server facts and which providers are configured (names only, never keys) | |
+| GET /api/admin/analytics | owner | none | Google Analytics summary when `ga_property_id` and a service-account file are configured | |
 | PATCH /api/admin/enquiries/{id} | owner | `{status?: new|read|replied|resolved|archived, note?: string ≤ 2000}` | `{ok, unread}` | 422 |
 
 "Owner" = verified Clerk token AND user id in `admin_user_ids`; 401 without a valid token, 403 otherwise (tested end to end, `test/cms-http.test.mjs`). Admin routes count toward the per-visitor limit (30 a minute by default). Writes are audited. Field-error paths use dots, for example `hero.title`, `steps.0.text`, `footer.1.links.0.href`, `link.href`.

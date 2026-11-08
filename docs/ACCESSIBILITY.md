@@ -4,7 +4,7 @@ Target: WCAG 2.2 AA where applicable, not verified certification. Existing seman
 
 Required tests: keyboard search/date/source selection, sample/save/reopen/remove, tab focus order, error announcements, local clocks not excessively announced, screen-reader status/timeline, 200–400% zoom, mobile reflow, long labels and no colour-only delay meaning. Measure contrast for muted green labels and revisit tiny 7–10px copy. Respect reduced motion and accessible touch targets.
 
-No automated accessibility report or manual assistive-technology audit has been executed in this docs pass. Track defects in VERIFICATION and scoped implementation tickets.
+No automated accessibility report or manual assistive-technology audit has been executed in this docs pass. Track defects in docs/AUDIT.md and scoped implementation tickets.
 
 ## Added 24 Oct 2026
 - Checklist ticks are real buttons with labels and keyboard support; suggestions have labelled Add and Dismiss controls.

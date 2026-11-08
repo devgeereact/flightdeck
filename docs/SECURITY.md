@@ -32,7 +32,7 @@ From the security audit (no Critical or High findings):
 - The console's mailto link is encoded; `X-Powered-By` is removed; the production CSP no longer allows Clerk development hosts (the local dev router adds them back for local sign-in only).
 Still open (needs the owner): set `clerk_authorized_parties` to `['https://flightdeck.gakinz.com']` in the server config if it is not already set; consider Cloudflare Turnstile on the contact form; Google Tag Manager in `script-src` is broad (self-hosting gtag would remove it).
 
-## Website and CMS (25 Oct 2026, local, not released)
+## Website and CMS (25 Oct 2026, live)
 
 - **Access:** every CMS route sits under `/api/admin`, so App.php checks the Clerk token and the owner id before Cms.php runs. End-to-end tests prove 401 (anonymous; forged, expired or wrong-issuer tokens) and 403 (signed-in non-owner) on every CMS route, and that nothing changes. No roles can be granted from the browser.
 - **No executable content:** editors write a Markdown subset. The renderer escapes every character first and can only emit a fixed set of tags; links are limited to site paths, #anchors, http(s) and mailto (external links get `rel="noopener"`). Settings placeholders are escaped before parsing. Announcement links pass the same check or are dropped. Tests cover script tags, event handlers, javascript:/data:/vbscript: and protocol-relative links, entity tricks, quote break-outs and hostile settings. Preview HTML is shown in an `<iframe sandbox="">` (no scripts, no navigation). The site's CSP (no inline scripts) applies to every server-rendered page.

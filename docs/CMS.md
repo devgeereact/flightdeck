@@ -1,6 +1,6 @@
 # Flightdeck CMS (owner console)
 
-Status: IMPLEMENTED and tested locally, 25 October 2026. NOT released. Decisions: ADR-015 (site at `/`, app at `/app/`), ADR-016 (file-based CMS), ADR-017 (safe Markdown).
+Status: LIVE. Implemented 25 October 2026 and tested end to end (`test/cms-http.test.mjs`, `pnpm test:console`). Decisions: ADR-015 (site at `/`, app at `/app/`), ADR-016 (file-based CMS), ADR-017 (safe Markdown).
 
 ## Who can use it
 

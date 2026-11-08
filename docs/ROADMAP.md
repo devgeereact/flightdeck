@@ -5,11 +5,11 @@ Foundations, PHP API on cPanel, live data (AeroDataBox, OpenSky, adsbdb), deploy
 
 ## Next
 - Owner checks: console with the production account, a real phone, a screen reader, a paper print, Firefox.
-- Bright Data web links: switch on only if the owner wants them (key + zone in config.php; cost per search).
+- Bright Data web links: the owner chose ON (8 Nov 2026) but the live site reports `webCheck: false`; needs `brightdata_key`, `brightdata_zone` and the `brightdata` switch in config.php (cost per search; caps 150 a day, 20 per user a day).
 - Push notifications for gate and delay changes (needs a background job; cPanel cron could poll saved flights).
 - External uptime monitor with fast alerts.
 
-## Code-quality follow-ups — 28 October 2026 (from the Biome warnings)
+## Code-quality follow-ups — 28 October 2026 (from the Biome warnings; the counts are from that day and not re-measured)
 Fix in small slices, then raise each rule to "error" in `biome.json`:
 1. Buttons without `type` (71) — `type="button"` for actions, `type="submit"` only for form submit buttons.
 2. React hook dependencies (29) — review each effect/callback for stale values.

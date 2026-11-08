@@ -1,18 +1,23 @@
 # Flightdeck decision records
 
 ## ADR-001: preserve current prototype
+Status (8 Nov 2026): superseded. The Express prototype was archived (ADR-018) and PHP is the only backend (ADR-007).
 24 October 2026 · accepted for docs task. Keep React/TypeScript/Express working code unchanged. The new cPanel PHP stack is a target preference, not retrospective proof of implementation. Consequence: PHP parity/migration remains a separate approved code task.
 
 ## ADR-002: guest/browser-local V1
+Status (8 Nov 2026): partly superseded. Clerk accounts exist (ADR-009, ADR-010); there is still no SQL database (ADR-016). Packing lists and saved flights stay in the browser and sync to the signed-in account.
 Current implementation has no accounts/DB. Treat Clerk/MariaDB as conditional; do not add services solely to match a template. Revisit only if cross-device/persistent shared requirements are accepted.
 
 ## ADR-003: honest data provenance
+Status (8 Nov 2026): still holds. Live sources now exist (ADR-006, ADR-008); the rule against guessed values still applies.
 Samples must stay labelled. No guessed boarding/gates/baggage/location. No authorised live flight source currently exists. A schematic is never geographic tracking evidence.
 
 ## ADR-004: deliberate releases
+Status (8 Nov 2026): superseded by deploy on push (30 Oct 2026), now gated by CI (ADR-023). The Actions-minutes concern is why docs-only pushes do not deploy or run CI.
 Respect the user's limited Actions budget: production-branch/manual deployment is preferred. No repo/workflow exists yet, and documentation does not create one or authorise deployment.
 
 ## ADR-005: source backup without Git
+Status (8 Nov 2026): superseded. The project has been in Git since 24 Oct 2026 (remote `devgeereact/flightdeck`).
 Flightdeck has no .git/remote. Approved verified source archive substitutes for bundle for this task; Git history/branches cannot be audited or cleaned. Do not initialise/push as a side effect of docs creation.
 
 ## ADR-006: OpenSky replaces FlightAware
@@ -91,5 +96,5 @@ Rejected: per-visitor IP limits only (already in place; they do not stop one acc
 ## ADR-023: the deploy waits for the full CI gate; deploy-on-push stays (8 Nov 2026)
 Context: pushes to `main` deployed after only `pnpm test`, `pnpm test:php` and the build; the UI and console smoke tests, `php -l` and gitleaks ran in a separate CI run the deploy did not wait for. The post-deploy smoke test only checked three status codes, so it would not notice every protected route answering 503 (no valid Clerk issuer). The global rule says "no GitHub Actions minutes for deploys"; this project has deployed over SSH from Actions since the owner's decision of 30 Oct 2026, and a project's own rules override the global defaults.
 Decision: (1) Deploy-on-push to `main` stays, as decided on 30 Oct. (2) `deploy.yml` now has `check` (calls `ci.yml`) and `deploy` (`needs: check`, only on `main`); pull requests run `ci.yml` only and never reach the deploy job. CI no longer also runs on the push itself, so one push costs one gate run, not two. (3) All actions in both workflows are pinned by full commit SHA. (4) CI and Deploy run PHP 8.4, the server version; local development may be newer. (5) The smoke list checks content, `signInRequired: true` and an anonymous 401 on `/api/weather`. (6) `pnpm check` no longer runs `tsc` twice; the console test uses port 3995 so it cannot clash with the live-account preview on 3993. (7) `test/release-gate.test.mjs` guards all of this.
-Consequence: a push to `main` takes about a minute or two longer (gate, then deploy). `conserve_github_actions_minutes` in `.agent/PROJECT.yml` stays true: docs-only pushes do not run anything, and a superseded gate on a newer push is cancelled. The deploy job still repeats `pnpm test`, `pnpm test:php` and the build inside `release.mjs`; that duplication is kept so the same script is safe from the Mac.
+Consequence: a push to `main` takes about a minute or two longer (gate, then deploy). `conserve_github_actions_minutes` in `.agent/PROJECT.yml` stays true: docs-only pushes do not deploy or run CI, and a superseded gate on a newer push is cancelled. The deploy job still repeats `pnpm test`, `pnpm test:php` and the build inside `release.mjs`; that duplication is kept so the same script is safe from the Mac.
 Rejected: a manual-only deploy (the owner chose automatic); a separate deploy workflow triggered by CI's `workflow_run` (harder to read, and it deploys whatever `main` is at that moment); skipping the repeat of the checks inside `release.mjs`.

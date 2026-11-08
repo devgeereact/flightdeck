@@ -1,6 +1,6 @@
 schema_version: 1
 name: Flightdeck
-last_reviewed: "2026-11-01"
+last_reviewed: "2026-11-08"
 status: live   # personal, free, non-commercial (owner, 25 Oct 2026)
 current:
   frontend: react-typescript-vite-pwa
@@ -32,7 +32,6 @@ constraints:
 route:
   mode: A   # rebrand inside the existing project, confirmed by the owner 25 Oct 2026
   project: /Users/realmrgee/Developer/Projects/flightdeck
-  reference_kit: /Users/realmrgee/Downloads/Rebrand-and-Restructure   # read only
   plan: done   # the restructure plan was completed and retired (git history)
   public_site: server-rendered-php-at-root   # ADR-015; app at /app/
   cms: file-based-private-var-content        # ADR-016
