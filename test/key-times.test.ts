@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { gatePlace, keyTimes, leadTimes } from '../src/features/flight/keyTimes';
+import {
+  gatePlace,
+  gateTile,
+  keyTimes,
+  leadTimes,
+  positionCard,
+} from '../src/features/flight/keyTimes';
 
 const f = (over: any = {}): any => ({
   number: 'BA117',
@@ -66,4 +72,57 @@ test('gate place reads naturally', () => {
   assert.equal(gatePlace('5', 'B34'), 'T5 · Gate B34');
   assert.equal(gatePlace(null, null, '5'), 'Usually T5');
   assert.equal(gatePlace(null, null), null);
+});
+
+// ---- smoke test of the live site, 8 Nov 2026: BA117 (arrived) showed "Departure gate: T5" and "Arrival gate: T8" although the
+// airports had reported terminals only, and "often assigned shortly before landing" for a flight that landed hours earlier.
+
+test('gate tile: a known gate keeps the gate label and says gates can change', () => {
+  const t = gateTile('out', f({ terminalOut: '5', gateOut: 'B34' }));
+  assert.equal(t.label, 'Departure gate');
+  assert.match(t.note, /can change/i);
+  assert.equal(gateTile('in', f({ terminalIn: '8', gateIn: '12' })).label, 'Arrival gate');
+});
+
+test('gate tile: terminal only is labelled as a terminal, never as a gate, and says the gate is not published yet', () => {
+  const out = gateTile('out', f({ terminalOut: '5', gateOut: null }));
+  assert.equal(out.label, 'Departure terminal');
+  assert.match(out.note, /gate (is )?not (published|reported) yet/i);
+  assert.match(out.note, /45.90 min before departure/);
+  const inn = gateTile('in', f({ terminalIn: '8', gateIn: null }));
+  assert.equal(inn.label, 'Arrival terminal');
+  assert.match(inn.note, /shortly before landing/);
+});
+
+test('gate tile: once the flight has left or landed it no longer promises a gate for later', () => {
+  const left = gateTile('out', f({ terminalOut: '5', actualOut: '2026-11-01T08:50:00Z' }));
+  assert.doesNotMatch(left.note, /usually shown|before departure/i);
+  assert.match(left.note, /no gate was reported/i);
+  const landed = gateTile('in', f({ terminalIn: '8', actualIn: '2026-11-01T16:05:00Z' }));
+  assert.doesNotMatch(landed.note, /shortly before landing|often assigned/i);
+  assert.match(landed.note, /no gate was reported/i);
+});
+
+test('gate tile: nothing known keeps the plain gate label with the usual-timing note', () => {
+  const t = gateTile('out', f());
+  assert.equal(t.label, 'Departure gate');
+  assert.match(t.note, /45.90 min before departure/);
+  const landed = gateTile('in', f({ actualIn: '2026-11-01T16:05:00Z' }));
+  assert.equal(landed.label, 'Arrival gate');
+  assert.match(landed.note, /not reported/i);
+});
+
+test('position card: a landed flight says it has landed, not "not transmitting yet"', () => {
+  const c = positionCard(f({ actualIn: '2026-11-01T16:05:00Z', position: null }));
+  assert.match(c.title, /landed/i);
+  assert.doesNotMatch(c.title, /not transmitting/i);
+  assert.doesNotMatch(c.text, /appears once the aircraft is airborne/i);
+});
+
+test('position card: before departure and while airborne without a position keep the honest existing wording', () => {
+  const before = positionCard(f({ position: null }));
+  assert.match(before.title, /not transmitting yet/i);
+  assert.match(before.text, /does not guess/i);
+  const air = positionCard(f({ actualOut: '2026-11-01T08:50:00Z', position: null }));
+  assert.match(air.title, /not transmitting yet/i);
 });

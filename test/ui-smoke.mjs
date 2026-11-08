@@ -402,7 +402,7 @@ try {
       d.querySelector('.discover')?.textContent,
     );
     check(
-      'B11c gates and key times: boarding, gate closes, take-off and landing are on the page; typical times are labelled, unknown gates say so',
+      'B11c gates and key times: boarding, gate closes, take-off and landing are on the page; typical times are labelled, a terminal is never called a gate, unknown gates say so',
       (() => {
         const kt = d.querySelector('.keytimes')?.textContent || '';
         return (
@@ -410,7 +410,9 @@ try {
           /Gate closes/.test(kt) &&
           /Take-off/.test(kt) &&
           /Landing/.test(kt) &&
-          /Departure gate/.test(kt) &&
+          /Departure terminal/.test(kt) &&
+          !/Departure gate/.test(kt) &&
+          /Gate not published yet/.test(kt) &&
           /Arrival gate/.test(kt) &&
           /T5/.test(kt) &&
           /Belt 2/.test(kt) &&

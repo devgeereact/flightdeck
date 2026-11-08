@@ -129,3 +129,51 @@ export function gatePlace(
   ].filter(Boolean);
   return parts.length ? parts.join(' · ') : null;
 }
+
+/**
+ * What the gate tile on each side of the flight should say. A terminal is not a gate, so when only the terminal is known the tile is
+ * labelled as a terminal and says the gate has not been published; and once the flight has left (or landed) it no longer promises a
+ * gate for later. (Live smoke test, 8 Nov 2026: an arrived BA117 showed "Arrival gate: T8 - often assigned shortly before landing".)
+ */
+export function gateTile(
+  side: 'out' | 'in',
+  f: Pick<Flight, 'gateOut' | 'gateIn' | 'terminalOut' | 'terminalIn' | 'actualOut' | 'actualIn'>,
+): { label: string; note: string } {
+  const out = side === 'out';
+  const gate = out ? f.gateOut : f.gateIn;
+  const terminal = out ? f.terminalOut : f.terminalIn;
+  const gone = !!(out ? f.actualOut : f.actualIn);
+  const word = out ? 'Departure' : 'Arrival';
+  if (gate) {
+    return {
+      label: `${word} gate`,
+      note: out
+        ? 'Gates can change: follow the airport screens'
+        : 'Assigned by the arrival airport',
+    };
+  }
+  const wait = out
+    ? 'Usually shown 45–90 min before departure'
+    : 'Often assigned shortly before landing';
+  if (terminal) {
+    return {
+      label: `${word} terminal`,
+      note: gone ? 'No gate was reported for this flight' : `Gate not published yet. ${wait}`,
+    };
+  }
+  return { label: `${word} gate`, note: gone ? 'Not reported for this flight' : wait };
+}
+
+/** The aircraft-position card when no position is held: a landed flight says so instead of "not transmitting yet". */
+export function positionCard(f: Pick<Flight, 'actualIn'>): { title: string; text: string } {
+  if (f.actualIn) {
+    return {
+      title: 'Aircraft position: the flight has landed',
+      text: 'A position is only shown while the aircraft is in the air and in range of OpenSky Network receivers.',
+    };
+  }
+  return {
+    title: 'Aircraft position: not transmitting yet',
+    text: 'Position appears once the aircraft is airborne and in range of OpenSky Network receivers. Over oceans there is often no position. Flightdeck does not guess where the aircraft is.',
+  };
+}

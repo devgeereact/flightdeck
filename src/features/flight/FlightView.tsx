@@ -39,6 +39,7 @@ import {
   withHint,
 } from './flightFormat';
 import { flightIcs } from './ics';
+import { positionCard } from './keyTimes';
 import { summarise } from './summary';
 
 gsap.registerPlugin(useGSAP);
@@ -519,12 +520,8 @@ export default function FlightView({
           </div>
         ) : (
           <div>
-            <b>Aircraft position: not transmitting yet</b>
-            <p>
-              Position appears once the aircraft is airborne and in range of OpenSky Network
-              receivers. Over oceans there is often no position. Flightdeck does not guess where the
-              aircraft is.
-            </p>
+            <b>{positionCard(flight).title}</b>
+            <p>{positionCard(flight).text}</p>
           </div>
         )}
       </section>

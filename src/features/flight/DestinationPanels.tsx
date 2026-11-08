@@ -20,7 +20,7 @@ import { apiFetch } from '../../shared/api';
 import type { Airport, Flight } from '../../types';
 import { destinations } from './destinations';
 import { regionName, time, weatherLabel } from './flightFormat';
-import { gatePlace, type KeyTime, keyTimes } from './keyTimes';
+import { gatePlace, gateTile, type KeyTime, keyTimes } from './keyTimes';
 
 const NR = 'Not reported yet';
 
@@ -113,6 +113,8 @@ export function KeyTimesPanel({ flight }: { flight: Flight }) {
   const by = (key: string) => k.find((x) => x.key === key) as KeyTime;
   const out = gatePlace(flight.terminalOut, flight.gateOut, flight.terminalOutHint);
   const inn = gatePlace(flight.terminalIn, flight.gateIn, flight.terminalInHint);
+  const outTile = gateTile('out', flight);
+  const inTile = gateTile('in', flight);
   const typical = k.some((x) => x.kind === 'Typical');
   return (
     <section className="panel keytimes" aria-labelledby="kt-h">
@@ -126,16 +128,7 @@ export function KeyTimesPanel({ flight }: { flight: Flight }) {
           <span className="sr-only">Departure from </span>
           {flight.origin.code}
         </span>
-        <PlaceTile
-          label="Departure gate"
-          value={out}
-          icon={DoorClosed}
-          note={
-            flight.gateOut
-              ? 'Gates can change: follow the airport screens'
-              : 'Usually shown 45–90 min before departure'
-          }
-        />
+        <PlaceTile label={outTile.label} value={out} icon={DoorClosed} note={outTile.note} />
         <TimeTile k={by('boarding')} />
         <TimeTile k={by('gateclose')} />
         <TimeTile k={by('takeoff')} />
@@ -148,16 +141,7 @@ export function KeyTimesPanel({ flight }: { flight: Flight }) {
         </span>
         <TimeTile k={by('landing')} />
         <TimeTile k={by('gatein')} />
-        <PlaceTile
-          label="Arrival gate"
-          value={inn}
-          icon={DoorClosed}
-          note={
-            flight.gateIn
-              ? 'Assigned by the arrival airport'
-              : 'Often assigned shortly before landing'
-          }
-        />
+        <PlaceTile label={inTile.label} value={inn} icon={DoorClosed} note={inTile.note} />
         <PlaceTile
           label="Baggage belt"
           value={flight.baggage ? `Belt ${flight.baggage}` : null}
