@@ -2,8 +2,8 @@
 
 Newest first. Moved out of `.agent/CURRENT-TASK.md` on 1 Nov 2026; earlier entries describe the project at the time (paths and release steps may since have changed).
 
-## 8 November 2026 (later still): Phase 3, docs match the code (branch `phase-3/docs-match-code`, not pushed)
-- `pnpm docs:check` added (in `pnpm check`): API routes documented, no retired phrases, no dead paths. 29 real problems found and fixed first (nine undocumented API routes, stale wording in seven docs, three dead code references). Baseline audit findings and the Phase 3 result are now in docs/AUDIT.md. 135/135 tests, verify, lint, UI and console smoke PASS locally; CI not yet run. Open items for the owner are listed in `.agent/CURRENT-TASK.md`.
+## 8 November 2026 (later still): Phase 3, docs match the code (PR #8 merged, `main` at f8653a2, deployed)
+- `pnpm docs:check` added (in `pnpm check`): API routes documented, no retired phrases, no dead paths. 29 real problems found and fixed first (nine undocumented API routes, stale wording in seven docs, three dead code references). Baseline audit findings and the Phase 3 result are now in docs/AUDIT.md. 135/135 tests, verify, lint, UI and console smoke PASS; CI on the PR PASS; Deploy run 42528085001 PASS with the new smoke list (5 passed). Open items for the owner are listed in `.agent/CURRENT-TASK.md`.
 
 ## 8 November 2026 (later): Phase 2, gate the deploy (PR #7 merged, `main` at 5184493, deployed)
 - Deploy now waits for the full CI gate (ADR-023); smoke test checks sign-in; actions pinned; PHP 8.4 in CI. 126/126 tests, verify, lint, UI and console smoke PASS locally. First real `deploy.yml` run PASS (check 1m16s, deploy 36s). The release had nothing to upload, so the new smoke list did not run inside it (see CURRENT-TASK). See `.agent/CURRENT-TASK.md` and docs/AUDIT.md.

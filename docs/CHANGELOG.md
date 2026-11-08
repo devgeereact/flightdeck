@@ -2,7 +2,7 @@
 
 Newest first. Dates are UK dates.
 
-## 8 November 2026 (later still): the written docs match the code
+## 8 November 2026 (later still): the written docs match the code (live)
 - No behaviour change. The API reference now lists every route the server answers (`/me`, `/checklist`, `/event`, `/contact` and the owner overview, users, enquiry reply, system and analytics routes were missing) and says plainly which routes need sign-in. Several documents that still said "not released", "guest only", "Clerk not implemented", "Google Fonts" or "three demo destinations" were corrected, along with the product requirements, the integrations register, the data model's browser-storage list, the privacy notes, the runbook (new "when something breaks" section) and the decision records' statuses.
 - New check: `pnpm docs:check` (part of `pnpm check`, so CI runs it) fails if a route is missing from the API reference, a retired phrase returns to a live document, or a document names a file that no longer exists.
 - Still open: the public cookies and privacy page copy does not list every storage key (recorded in docs/PRIVACY.md); the off-server backup copy and restore drill need server access.
