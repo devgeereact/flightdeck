@@ -19,8 +19,10 @@ Phase 1 of the GSD roadmap: land the go-live security release on `main` safely. 
 7. Planned tasks: major upgrades (vite 8, plugin-react 6, vite-plugin-pwa 2, TypeScript 7, lucide 1, concurrently 10; Dependabot PRs for vite and lucide are open); self-host gtag to drop GTM from the CSP.
 8. Still open from 31 Oct: console with the production account, a real phone, a screen reader, a paper print, Firefox (BLOCKED here).
 
-## Next (Phase 2 of 9: gate the deploy; not started, needs the owner's go-ahead)
-Deploy runs on every push to `main` and does not wait for CI (DEL-10). Phase 2 makes it wait for or run the full gate. Full roadmap in `.planning/ROADMAP.md` (local only).
+## Phase 2 of 9: gate the deploy. Built on branch `phase-2/gate-the-deploy`, NOT pushed (needs the owner's "approved: push")
+- Done and checked locally (details in docs/AUDIT.md, ADR-023): `deploy.yml` = `check` (calls `ci.yml`) then `deploy` (`needs: check`, main only); `ci.yml` on pull requests and `workflow_call`, PHP 8.4, no push trigger; actions pinned by SHA; `pnpm check` runs `tsc` once; console test on port 3995; smoke list adds content checks, `signInRequired:true` and anonymous `/api/weather` = 401. Guard tests: `test/release-gate.test.mjs`. `npm run verify` PASS (126/126), lint, `test:ui`, `test:console` PASS.
+- **Not tested:** the workflows have not run on GitHub. Order to land it: (1) push the branch and open a PR, which runs `ci.yml` (first run on PHP 8.4); (2) once green, merge. The merge push is the first real run of `deploy.yml` (a mistake fails before any upload). Merging touches workflow files, so it deploys; ask before it.
+- Left for later phases: `semgrep.yml`/`uptime.yml` actions not pinned by SHA; the Dependabot PRs for vite and lucide.
 
 ## Checks run
 Before the push (8 Nov 2026, commit 971ce58 and docs-only tips): `npm run verify` PASS (node 116/116, PHP all passed, build, upload guard); Biome; `tsc --noEmit`; `php -l` 38 files; gitleaks; `scripts/check-apache-routes.sh`; `pnpm test:ui`; `pnpm test:console`. In CI on `3db0b73`: `check` and Semgrep PASS. After deploy: the public-request checks above. NOT run: any signed-in flow on the live site. Details: docs/AUDIT.md.

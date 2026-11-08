@@ -14,7 +14,7 @@ Personal flight tracker, destination weather and reusable packing list. React/Ty
 | Local preview with your live Clerk account | `pnpm dev:live-account` (see docs/LOCAL-LIVE-LOGIN.md) |
 | The gate CI runs | `pnpm check` (+ `pnpm test:ui`, `pnpm test:console`) |
 | Fix formatting / safe lint fixes | `pnpm format` |
-| Release | Push to `main` deploys (`.github/workflows/deploy.yml` → `scripts/release.mjs --go` over SSH). Docs-only pushes and `[skip ci]` do not deploy. Manual: `gh workflow run deploy.yml`. Undo: `pnpm release --rollback --go` |
+| Release | Push to `main` runs the full CI gate, then deploys (`.github/workflows/deploy.yml`: `check` → `deploy` → `scripts/release.mjs --go` over SSH). Docs-only pushes and `[skip ci]` do not deploy. Manual: `gh workflow run deploy.yml`. Undo: `pnpm release --rollback --go` |
 
 ## Status words and approvals
 Report as DONE (with evidence), PARTIAL, NOT TESTED, BLOCKED, PLANNED or ASSUMPTION.

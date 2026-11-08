@@ -22,7 +22,7 @@ release:
   preferred_branch: main   # every push to main deploys (30 Oct 2026); the production branch is no longer used
   selected_domain: flightdeck.gakinz.com
   document_root: /home/devgeereact/flightdeck.gakinz.com   # private: /home/devgeereact/flightdeck-private
-  workflow_created: deploy-on-push   # .github/workflows/deploy.yml runs scripts/release.mjs --go over SSH (30 Oct 2026)
+  workflow_created: deploy-on-push   # .github/workflows/deploy.yml runs scripts/release.mjs --go over SSH (30 Oct 2026); since 8 Nov 2026 only after the CI gate passes (ADR-023)
   auto_deploy_verified: true   # full app releases through deploy.yml since 30 Oct 2026 (e.g. run 41212106016, 31 Oct)
 constraints:
   no_extra_paid_hosting_without_approval: true

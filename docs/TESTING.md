@@ -4,11 +4,11 @@ Reviewed 1 November 2026. Rule from the owner: test locally first, look at the r
 
 | Command | What it proves |
 |---|---|
-| `pnpm check` | The CI gate: Biome (errors), TypeScript, `pnpm test`, `pnpm test:php`, production build. |
-| `pnpm test` | Unit and page tests (116 on 1 Nov 2026): flight times and key times, countdown, calendar file, packing list, consent, every public page rendered by PHP (`test/site.test.mjs`), the CMS over the real PHP router with signed test tokens (`test/cms-http.test.mjs`), local preview switch, CMS seed check. |
+| `pnpm check` | The core of the CI gate: Biome (errors), `pnpm test`, `pnpm test:php`, production build (the build runs `tsc --noEmit`, so types are checked once). CI adds `pnpm test:ui`, `pnpm test:console`, `php -l` and gitleaks. |
+| `pnpm test` | Unit and page tests (126 on 8 Nov 2026; includes `test/release-gate.test.mjs`, which fails if a workflow stops gating the deploy, an action is unpinned, PHP is not 8.4, or the smoke list loses its sign-in checks): flight times and key times, countdown, calendar file, packing list, consent, every public page rendered by PHP (`test/site.test.mjs`), the CMS over the real PHP router with signed test tokens (`test/cms-http.test.mjs`), local preview switch, CMS seed check. |
 | `pnpm test:php` | PHP suite: flight mapping, time zones, rate buckets, auth, CMS store, Markdown XSS, media, health, enquiries, travel guides, web check (off by default, cache, daily cap), forecast rows. |
 | `pnpm test:ui` | The real app build in jsdom with fixed fixtures (no provider units spent): tracker, flight page (gates and key times, weather and Discover beside the flight, tabs), saved flights, packing room, help, accessibility basics. `UI_TEST_LIVE=1` adds one real provider check. |
-| `pnpm test:console` | The owner console in jsdom against a throwaway server: edit, draft, preview, publish, restore, FAQ order, inbox, health, audit, non-owner refused. |
+| `pnpm test:console` | (port 3995) The owner console in jsdom against a throwaway server: edit, draft, preview, publish, restore, FAQ order, inbox, health, audit, non-owner refused. |
 | `bash scripts/check-apache-routes.sh` | macOS only: `dist/` under Apache + PHP-FPM in the host's layout: route and header checks. |
 | `node ~/.claude/skills/product-design/scripts/shots.mjs --axe` | Screenshots at several widths, sideways-overflow check and axe-core WCAG 2.2 AA audit. |
 
