@@ -2,6 +2,12 @@
 
 Newest first. Dates are UK dates.
 
+## 8 November 2026 (after the live smoke test): fixes
+- **Web links:** "Latest from the web" now retries once when Google's answer is not usable (it failed about half the time on its first try), skips Facebook, Instagram and similar, and shows one link per site.
+- **Gates:** when an airport has published only a terminal, the tile says "Departure terminal" or "Arrival terminal" with "Gate not published yet", instead of calling a terminal a gate. For a flight that has already left or landed, the note no longer promises a gate for later.
+- **Aircraft position:** a flight that has landed says so, instead of "not transmitting yet".
+- **Owner console:** System and Costs and limits now show Bright Data (today's searches against the daily cap); the dead "AI features" row and the two always-zero Usage badges are gone; Provider health no longer says Bright Data is "off unless configured".
+
 ## 8 November 2026 (after the ads removal): owner items
 - **Hidden server header:** the host's `X-Turbo-Charged-By: LiteSpeed` header is now removed at the edge by a Cloudflare response-header rule scoped to flightdeck.gakinz.com only. Checked live.
 - **Cookies and privacy pages:** the cookies page now lists every browser-storage key the app uses (it missed seven), says what each does and how long it lasts, and has an "anonymous counting" section. The privacy policy now explains the short-lived rate-limit counter (a one-way code of the network address, removed after about two hours) and names Bright Data for the flight web links. A test fails if a storage key in the code is missing from the cookies page. Last reviewed date set to 8 Nov 2026.

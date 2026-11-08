@@ -2,6 +2,9 @@
 
 Newest first. Moved out of `.agent/CURRENT-TASK.md` on 1 Nov 2026; earlier entries describe the project at the time (paths and release steps may since have changed).
 
+## 8 November 2026 (after the owner items): live smoke test in Chrome and fixes (branch `fix/smoke-test-defects`, not pushed)
+- Owner's Chrome, read-only, one real lookup. Defects fixed test-first: Bright Data retry and link quality, terminal-vs-gate labels, landed-flight position card, console Bright Data rows, dead AI/usage badges. Not fixed: stale top search box, a Google Analytics 503 (Google's). See docs/AUDIT.md.
+
 ## 8 November 2026 (after Phase 4): owner items (branch `post-phase-4/owner-items`, not pushed)
 - Done: Cloudflare rule hiding `X-Turbo-Charged-By` (live); cookies/privacy page text (every storage key listed, drift test); three owner-run scripts with tests (`set-bright-data.sh`, `install-backup-cron.sh`, `pull-server-backup.sh`); restore drill (the 1 Nov backup restores; finding: the server's nightly backup cron entry is gone, no backup since 1 Nov); Dependabot minimatch failure explained (build-time, waits for vite-plugin-pwa 2). 153/153 tests, verify, lint, UI, console PASS locally. Owner must run the scripts; see `.agent/CURRENT-TASK.md`.
 
