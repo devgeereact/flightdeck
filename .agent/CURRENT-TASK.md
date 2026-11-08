@@ -11,29 +11,32 @@ Work through the GSD roadmap (9 phases, local plan in `.planning/`). Personal-us
 - **Phase 4 (remove the ads path): BUILT on branch `phase-4/remove-ads-path`, NOT pushed** (ADR-024). Local checks PASS (136/136, verify, lint, UI, console). NOT tested: CI, the deploy, and `/ads.txt` on the live host. To land: push the branch, open a PR, wait for green, then the owner says "approved: push main". The merge deploys real code (PHP, the site script, the console bundle and `.htaccess`).
 
 ## Owner decisions (8 Nov 2026)
-- Restrict Clerk sign-up: yes (owner, in the Clerk dashboard). Not done yet.
+- Clerk sign-up: leave it open (owner). Per-user allowances cap the cost; the provider-terms concern (ADR-008) stays open.
 - `.planning/` stays local, untracked (excluded through `.git/info/exclude`).
-- Bright Data: ON. The live site still reports `webCheck: false`; the private server config needs `brightdata_key`, `brightdata_zone` and the `brightdata` switch.
+- Bright Data: ON. Not yet on the live site (`webCheck:false`). Only `brightdata_key` and `brightdata_zone` are needed (there is no other switch; an earlier note of mine said otherwise).
+- Signed-in flight lookup on the live site: DONE by the owner.
+- Cookies and privacy page text change: approved and written (branch below); check it live after deploy.
 - Workspace cleanup done (unused test browsers, stale `graphify-out`, `.DS_Store`).
+- Cloudflare header rule: DONE and live (rule `fdbcc345d3c245d693244a62da1203f8` in zone gakinz.com, host-scoped).
+- Off-server backup drill and Dependabot: delegated to me; done, see docs/AUDIT.md (8 Nov, owner items).
 
-## Open (mostly yours)
-1. **Restrict Clerk sign-up** in the Clerk dashboard. Until then anyone can sign up and spend the metered provider allowance.
-2. **Signed-in check on the live site:** sign in, one real flight lookup (spends metered AeroDataBox quota), Provider health. Never done.
-3. **Bright Data config** on the server (see above).
-4. **`X-Turbo-Charged-By: LiteSpeed`** is still sent; `.htaccess` cannot remove it. Needs a Cloudflare response-header rule or a LiteSpeed setting (needs approval).
-5. **Bare line in `.env`** (if it is the Clerk secret, name it `CLERK_SECRET_KEY` or delete it).
-6. Server settings unverified: `trust_cf_connecting_ip`, whether `var/content/published.json` exists, PHP GD.
-7. **Off-server backup copy and one restore drill** (the Phase 3 item that needs server access): not done.
-8. **Public cookies and privacy page copy** lacks several storage keys, rate-limit hashing and the Bright Data query (docs/PRIVACY.md has the list). It is live content in `php/private/src/Content/seed.json`; changing it needs the owner's approval.
-9. Gap: a deploy with nothing to upload exits before the smoke checks (candidate fix in Phase 5 or 7, test first). The smoke list itself is proven: 5 passed on the Phase 3 deploy.
-10. Dependabot: PRs for vite 8 and lucide 1 are open (planned major upgrades, Phase 9); one Dependabot Updates run failed on 3db0b73 and was never looked at.
-11. Still open from 31 Oct: console with the production account, a real phone, a screen reader, a paper print, Firefox (BLOCKED here).
+## Open (yours, in order)
+1. **Run `bash scripts/install-backup-cron.sh`.** The server's nightly backup stopped after 1 Nov (the cron entry vanished). It adds one line and keeps other jobs. Then, once, `bash scripts/pull-server-backup.sh` for an off-server copy (weekly after that).
+2. **Run `bash scripts/set-bright-data.sh`** (needs your Bright Data zone name and API token; typed hidden). Then `curl -s https://flightdeck.gakinz.com/api/config` should say `"webCheck":true`. Each search costs money; caps are 150 a day, 20 per user.
+3. **Run `bash .local-test/fix-env-bare-line.sh`** for the bare line in `.env` (it never prints a value; I was not allowed to read `.env`). It refuses anything it cannot identify.
+4. **Approve pushing**: Phase 4 (ads removed, branch `phase-4/remove-ads-path`) and the owner-items branch `post-phase-4/owner-items` (cookies and privacy text, the three scripts, tests, docs) are both local only. They are stacked: `post-phase-4/owner-items` contains Phase 4. One PR from the top branch lands both. The merge deploys real code (PHP site, seed content, console bundle, `.htaccess`).
+5. Server settings unverified: `trust_cf_connecting_ip`, PHP GD. (`published.json`: the 1 Nov backup had none.)
+6. Clerk sign-up restriction: left open by choice.
+7. Gap: a deploy with nothing to upload exits before the smoke checks (candidate fix in Phase 5 or 7, test first).
+8. Dependabot minimatch security job fails on every push: build-time only, needs vite-plugin-pwa 2 (Phase 9). Left on purpose.
+9. Access to `~/Backups/` and `.local-state/` was denied to me; the drill's tarball is in `.local-test/restore-drill/` (mode 600). Move it to `~/Backups/projects/flightdeck/` if you want to keep it.
+10. Still open from 31 Oct: console with the production account, a real phone, a screen reader, a paper print, Firefox (BLOCKED here).
 
 ## Rollback
 If sign-in or the app breaks after a deploy: `pnpm release --rollback --go` (needs approval; restores code files, not server config).
 
 ## Next
-After Phase 4 lands: Phase 5, cleanup and a safety net (needs the owner's go-ahead). Roadmap in `.planning/ROADMAP.md` (local only).
+After Phase 4 and the owner items land: Phase 5, cleanup and a safety net (needs the owner's go-ahead). Roadmap in `.planning/ROADMAP.md` (local only).
 
 ## Checks run (8 Nov 2026)
-Phase 4: `npm run verify` PASS (node 136/136, PHP "All passed", build, upload guard); `pnpm lint`; `pnpm docs:check`; `pnpm test:ui`; `pnpm test:console`. Earlier phases: see docs/AUDIT.md.
+Owner-items branch (includes Phase 4): `npm run verify` PASS (node 153/153, PHP "All passed", build, upload guard); `pnpm lint`; `pnpm docs:check`; `pnpm test:ui`; `pnpm test:console`. Earlier phases: see docs/AUDIT.md.

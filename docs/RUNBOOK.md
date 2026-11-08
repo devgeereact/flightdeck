@@ -27,9 +27,11 @@ See docs/DEPLOYMENT.md. Watch a run with `gh run watch`. Undo the last release w
 - Maintenance: Site settings → Visibility → Maintenance shows a 503 "Back soon" page on public pages; app, console and API keep working.
 
 ## Backups and restore
-- Nightly cron runs `~/flightdeck-backup.sh` → `~/flightdeck-backups/flightdeck-var-YYYYMMDD.tar.gz` (checklists, enquiries, metrics, content, health; caches skipped), mode 600, 14 days. Same disk, so copy off-server periodically.
+- **The nightly cron entry went missing: no backup was made between 1 Nov and the 8 Nov 2026 restore drill.** If `ls ~/backups/flightdeck/` shows no file from last night, run `bash scripts/install-backup-cron.sh` (adds one line, keeps other jobs, safe to repeat). Nightly cron should run `~/flightdeck-backup.sh` → `~/flightdeck-backups/flightdeck-var-YYYYMMDD.tar.gz` (checklists, enquiries, metrics, content, health; caches skipped), mode 600, 14 days. Same disk, so copy off-server periodically.
 - Restore: copy the current `var/` aside, then `tar -xzf <file> -C ~/flightdeck-private`.
 - Release snapshots: `~/backups/flightdeck/releases/`.
+- Off-server copy: `bash scripts/pull-server-backup.sh` downloads the newest backup to `~/Backups/projects/flightdeck/` (mode 600, checked with gzip; it warns if the backup is more than two days old). Run it weekly.
+- Restore drill, 8 Nov 2026: the 1 Nov backup was downloaded, extracted into a scratch folder on the Mac only, all 13 JSON files parsed and the checklist and enquiry records had the fields the code reads. Nothing was restored onto the server.
 
 ## Monitoring
 `.github/workflows/uptime.yml` runs every 6 hours: `/` 200, `/api/config` live, `/api/me` 401 without a token. Failures email the repository owner.
@@ -38,4 +40,6 @@ See docs/DEPLOYMENT.md. Watch a run with `gh run watch`. Undo the last release w
 "Reply by email" sends from `mail_from` with Reply-To `owner_email`, through PHP mail() or the SMTP settings in config.php (`smtp_host`, `smtp_port`, `smtp_secure`, `smtp_user`, `smtp_pass`). Local test: `node test/fake-smtp.mjs` with `SMTP_HOST=127.0.0.1 SMTP_PORT=2525 SMTP_SECURE=none`.
 
 ## Secrets
+To switch on the web links (Bright Data), run `bash scripts/set-bright-data.sh` yourself: it asks for the zone name and the API token (typed hidden), sends them to the server over your SSH login and sets `brightdata_key` and `brightdata_zone` in `config.php` (backup kept, file checked before it is used). Afterwards `/api/config` reports `webCheck:true`. There is no separate on/off switch.
+
 Rotate in the provider's dashboard, update `config.php` on the server (or the GitHub secret), then check the app. Never paste keys into docs, logs or chat.

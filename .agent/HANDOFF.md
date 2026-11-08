@@ -2,6 +2,9 @@
 
 Newest first. Moved out of `.agent/CURRENT-TASK.md` on 1 Nov 2026; earlier entries describe the project at the time (paths and release steps may since have changed).
 
+## 8 November 2026 (after Phase 4): owner items (branch `post-phase-4/owner-items`, not pushed)
+- Done: Cloudflare rule hiding `X-Turbo-Charged-By` (live); cookies/privacy page text (every storage key listed, drift test); three owner-run scripts with tests (`set-bright-data.sh`, `install-backup-cron.sh`, `pull-server-backup.sh`); restore drill (the 1 Nov backup restores; finding: the server's nightly backup cron entry is gone, no backup since 1 Nov); Dependabot minimatch failure explained (build-time, waits for vite-plugin-pwa 2). 153/153 tests, verify, lint, UI, console PASS locally. Owner must run the scripts; see `.agent/CURRENT-TASK.md`.
+
 ## 8 November 2026 (last): Phase 4, ads path removed (branch `phase-4/remove-ads-path`, not pushed)
 - All ad code, the `/ads.txt` route, the console "Adverts" rows and the ads docs are gone (ADR-024). Old `ads_*` server keys are ignored (tested). 136/136 tests, verify, lint, UI and console smoke PASS locally; CI not yet run. See docs/AUDIT.md.
 

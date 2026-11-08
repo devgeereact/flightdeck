@@ -30,7 +30,7 @@ Reviewed 25 October 2026. There is no SQL database. Shared data is JSON files in
 
 ## Browser storage (per device)
 
-`flightdeck-saved` (+ `flightdeck-saved-owner`), `flightdeck-checklist` (+ `flightdeck-checklist-owner`), `flightdeck-last-results` (6), `flightdeck-public-packing`, `flightdeck-dismissed` (dismissed app announcements, 20), `fd-consent` (cookie choice, `public/consent.js`), `fd-signed-in` (remembers a signed-in visit), `fd.favs` (favourites on the public guides), `fd-done-<id>` (ticked packing items) and `fd-once-<event>` (a flag so each anonymous event counts once). Session storage: `fd-signin-back` (where to return after sign-in). Checked against the code on 8 Nov 2026. All listed on the cookies page. Signed-in saved flights also live in the user's Clerk profile (`unsafeMetadata.savedFlights`, up to 12).
+`flightdeck-saved` (+ `flightdeck-saved-owner`), `flightdeck-checklist` (+ `flightdeck-checklist-owner`), `flightdeck-last-results` (6), `flightdeck-public-packing`, `flightdeck-dismissed` (dismissed app announcements, 20), `fd-consent` (cookie choice, `public/consent.js`), `fd-signed-in` (remembers a signed-in visit), `fd.favs` (favourites on the public guides), `fd-done-<trip>` (a packing list was fully ticked, counted once). Session storage (per tab): `fd-once-<event>` (an anonymous event already counted in this tab) and `fd-signin-back` (where to return after sign-in). Checked against the code on 8 Nov 2026. All listed on the cookies page. Signed-in saved flights also live in the user's Clerk profile (`unsafeMetadata.savedFlights`, up to 12).
 
 ## Migrations
 
