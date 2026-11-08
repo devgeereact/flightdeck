@@ -2,20 +2,20 @@
 
 Newest first. Dates are UK dates.
 
-## 8 November 2026 (after the live smoke test): fixes
+## 8 November 2026 (after the live smoke test): fixes (live)
 - **Web links:** "Latest from the web" now retries once when Google's answer is not usable (it failed about half the time on its first try), skips Facebook, Instagram and similar, and shows one link per site.
 - **Gates:** when an airport has published only a terminal, the tile says "Departure terminal" or "Arrival terminal" with "Gate not published yet", instead of calling a terminal a gate. For a flight that has already left or landed, the note no longer promises a gate for later.
 - **Aircraft position:** a flight that has landed says so, instead of "not transmitting yet".
 - **Owner console:** System and Costs and limits now show Bright Data (today's searches against the daily cap); the dead "AI features" row and the two always-zero Usage badges are gone; Provider health no longer says Bright Data is "off unless configured".
 
-## 8 November 2026 (after the ads removal): owner items
+## 8 November 2026 (after the ads removal): owner items (live)
 - **Hidden server header:** the host's `X-Turbo-Charged-By: LiteSpeed` header is now removed at the edge by a Cloudflare response-header rule scoped to flightdeck.gakinz.com only. Checked live.
 - **Cookies and privacy pages:** the cookies page now lists every browser-storage key the app uses (it missed seven), says what each does and how long it lasts, and has an "anonymous counting" section. The privacy policy now explains the short-lived rate-limit counter (a one-way code of the network address, removed after about two hours) and names Bright Data for the flight web links. A test fails if a storage key in the code is missing from the cookies page. Last reviewed date set to 8 Nov 2026.
 - **Owner scripts (run by you, not by the site):** `scripts/set-bright-data.sh` (turn on the web links: asks for the zone and token, token typed hidden, backup kept), `scripts/install-backup-cron.sh` (the server's nightly backup entry had disappeared; no backup since 1 Nov), `scripts/pull-server-backup.sh` (copy the newest server backup to this Mac). Each is tested against a fake server.
 - **Backup restore drill done:** the 1 Nov backup restored cleanly into a scratch folder.
 - Corrections to earlier notes: Bright Data has no separate on/off switch (it is on once the key and zone are set), and `fd-once-*` is session storage.
 
-## 8 November 2026 (last): the ads path is removed
+## 8 November 2026 (last): the ads path is removed (live)
 - Flightdeck is personal and non-commercial, so the code that could have shown adverts is gone: the Google ad script and ad slots on guides and the packing list, the `/ads.txt` route and its server rule, the four-key server gate, the "Adverts" row in Site settings and in the console's "What is switched on" list, the unused `ads` block in `site.config.json`, and the ad CSS. Nothing visible to visitors changes: no adverts were ever shown. `/ads.txt` answers 404.
 - A server config that still has the old `ads_*` keys is ignored (tested). Google Analytics, still behind the cookie choice, is unchanged. `docs/MONETISATION.md` is now a short non-commercial statement. Decision: ADR-024.
 - `pnpm docs:check` now also fails if ad code or an ads mention returns.

@@ -20,16 +20,16 @@ Work through the GSD roadmap (9 phases, local plan in `.planning/`). Personal-us
 - Cloudflare header rule: DONE and live (rule `fdbcc345d3c245d693244a62da1203f8` in zone gakinz.com, host-scoped).
 - Off-server backup drill and Dependabot: delegated to me; done, see docs/AUDIT.md (8 Nov, owner items).
 
-## Smoke test of the live site as owner (8 Nov 2026, Chrome): done, fixes built, NOT pushed
-- Found and fixed (branch `fix/smoke-test-defects`, stacked on `post-phase-4/owner-items`): Bright Data intermittent "Unexpected answer" (now retried once), terminal shown as a gate, "not transmitting yet" on a landed flight, poor web links (Facebook, duplicates), console gaps (no Bright Data in System or Costs, dead AI row, dead Usage badges, stale health label). Full list and what was not tested: docs/AUDIT.md (top entry). 162/162 node tests, PHP suite, verify, UI smoke, console smoke (C17 to C20), lint, docs:check all PASS locally; CI not run.
-- Live Bright Data works end to end (server answered ok with 4 results); the page card was missing on the first view because the first Google call failed.
-- Your question about using Google's live tracker for gates: answered no; reasons in docs/INTEGRATIONS.md.
+## Latest (8 Nov 2026, evening): PR #9 is merged and live (`main` at b499407)
+- Deployed with run 42537019558 (smoke checks 5 passed) and checked live: ads removed (`/ads.txt` 404), cookies and privacy text updated, terminals no longer shown as gates, landed flights say so, Bright Data in System and Costs, web-link card present, `X-Turbo-Charged-By` hidden. Details: docs/AUDIT.md (top entry).
+- The installed app updates through its own banner ("A new version is ready. Reload to update."); users see the fixes after pressing Reload.
+- Bright Data: enabled and returning results; the retry is untested over time. Watch Provider health for "Unexpected answer".
 
 ## Open (yours, in order)
-1. **Backup cron: DONE** (installed by the owner's run on 8 Nov; first backup due 02:23 server time on 9 Nov). Check tomorrow: `bash scripts/pull-server-backup.sh` copies the newest backup to this Mac and warns if it is more than two days old. Weekly after that.
+1. **Backup cron: installed; check that a backup file appeared (tonight 02:23 server time)** (DONE earlier) (installed by the owner's run on 8 Nov; first backup due 02:23 server time on 9 Nov). Check tomorrow: `bash scripts/pull-server-backup.sh` copies the newest backup to this Mac and warns if it is more than two days old. Weekly after that.
 2. **Bright Data: ENABLED on the live server** (8 Nov 2026, zone `mcp_serp`, `/api/config` reports `webCheck:true`, verified read-only; the script's first run refused safely because the server config uses the older `array (` style, since fixed and tested). **Still to check by you:** open a flight page while signed in and look for "Latest from the web" links. If they are empty, look at Provider health (Bright Data) and tell me: Google returned non-JSON twice in my connector test, and the next step would be a small code change (`parsed_light`, or Bing). Each search costs money; caps default to 150 a day and 20 per user.
 3. **Run `bash .local-test/fix-env-bare-line.sh`** for the bare line in `.env` (it never prints a value; I was not allowed to read `.env`). It refuses anything it cannot identify.
-4. **Approve pushing**: PR #9 (`post-phase-4/owner-items`: ads removed, cookies text, scripts) is open and green but is missing its last commits, and `fix/smoke-test-defects` (the smoke-test fixes) is local only and stacked on top of it. Pushing the top branch updates PR #9 to carry everything. The merge deploys real code (PHP site, seed content, console bundle, `.htaccess`).
+4. ~~Approve pushing~~ DONE: PR #9 merged and deployed. The merge deploys real code (PHP site, seed content, console bundle, `.htaccess`).
 5. Server settings unverified: `trust_cf_connecting_ip`, PHP GD. (`published.json`: the 1 Nov backup had none.)
 6. Clerk sign-up restriction: left open by choice.
 7. Gap: a deploy with nothing to upload exits before the smoke checks (candidate fix in Phase 5 or 7, test first).
