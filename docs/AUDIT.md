@@ -11,8 +11,11 @@ Newest first. Each entry says what was checked, how, and what was not.
   - gitleaks over all refs: 131 commits scanned, no leaks.
   - `scripts/check-apache-routes.sh` (local Apache + PHP-FPM on 127.0.0.1:3990): all route, header and hidden-file checks passed.
   - `pnpm test:ui` and `pnpm test:console`: all checks passed.
-- **Git facts checked (read-only):** `origin/main` (31f6851) is an ancestor of the branch; the branch is 3 commits ahead and 0 behind, so it fast-forwards with no conflicts. 31f6851 was deployed on 1 Nov 2026 (Deploy run 41283970437). `origin/production` is fully merged into `main`. Open PRs: #2 Clerk 6.18.1 (obsolete: the branch has 6.18.4), #3 lucide 1.61, #4 vite 8.3.5, #5 actions group.
+- **Which commit:** the gate ran on 971ce58. The later commit that added this entry changes only `.agent/` and `docs/`, so the code is identical; the full gate on the pushed tip is the PR's CI.
+- **Git facts checked (read-only):** `origin/main` (31f6851) is an ancestor of the branch; the branch is ahead only (the 3 security commits plus docs commits) and 0 behind, so it fast-forwards with no conflicts. 31f6851 was deployed on 1 Nov 2026 (Deploy run 41283970437). `origin/production` is fully merged into `main`. Open PRs: #2 Clerk 6.18.1 (obsolete: the branch has 6.18.4), #3 lucide 1.61, #4 vite 8.3.5, #5 actions group.
 - **Measured:** the production build's main script is 544.84 kB (174.10 kB gzip) with the live Clerk key. A build without that key is about 483 kB, so a size budget must be measured with the production variables.
+- **Noted, not fixed:** the PHP suite prints harmless `unlink(...) Operation not permitted` warnings from `php/tests/run.php:958` (temp-folder cleanup); it still reports "All passed", so the output is not pristine.
+- **Risk found by the plan check:** the new fail-closed sign-in answers 503 on every protected route if the server has no valid Clerk issuer, and the deploy smoke test only checks `/`, `/app/` and `/api/config`, so it would pass anyway. The server issuer must be confirmed before deploying, and an anonymous `GET /api/weather` (expect 401) checked after.
 - **Not checked:** Semgrep (not re-run; last clean on 1 Nov); anything on the live server (`FLIGHTDECK_AUTH`, `trust_cf_connecting_ip`, `published.json`, PHP GD, headers after deploy); CI itself (the PR has not been opened); the `.env` line the owner must look at.
 - **Corrected:** `.agent/CURRENT-TASK.md` said 31f6851 was unpushed. It is on `origin/main` and deployed.
 
