@@ -19,9 +19,11 @@ Phase 1 of the GSD roadmap: land the go-live security release on `main` safely. 
 7. Planned tasks: major upgrades (vite 8, plugin-react 6, vite-plugin-pwa 2, TypeScript 7, lucide 1, concurrently 10; Dependabot PRs for vite and lucide are open); self-host gtag to drop GTM from the CSP.
 8. Still open from 31 Oct: console with the production account, a real phone, a screen reader, a paper print, Firefox (BLOCKED here).
 
-## Phase 2 of 9: gate the deploy. Branch `phase-2/gate-the-deploy`, PR #7, NOT merged
+## Phase 2 of 9: gate the deploy. DONE and live (PR #7)
 - Done and checked locally (details in docs/AUDIT.md, ADR-023): `deploy.yml` = `check` (calls `ci.yml`) then `deploy` (`needs: check`, main only); `ci.yml` on pull requests and `workflow_call`, PHP 8.4, no push trigger; actions pinned by SHA; `pnpm check` runs `tsc` once; console test on port 3995; smoke list adds content checks, `signInRequired:true` and anonymous `/api/weather` = 401. Guard tests: `test/release-gate.test.mjs`. `npm run verify` PASS (126/126), lint, `test:ui`, `test:console` PASS.
-- **PR #7 is open and green** (`check` and Semgrep PASS; CI ran PHP 8.4.27 and the whole gate passed on it; no deploy job in the PR run). **Not tested:** `deploy.yml` itself, which first runs on the merge push (a mistake fails before any upload). Merging touches workflow files, so it deploys; it needs the owner's "approved: push main" (fast-forward merge).
+- **PR #7 merged by fast-forward: `main` = 5184493 (8 Nov 2026).** CI on the PR PASS (PHP 8.4.27). First real `deploy.yml` run 42526313819 PASS: `check` 1m16s, then `deploy` 36s. Live: `/api/weather` 401, `signInRequired:true`, pages 200.
+- **Gap to fix (later, own test first):** the release exits with "Nothing to upload" before the smoke checks, so a deploy that changes no uploaded file is never smoke-tested, and the new smoke list has not yet run inside a deploy (only by hand, 5/5 PASS). Candidate for a small follow-up in Phase 5/7: run the smoke list even when there is nothing to upload.
+- To do with approval: delete branch `phase-2/gate-the-deploy` (remote and local).
 - Left for later phases: `semgrep.yml`/`uptime.yml` actions not pinned by SHA; the Dependabot PRs for vite and lucide.
 
 ## Checks run

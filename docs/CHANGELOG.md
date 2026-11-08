@@ -2,7 +2,7 @@
 
 Newest first. Dates are UK dates.
 
-## 8 November 2026 (later): the deploy waits for the full gate
+## 8 November 2026 (later): the deploy waits for the full gate (live)
 - A push to `main` now runs the whole CI gate first (lint, tests, PHP tests, build, UI and console smoke tests, PHP syntax, secret scan) and deploys only if it passes. Before, the deploy ran a smaller set of checks and did not wait for CI. Pull requests run the gate and can never deploy. A manual run deploys only from `main`.
 - After a deploy, the live check also confirms that sign-in is configured (`signInRequired` is true and an anonymous look-up is refused with 401, not 503), and that the home page, the app and the sitemap have their expected content. A failing check restores the previous release as before.
 - CI and the deploy now use PHP 8.4, the version the server runs. Every action in the workflows is pinned to a commit. The type check no longer runs twice. The console test uses port 3995. Decision: ADR-023.
