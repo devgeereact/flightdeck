@@ -41,7 +41,7 @@ Runtime schema validation, documented input enums, cost controls, bounded shared
 
 ## Website, CMS and console routes (live)
 
-Public website paths (`/`, `/<slug>/`, `/guides/<slug>/`, `/sitemap.xml`, `/ads.txt`, `/media/<sha256>.<ext>`) are served by `public/site.php` (HTML, ETag, `no-cache`; 404/405/503 pages). The app moved to `/app/`.
+Public website paths (`/`, `/<slug>/`, `/guides/<slug>/`, `/sitemap.xml`, `/media/<sha256>.<ext>`) are served by `public/site.php` (HTML, ETag, `no-cache`; 404/405/503 pages). The app moved to `/app/`.
 
 | Method/route | Who | Input | Success | Errors |
 |---|---|---|---|---|

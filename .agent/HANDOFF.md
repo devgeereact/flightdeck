@@ -2,6 +2,9 @@
 
 Newest first. Moved out of `.agent/CURRENT-TASK.md` on 1 Nov 2026; earlier entries describe the project at the time (paths and release steps may since have changed).
 
+## 8 November 2026 (last): Phase 4, ads path removed (branch `phase-4/remove-ads-path`, not pushed)
+- All ad code, the `/ads.txt` route, the console "Adverts" rows and the ads docs are gone (ADR-024). Old `ads_*` server keys are ignored (tested). 136/136 tests, verify, lint, UI and console smoke PASS locally; CI not yet run. See docs/AUDIT.md.
+
 ## 8 November 2026 (later still): Phase 3, docs match the code (PR #8 merged, `main` at f8653a2, deployed)
 - `pnpm docs:check` added (in `pnpm check`): API routes documented, no retired phrases, no dead paths. 29 real problems found and fixed first (nine undocumented API routes, stale wording in seven docs, three dead code references). Baseline audit findings and the Phase 3 result are now in docs/AUDIT.md. 135/135 tests, verify, lint, UI and console smoke PASS; CI on the PR PASS; Deploy run 42528085001 PASS with the new smoke list (5 passed). Open items for the owner are listed in `.agent/CURRENT-TASK.md`.
 

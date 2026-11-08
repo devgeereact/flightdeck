@@ -1,15 +1,12 @@
-# Monetisation: AdSense readiness
+# Monetisation: none
 
-Status: built, OFF. Nothing loads from Google Ads on the live site.
+Flightdeck is a personal, free, non-commercial project (owner decision, 25 Oct 2026; confirmed 8 Nov 2026). It has no adverts, no sponsored content and nothing to buy, and the code for showing adverts was removed on 8 Nov 2026 (ADR-024).
 
-## The gate
-scripts/build-public.mjs emits ad slots and ads.txt only when ALL are true in site.config.json: ads.enabled, ads.licenceCleared, ads.cmpReady and a valid pubId (pub-<digits>). Any missing one builds without ads and prints a warning. Ads appear only on public guide and packing-list pages, never in the app, console or flight data.
+## Why
+- The data providers' free plans are for personal or non-commercial use only: AeroDataBox free plan, OpenSky Network (non-profit research), Open-Meteo free endpoint, and adsbdb route data that may not be copied into other databases (docs/INTEGRATIONS.md). Showing adverts would make the site commercial and break those terms.
+- Adverts would also need a certified consent tool and a change to the privacy and cookies pages. None of that is wanted.
 
-## Before turning it on (owner decisions)
-1. Data licences. AeroDataBox free plan is non-commercial (Pro is paid, commercial use allowed); OpenSky is for non-profit research only; adsbdb data may not be copied into a database. With ads, the site is commercial, so move to licensed sources or stop showing provider data next to ads. Set licenceCleared only when settled.
-2. Consent. UK/EEA personalised ads need a Google-certified CMP (Google's free Privacy & messaging qualifies). Replace the built-in banner with it, then set cmpReady.
-3. AdSense account: apply when about ten real pages exist (five guides plus the packing list, legal pages), then add the pub id and slot ids.
-4. Privacy and cookie pages must list Google as an advertising partner before launch.
-5. Never click your own ads. Auto ads stay off.
-
-Realistic expectation: a new small site earns very little for months; approval depends on original useful content, which is why the guides and packing list come first.
+## What this means in practice
+- No ad script, ad slot or `ads.txt` exists in the code. `/ads.txt` answers 404. `pnpm docs:check` fails if ad code returns by accident.
+- Analytics (Google Analytics 4) load only after the visitor accepts them, and advertising features stay off (docs/PRIVACY.md).
+- If the owner ever wants income, it is a new decision: first move to licensed data sources, then add a consent tool, then update the privacy and cookies pages, and record it as a new ADR. Do not restore the old code from git without that.

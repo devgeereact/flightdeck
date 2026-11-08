@@ -10,4 +10,4 @@ No automated accessibility report or manual assistive-technology audit has been 
 - Checklist ticks are real buttons with labels and keyboard support; suggestions have labelled Add and Dismiss controls.
 - Consent banner offers Accept and Reject with equal weight and is reachable from "Cookie settings" in every footer.
 - Public pages have a skip link, one h1, landmark nav and footer, and work at phone width without sideways scrolling; print styles hide chrome.
-- Not yet audited with a screen reader or an automated tool (axe/Lighthouse). Ad slots, when enabled, must be labelled "Advertisement" and kept off the app and console.
+- Not yet audited with a screen reader or an automated tool (axe/Lighthouse).

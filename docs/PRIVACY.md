@@ -14,7 +14,7 @@ The published notice is generated from content/pages.mjs (privacy, cookies) and 
 | Weather | Airport coordinates sent to Open-Meteo | No user data |
 | Fonts | Self-hosted (OFL); no Google Fonts requests | n/a |
 | Browser IP | Hosting and Cloudflare logs; rate limiter | Host log retention not verified |
-| Advertising | Not shown. If ever enabled: certified consent tool first; see docs/MONETISATION.md | n/a |
+| Advertising | None. The site is personal and non-commercial and contains no advertising code (docs/MONETISATION.md) | n/a |
 
 Not implemented: payments, precise location, AI processing of user text (phase 8 is flagged off; when enabled it must be disclosed here first). Audience is general public; the notice says the service is not aimed at under-13s.
 

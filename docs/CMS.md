@@ -23,7 +23,7 @@ Open it from the app: sign in at `/app/`, then **Owner console** in the menu (`/
 | People | Users (Clerk), Google Analytics | Owner only |
 | System and audit | What is switched on; every console change | Owner only |
 
-Not editable in the console (on purpose): the site address, provider keys, Clerk settings, ads, rate limits, owner ids. These live only in the private server config and are never sent to the browser. The packing-list items come from the app's own template (`src/features/checklist/checklistTemplate.ts`) so the app and printable list never differ.
+Not editable in the console (on purpose): the site address, provider keys, Clerk settings, rate limits, owner ids. These live only in the private server config and are never sent to the browser. The packing-list items come from the app's own template (`src/features/checklist/checklistTemplate.ts`) so the app and printable list never differ.
 
 ## Workflow
 

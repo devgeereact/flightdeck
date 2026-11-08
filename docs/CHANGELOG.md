@@ -2,6 +2,11 @@
 
 Newest first. Dates are UK dates.
 
+## 8 November 2026 (last): the ads path is removed
+- Flightdeck is personal and non-commercial, so the code that could have shown adverts is gone: the Google ad script and ad slots on guides and the packing list, the `/ads.txt` route and its server rule, the four-key server gate, the "Adverts" row in Site settings and in the console's "What is switched on" list, the unused `ads` block in `site.config.json`, and the ad CSS. Nothing visible to visitors changes: no adverts were ever shown. `/ads.txt` answers 404.
+- A server config that still has the old `ads_*` keys is ignored (tested). Google Analytics, still behind the cookie choice, is unchanged. `docs/MONETISATION.md` is now a short non-commercial statement. Decision: ADR-024.
+- `pnpm docs:check` now also fails if ad code or an ads mention returns.
+
 ## 8 November 2026 (later still): the written docs match the code (live)
 - No behaviour change. The API reference now lists every route the server answers (`/me`, `/checklist`, `/event`, `/contact` and the owner overview, users, enquiry reply, system and analytics routes were missing) and says plainly which routes need sign-in. Several documents that still said "not released", "guest only", "Clerk not implemented", "Google Fonts" or "three demo destinations" were corrected, along with the product requirements, the integrations register, the data model's browser-storage list, the privacy notes, the runbook (new "when something breaks" section) and the decision records' statuses.
 - New check: `pnpm docs:check` (part of `pnpm check`, so CI runs it) fails if a route is missing from the API reference, a retired phrase returns to a live document, or a document names a file that no longer exists.

@@ -6,7 +6,7 @@ Reviewed 8 November 2026. `pnpm docs:check` keeps these files honest. One topic,
 - [PRD](PRD.md): what the product does and for whom
 - [Design](DESIGN.md): the design system (agent form: `.claude/skills/flightdeck-design`)
 - [Accessibility](ACCESSIBILITY.md)
-- [Monetisation](MONETISATION.md): ads, built but off
+- [Monetisation](MONETISATION.md): there is none; the non-commercial statement
 
 **How it works**
 - [Architecture](ARCHITECTURE.md)
