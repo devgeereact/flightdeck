@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Flightdeck;
 
-/** Port of server/flight.ts. Keep behaviour and response shapes identical to the Node reference. */
+/** Flight look-up and mapping. Originally a port of the Node reference server (archived, ADR-018); the PHP code is now the only implementation. */
 final class Flight
 {
     /** IATA carrier code => [ICAO callsign prefix, name]. Partial list; ICAO callsigns can be searched directly. */

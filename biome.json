@@ -13,7 +13,6 @@
       "!!**/.local-test",
       "!!**/.local-state",
       "!!**/.local-live",
-      "!!**/server",
       "!!**/php/private/vendor",
       "!!**/php/private/src/Content/seed.json"
     ]

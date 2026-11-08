@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-// Mirrors server/flight.test.ts. Run: php php/tests/run.php
+// PHP test suite (the Node reference tests it once mirrored were archived, ADR-018). Run: php php/tests/run.php
 foreach (['Http', 'DevEnv', 'ClerkAuth', 'Checklists', 'Metrics', 'Mailer', 'Enquiries', 'ClerkApi', 'Admin', 'GoogleAnalytics', 'Store', 'CloudflareIps', 'Geo', 'Flight', 'OpenSky', 'RouteLookup', 'AeroDataBox', 'App'] as $f) {
     require __DIR__ . '/../private/src/' . $f . '.php';
 }
