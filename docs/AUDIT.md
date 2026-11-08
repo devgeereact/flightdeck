@@ -2,6 +2,20 @@
 
 Newest first. Each entry says what was checked, how, and what was not.
 
+## 8 November 2026: Phase 1 gate re-run on `golive/2026-11` (commit 971ce58, before any change)
+- **Why:** before the branch is pushed for a PR, the whole gate was run again on the exact commit, in the project folder, with a clean working tree apart from the untracked `.planning/` folder. No push, deploy, server or provider access.
+- **Results (all PASS):**
+  - `npm run verify` (`release.mjs --verify`): Biome, TypeScript, node 116/116, PHP "All passed", build, upload guard. Nothing is sent.
+  - `tsc --noEmit` and Biome (`pnpm lint`) run on their own: clean.
+  - `php -l` over `php/` and `public/`: 38 files, 0 errors.
+  - gitleaks over all refs: 131 commits scanned, no leaks.
+  - `scripts/check-apache-routes.sh` (local Apache + PHP-FPM on 127.0.0.1:3990): all route, header and hidden-file checks passed.
+  - `pnpm test:ui` and `pnpm test:console`: all checks passed.
+- **Git facts checked (read-only):** `origin/main` (31f6851) is an ancestor of the branch; the branch is 3 commits ahead and 0 behind, so it fast-forwards with no conflicts. 31f6851 was deployed on 1 Nov 2026 (Deploy run 41283970437). `origin/production` is fully merged into `main`. Open PRs: #2 Clerk 6.18.1 (obsolete: the branch has 6.18.4), #3 lucide 1.61, #4 vite 8.3.5, #5 actions group.
+- **Measured:** the production build's main script is 544.84 kB (174.10 kB gzip) with the live Clerk key. A build without that key is about 483 kB, so a size budget must be measured with the production variables.
+- **Not checked:** Semgrep (not re-run; last clean on 1 Nov); anything on the live server (`FLIGHTDECK_AUTH`, `trust_cf_connecting_ip`, `published.json`, PHP GD, headers after deploy); CI itself (the PR has not been opened); the `.env` line the owner must look at.
+- **Corrected:** `.agent/CURRENT-TASK.md` said 31f6851 was unpushed. It is on `origin/main` and deployed.
+
 ## 1 November 2026 (later): go-live fixes and hardening checklist (branch `golive/2026-11`)
 - **Owner request:** fix every finding from the review below and go through a standard hardening list. No push, deploy or provider-settings change. Fixes were made test first: each new test was seen failing before the fix.
 - **Fixed (all findings from the review below):**
