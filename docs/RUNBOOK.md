@@ -27,7 +27,7 @@ See docs/DEPLOYMENT.md. Watch a run with `gh run watch`. Undo the last release w
 - Maintenance: Site settings → Visibility → Maintenance shows a 503 "Back soon" page on public pages; app, console and API keep working.
 
 ## Backups and restore
-- **The nightly cron entry went missing: no backup was made between 1 Nov and the 8 Nov 2026 restore drill.** If `ls ~/backups/flightdeck/` shows no file from last night, run `bash scripts/install-backup-cron.sh` (adds one line, keeps other jobs, safe to repeat). Nightly cron should run `~/flightdeck-backup.sh` → `~/flightdeck-backups/flightdeck-var-YYYYMMDD.tar.gz` (checklists, enquiries, metrics, content, health; caches skipped), mode 600, 14 days. Same disk, so copy off-server periodically.
+- **The nightly cron entry went missing: no backup was made between 1 Nov and the 8 Nov 2026 restore drill; the entry was put back that evening.** If `ls ~/backups/flightdeck/` shows no file from last night, run `bash scripts/install-backup-cron.sh` (adds one line, keeps other jobs, safe to repeat). Nightly cron should run `~/flightdeck-backup.sh` → `~/flightdeck-backups/flightdeck-var-YYYYMMDD.tar.gz` (checklists, enquiries, metrics, content, health; caches skipped), mode 600, 14 days. Same disk, so copy off-server periodically.
 - Restore: copy the current `var/` aside, then `tar -xzf <file> -C ~/flightdeck-private`.
 - Release snapshots: `~/backups/flightdeck/releases/`.
 - Off-server copy: `bash scripts/pull-server-backup.sh` downloads the newest backup to `~/Backups/projects/flightdeck/` (mode 600, checked with gzip; it warns if the backup is more than two days old). Run it weekly.
