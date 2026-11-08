@@ -2,6 +2,15 @@
 
 Newest first. Each entry says what was checked, how, and what was not.
 
+## 8 November 2026: post-deploy check of the security release (`main` at 3db0b73)
+- **What was done:** PR #6 (`golive/2026-11`, head 3db0b73) had `check` and Semgrep PASS on that exact commit; `origin/main` was still 31f6851 and the branch 0 behind, so `main` was fast-forwarded and pushed. Deploy run 42523620903 PASS (1m16s). The issuer precondition was checked from the live site: `/api/config` reported `signInRequired: true` before the push, which on the old code is true only when a valid Clerk issuer resolves.
+- **Checked after deploy (anonymous requests to https://flightdeck.gakinz.com, status codes and headers only):**
+  - PASS: `/api/weather` 401 (not 503); `/api/me` 401; `/api/admin/overview` 401; `/` 200; `/app/` 200; `Cross-Origin-Opener-Policy: same-origin-allow-popups` and `X-Permitted-Cross-Domain-Policies: none` present (proves the new release is serving); `X-Powered-By` absent; `/php/private/config.php` 404; `/app/index.html.map` 404; `/.env` and `/.git/config` 403 (blocked; 404 was expected, 403 still denies).
+  - **FAIL (low):** `X-Turbo-Charged-By: LiteSpeed` is still sent. `public/.htaccess` unsets it, but LiteSpeed adds it after `.htaccess`. Needs a Cloudflare response-header rule or a LiteSpeed setting (not a code change; needs the owner's approval).
+  - **Finding:** `/api/config` reports `webCheck: false`, so Bright Data is not live although the owner chose ON. Private server config needs `brightdata_key`, `brightdata_zone` and the `brightdata` switch.
+- **Not checked:** any signed-in flow (sign-in, flight lookup, weather, Discover, packing-list sync); Provider health; `FLIGHTDECK_AUTH`, `trust_cf_connecting_ip`, `published.json` and PHP GD on the server; the bare line in `.env`; the Clerk sign-up restriction (owner, in the Clerk dashboard). An anonymous `/api/flights/...` request returned 404 for a guessed path, which proves nothing about the real route.
+- **Branches:** `origin/production` (0 commits ahead of `main`) deleted; local `golive/2026-11` deleted with `-d` (GitHub had already removed the remote copy when the PR merged).
+
 ## 8 November 2026: Phase 1 gate re-run on `golive/2026-11` (commit 971ce58, before any change)
 - **Why:** before the branch is pushed for a PR, the whole gate was run again on the exact commit, in the project folder, with a clean working tree apart from the untracked `.planning/` folder. No push, deploy, server or provider access.
 - **Results (all PASS):**

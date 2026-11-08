@@ -2,6 +2,11 @@
 
 Newest first. Dates are UK dates.
 
+## 8 November 2026: go-live security fixes are live
+- The 1 November security fixes (below) were pushed to `main` and deployed. No new code in this entry. After the deploy, signed-in routes answer 401 to anonymous visitors, the new isolation headers are sent, and `X-Powered-By` is gone.
+- Known gap: the host still sends `X-Turbo-Charged-By: LiteSpeed`; it is added after `.htaccess` runs and needs a Cloudflare or LiteSpeed setting to hide.
+- Housekeeping: the old `production` branch was deleted; unused local test browsers were removed.
+
 ## 1 November 2026 (later): go-live security fixes
 - Sign-in fails closed. If the server's Clerk issuer is missing or mistyped, look-ups are refused instead of opened to everyone. A trailing slash or an empty value in config no longer switches sign-in off.
 - Fair use: each signed-in user can cause up to 6 paid schedule look-ups an hour and 20 web searches a day. The owner is exempt. Watching a flight never hits the limit, and over the limit the flight still shows live data with a note.
