@@ -33,7 +33,7 @@ const ROLE: Record<string, string> = {
   adsbdb: 'Usual routes',
   openmeteo: 'Destination weather',
   wikimedia: 'Travel guides (Discover)',
-  brightdata: 'Web search links (off unless configured)',
+  brightdata: 'Web search links',
 };
 
 /** Provider health and cache state. Shows only what the server recorded; a provider that has not been called says so. */

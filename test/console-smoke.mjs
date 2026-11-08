@@ -206,6 +206,33 @@ check(
   )),
 );
 
+// ---------------------------------------------------------------- live smoke-test findings, 8 Nov 2026
+c = boot('user_owner', '#/admin/system');
+check(
+  'C17 System has a row for the web links (Bright Data) and no dead "AI features" row',
+  !!(await c.until(() => c.text().includes('What is switched on'))) &&
+    c.text().includes('Web search links') &&
+    !c.text().includes('AI features'),
+);
+c = boot('user_owner', '#/admin/costs');
+check(
+  'C18 Costs shows the Bright Data web searches next to the AeroDataBox units',
+  !!(await c.until(() => c.text().includes('Bright Data') && c.text().includes('searches a day'))),
+);
+c = boot('user_owner', '#/admin/health');
+check(
+  'C19 Provider health no longer calls a provider "off unless configured"',
+  !!(await c.until(() => c.text().includes('No calls yet'))) &&
+    !c.text().includes('off unless configured'),
+);
+c = boot('user_owner', '#/admin/usage');
+check(
+  'C20 Usage has no badge for events that are never recorded ("signed up", "saved")',
+  !!(await c.until(() => c.text().includes('Sign-in screen views'))) &&
+    !/\d+ signed up/.test(c.text()) &&
+    !/\d+ saved/.test(c.text()),
+);
+
 // ---------------------------------------------------------------- not the owner
 c = boot('user_other', '#/admin/pages');
 check(

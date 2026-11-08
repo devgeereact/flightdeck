@@ -231,16 +231,12 @@ export function Usage({ ov }: { ov: any }) {
           icon={<Search size={16} />}
           label="Sign-in screen views"
           value={t.landingViews}
-          corner={`${nf.format(t.ctaClicks)} signed up`}
-          cornerTone="ok"
           spark={s.landingViews}
         />
         <Kpi
           icon={<ListChecks size={16} />}
           label="Packing lists"
           value={t.checklistsCreated}
-          corner={`${nf.format(t.checklistSaves)} saved`}
-          cornerTone="ok"
           spark={s.checklistsCreated}
         />
         <Kpi
@@ -386,6 +382,29 @@ export function Costs({ ov }: { ov: any }) {
         >
           <small>{nf.format(t.routeCacheHits)} answered from the cache (this range)</small>
         </ProviderRow>
+        {al.web && (
+          <ProviderRow
+            abbr="WEB"
+            name="Bright Data"
+            plan={`Web search links, ${nf.format(al.web.cap)} searches a day`}
+            value={
+              al.web.enabled
+                ? `${nf.format(al.web.usedToday)} of ${nf.format(al.web.cap)} today`
+                : 'Off'
+            }
+          >
+            {al.web.enabled ? (
+              <Meter
+                used={al.web.usedToday}
+                cap={al.web.cap}
+                label="Bright Data searches used today"
+                stopLabel={`Stop at ${al.web.cap} searches`}
+              />
+            ) : (
+              <small>Not set up on the server yet.</small>
+            )}
+          </ProviderRow>
+        )}
       </Panel>
       <div className="cs-kpis">
         <Kpi
@@ -689,7 +708,7 @@ export function SystemView({ sys }: { sys: any }) {
     ['User numbers (Clerk secret key)', sys.clerkApi],
     ['Google Analytics numbers', sys.googleAnalyticsApi],
     ['Email for new enquiries', sys.emailNotifications],
-    ['AI features', sys.ai],
+    ['Web search links (Bright Data)', sys.webCheck],
     ['Per-visitor limits behind Cloudflare', sys.trustCloudflareIp],
   ];
   const on = flags.filter(([, v]) => v).length;

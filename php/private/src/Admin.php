@@ -119,8 +119,11 @@ final class Admin
         $perDay = $dayOfMonth > 0 ? $used / $dayOfMonth : 0;
         $left = max(0, $cap - $used);
         $daysLeft = $perDay > 0 ? (int) floor($left / $perDay) : null;
+        // Bright Data bills per search, so today's count against the daily caps is shown next to the AeroDataBox units.
+        $web = ['enabled' => WebCheck::enabled($config), 'usedToday' => (int) ($store->get('web-count-' . gmdate('Y-m-d', $now)) ?? 0),
+            'cap' => max(0, (int) ($config['brightdata_daily_cap'] ?? 150)), 'userCap' => max(0, (int) ($config['brightdata_user_daily_cap'] ?? 20))];
         return ['used' => $used, 'cap' => $cap, 'left' => $left, 'perDay' => round($perDay, 1), 'daysUntilEmpty' => $daysLeft,
-            'runsOutBeforeMonthEnd' => $daysLeft !== null && $daysLeft < ($daysInMonth - $dayOfMonth), 'month' => gmdate('Y-m', $now)];
+            'runsOutBeforeMonthEnd' => $daysLeft !== null && $daysLeft < ($daysInMonth - $dayOfMonth), 'month' => gmdate('Y-m', $now), 'web' => $web];
     }
 
     public static function system(array $config, Store $store, bool $clerkApi, bool $ga): array
@@ -129,7 +132,7 @@ final class Admin
             'phpVersion' => PHP_VERSION, 'serverTime' => gmdate('c'),
             'signInEnforced' => !empty($config['clerk_issuer']), 'aerodatabox' => !empty($config['aerodatabox_key']),
             'opensky' => !empty($config['opensky_client_id']), 'clerkApi' => $clerkApi, 'googleAnalyticsApi' => $ga,
-            'emailNotifications' => !empty($config['owner_email']), 'ai' => !empty($config['ai_enabled']),
+            'emailNotifications' => !empty($config['owner_email']), 'webCheck' => WebCheck::enabled($config),
             'trustCloudflareIp' => !empty($config['trust_cf_connecting_ip']),
         ];
     }
