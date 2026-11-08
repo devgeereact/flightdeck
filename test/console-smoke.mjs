@@ -21,7 +21,7 @@ execFileSync(
   { cwd: root, stdio: 'inherit' },
 );
 const code = fs.readFileSync(path.join(root, '.local-test/build/console-smoke/console.js'), 'utf8');
-const h = await startHarness({ port: 3993 });
+const h = await startHarness({ port: 3995 });
 process.on('exit', () => h.stop());
 
 function boot(sub, hash) {

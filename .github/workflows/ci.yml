@@ -1,12 +1,11 @@
-# Every push to main and every pull request. Never deploys and never uses secrets.
+# The full gate. Runs on every pull request, and deploy.yml calls it before every deploy (a push to main runs
+# through Deploy, so CI is not also triggered by the push). Never deploys and never uses secrets.
 name: CI
 
 on:
-  push:
-    branches: [main]
-    paths-ignore: ["docs/**", "**/*.md", ".agent/**"]
   pull_request:
     paths-ignore: ["docs/**", "**/*.md", ".agent/**"]
+  workflow_call:
 
 permissions:
   contents: read
@@ -32,6 +31,12 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .node-version
+
+      # The server runs PHP 8.4; the runner's default PHP is not guaranteed to match.
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2.40.0
+        with:
+          php-version: "8.4"
+          coverage: none
 
       - run: pnpm install --frozen-lockfile
 
