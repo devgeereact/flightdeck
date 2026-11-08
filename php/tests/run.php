@@ -879,6 +879,19 @@ $per->fetch('ZZ2', '2026-10-24', 'user_b');
 $per->fetch('ZZ3', '2026-10-24', null); // the owner is not limited per user
 check('adb svc: each user has an hourly allowance of paid look-ups; others and the owner are unaffected', strpos($userCapped, 'You have used') !== false && count($calls) === 3);
 
+// The Google request shape Bright Data documents for its SERP API: q= must come first, then the other parameters (parameters
+// before q lower the success rate; in a 8 Nov 2026 check Google returned non-JSON through the owner's account). The body must carry
+// the zone and ask for the parsed JSON, and the key must go in the Authorization header only, never in the body or the URL.
+$sent = [];
+$spy = static function (string $url, array $h, string $body) use (&$sent): array {
+    $sent = ['url' => $url, 'headers' => $h, 'body' => json_decode($body, true), 'raw' => $body];
+    return [200, json_encode(['organic' => []])];
+};
+\Flightdeck\WebCheck::lookup(['brightdata_key' => 'test-key-abc', 'brightdata_zone' => 'my_zone', 'brightdata_daily_cap' => 100], new Store($gdir . '-w2'), 'BA117', '2026-11-01', 'LHR', 'JFK', $spy);
+$searchUrl = (string) ($sent['body']['url'] ?? '');
+check('web check: the Google URL starts with q= (Bright Data guidance) and keeps the parsed-JSON, language and country options', strpos($searchUrl, 'https://www.google.com/search?q=') === 0 && strpos($searchUrl, 'brd_json=1') !== false && strpos($searchUrl, 'hl=en') !== false && strpos($searchUrl, 'gl=gb') !== false && strpos($searchUrl, 'BA117') !== false);
+check('web check: the request names the zone, asks for the raw body, and the key is only in the Authorization header', ($sent['body']['zone'] ?? '') === 'my_zone' && ($sent['body']['format'] ?? '') === 'raw' && strpos((string) $sent['raw'], 'test-key-abc') === false && strpos($searchUrl, 'test-key-abc') === false && in_array('Authorization: Bearer test-key-abc', $sent['headers'], true));
+
 // L4 and L1 for the web check.
 $posts = 0;
 $wstore = new Store($gdir . '-w');

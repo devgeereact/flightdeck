@@ -58,7 +58,8 @@ final class WebCheck
         $q = trim($number . ' ' . $from . ' ' . $to . ' flight status');
         $payload = json_encode([
             'zone' => (string) $config['brightdata_zone'],
-            'url' => 'https://www.google.com/search?hl=en&gl=gb&brd_json=1&q=' . rawurlencode($q),
+            // q= first: Bright Data's SERP API documents that Google requests should not carry parameters before q.
+            'url' => 'https://www.google.com/search?q=' . rawurlencode($q) . '&hl=en&gl=gb&brd_json=1',
             'format' => 'raw',
         ]);
         $headers = ['Authorization: Bearer ' . trim((string) $config['brightdata_key']), 'Content-Type: application/json'];
