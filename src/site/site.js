@@ -617,8 +617,4 @@
       );
     });
   }
-
-  // Ad slots exist only when the owner has opened every condition of the ads gate (server config).
-  var slots = document.querySelectorAll('ins.adsbygoogle');
-  for (var s = 0; s < slots.length; s++) (window.adsbygoogle = window.adsbygoogle || []).push({});
 })();

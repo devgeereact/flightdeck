@@ -129,7 +129,7 @@ final class Admin
             'phpVersion' => PHP_VERSION, 'serverTime' => gmdate('c'),
             'signInEnforced' => !empty($config['clerk_issuer']), 'aerodatabox' => !empty($config['aerodatabox_key']),
             'opensky' => !empty($config['opensky_client_id']), 'clerkApi' => $clerkApi, 'googleAnalyticsApi' => $ga,
-            'emailNotifications' => !empty($config['owner_email']), 'ai' => !empty($config['ai_enabled']), 'ads' => !empty($config['ads_enabled']),
+            'emailNotifications' => !empty($config['owner_email']), 'ai' => !empty($config['ai_enabled']),
             'trustCloudflareIp' => !empty($config['trust_cf_connecting_ip']),
         ];
     }

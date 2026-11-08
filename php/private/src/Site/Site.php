@@ -128,9 +128,6 @@ final class Site
         if (!preg_match('#^/[A-Za-z0-9/_.-]*$#D', $path) || strpos($path, '..') !== false) {
             return ['status' => 404, 'html' => $this->notFound()];
         }
-        if ($path === '/ads.txt') { // only when the owner has opened every condition of the ads gate (server config)
-            return $this->adsOpen() ? ['status' => 200, 'type' => 'text/plain; charset=utf-8', 'html' => 'google.com, ' . $this->config['ads_pub_id'] . ", DIRECT, f08c47fec0942fa0\n"] : ['status' => 404, 'html' => $this->notFound()];
-        }
         if ($path === '/sitemap.xml') {
             return ['status' => 200, 'type' => 'application/xml; charset=utf-8', 'html' => $this->sitemap()];
         }
@@ -265,7 +262,6 @@ final class Site
         $lenis = !empty($this->assets['lenisJs']) ? '<script src="' . self::e($this->assets['lenisJs']) . '" defer></script>' : '';
         $motion = !empty($o['motion']) && !empty($this->assets['motionJs']) ? '<script src="' . self::e($this->assets['motionJs']) . '" defer></script>' : '';
         $scripts = '<script src="/consent.js" defer></script>' . $lenis . $motion . '<script src="' . self::e($this->assets['js']) . '" defer></script>' . ($o['scripts'] ?? '');
-        $adsHead = !empty($o['ads']) ? '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-' . self::e($this->config['ads_pub_id']) . '" crossorigin="anonymous"></script>' : '';
         $site = self::e($this->s['siteName'] ?? 'Flightdeck');
         // One header for every page, sitting over the photo band. On narrow screens the nav becomes the menu sheet (site.js);
         // without JavaScript it simply stays open under the bar.
@@ -280,28 +276,13 @@ final class Site
 <meta property="og:title" content="' . self::e($title) . '"><meta property="og:description" content="' . self::e($o['description']) . '"><meta property="og:type" content="' . (($o['ogType'] ?? '') === 'article' ? 'article' : 'website') . '"><meta property="og:url" content="' . self::e($url) . '"><meta property="og:site_name" content="' . $site . '"><meta property="og:image" content="' . self::e($img) . '"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="' . self::e($img) . '">
 <meta name="fd-ga-id" content="' . self::e($this->assets['gaId'] ?? '') . '">
 <link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/manifest.webmanifest">
-<link rel="stylesheet" href="' . self::e($this->assets['css']) . '">' . $ld . $adsHead . '</head>
+<link rel="stylesheet" href="' . self::e($this->assets['css']) . '">' . $ld . '</head>
 <body class="' . (!empty($o['home']) ? 'is-home' : 'is-inner') . '"><a class="skip" href="#main">Skip to content</a>
 ' . $this->announcements() . '<div class="stage">' . $header . '
 <main id="main">' . $o['main'] . '</main></div>
 <footer class="sf" aria-label="Site"><div class="sf-in"><div class="sf-top"><div class="sf-about">' . $this->brand('sf-brand') . '<p class="sf-blurb">' . self::e($this->s['footerBlurb'] ?? '') . '</p></div><div class="sf-cols">' . $foot . '</div></div><div class="sf-base"><p>' . self::e($this->s['footerNote'] ?? '') . '</p><p>© ' . $year . ' <a href="https://gakinz.com" rel="noopener">Gakinz</a></p></div></div></footer>
 ' . $scripts . '</body></html>
 ';
-    }
-
-    private function adsOpen(): bool
-    {
-        $c = $this->config;
-        return !empty($c['ads_enabled']) && !empty($c['ads_licence_cleared']) && !empty($c['ads_cmp_ready']) && preg_match('/^pub-\d{10,20}$/D', (string) ($c['ads_pub_id'] ?? '')) === 1;
-    }
-
-    private function adSlot(string $kind): string
-    {
-        $slot = (string) (($this->config['ads_slots'] ?? [])[$kind] ?? '');
-        if (!$this->adsOpen() || !preg_match('/^\d{6,20}$/D', $slot)) {
-            return '';
-        }
-        return '<aside class="ad-slot" aria-label="Advertisement"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-' . self::e($this->config['ads_pub_id']) . '" data-ad-slot="' . self::e($slot) . '" data-ad-format="auto" data-full-width-responsive="true"></ins></aside>';
     }
 
     /** The compact photo band every inner page opens with (the hero's smaller sibling): breadcrumbs, label, the one h1, the summary. */
@@ -410,8 +391,7 @@ final class Site
         });
         $related = array_slice(array_merge(array_values($same), array_values($diff)), 0, 3);
         $relHtml = $related ? '<section class="panel sheet related" aria-label="More guides"><div class="sheet-head"><h2>More guides</h2><a class="link-quiet" href="/guides/">See all ' . count($guides) . ' guides</a></div>' . $this->cards($related) . '</section>' : '';
-        $slot = $this->adSlot('guide');
-        $main = '<div class="shell page">' . $this->head($p, $crumbs, $tags) . $this->prose($r, $take) . $slot . $relHtml
+        $main = '<div class="shell page">' . $this->head($p, $crumbs, $tags) . $this->prose($r, $take) . $relHtml
             . $this->cta('Follow your flight in Flightdeck', 'Status, gate and baggage belt when reported, outbound or inbound, and a packing list you can reuse.', '/app/', 'Open Flightdeck') . '</div>';
         $base = rtrim((string) $this->s['siteUrl'], '/');
         $ld = [
@@ -423,7 +403,7 @@ final class Site
                 ['@type' => 'ListItem', 'position' => 3, 'name' => $p['title'], 'item' => $url],
             ]],
         ];
-        return $this->layout(['title' => $p['title'], 'description' => $p['description'], 'url' => $url, 'here' => '/' . $slug . '/', 'main' => $main, 'ld' => $ld, 'ogType' => 'article', 'ads' => $slot !== '']);
+        return $this->layout(['title' => $p['title'], 'description' => $p['description'], 'url' => $url, 'here' => '/' . $slug . '/', 'main' => $main, 'ld' => $ld, 'ogType' => 'article']);
     }
 
     private function guideIndex(array $p): string
@@ -470,7 +450,6 @@ final class Site
             $panels .= '<section class="ck-sec" id="' . $sid . '" aria-labelledby="' . $sid . '-h"><header class="ck-sec-head"><span class="ck-n" aria-hidden="true">' . ($i + 1) . '</span><div><h2 class="ck-sec-title" id="' . $sid . '-h">' . self::e($sec['title']) . '</h2>' . (!empty($sec['hint']) ? '<p class="ck-sec-hint">' . self::e($sec['hint']) . '</p>' : '') . '</div><span class="ck-sec-count">0/' . $n . '</span></header><ul class="ck-list">' . $list . '</ul><footer class="ck-pager noprint">' . $prev . $next . '</footer></section>';
         }
         $intro = $this->md((string) $p['body'])['html'];
-        $slot = $this->adSlot('checklist');
         $main = '<div class="shell page packing-page">' . $this->head($p)
             . '<div class="panel sheet packing-sheet"><div class="packing-top noprint"><div class="sub">' . $intro . '<p class="packing-access">' . self::ico('info', 'ico-sm') . '<span>Free to use and print. No sign-in needed. Your ticks stay in this browser.</span></p></div>'
             . '<div class="tools"><button class="btn btn-primary" type="button" data-print>' . self::ico('printer', 'ico-sm') . 'Print this list</button><button class="btn btn-secondary" type="button" data-print-blank>Print blank copy</button><a class="btn btn-secondary" href="/app/#/checklist">Keep it in Flightdeck</a><span class="stat num">' . count($tpl) . ' sections · ' . $total . ' items</span></div></div>'
@@ -480,13 +459,12 @@ final class Site
             . '<div class="ph-meta"><span><i>Trip</i><b id="packing-trip"></b></span><span><i>Leaving</i><b id="packing-date"></b></span><span><i>Packed by</i><b></b></span></div></div>'
             . '<div class="ck-layout" id="packing-board"><nav class="ck-rail" aria-label="Packing list sections">' . $rail . '</nav><div class="ck-panels">' . $panels . '</div></div>'
             . '<div class="print-foot"><span class="fd-brand">' . self::LOGO . '<span class="fd-brand-word">Flightdeck</span></span><span>Free printable packing list · flightdeck.gakinz.com/travel-checklist/</span><span>Flight details can change. Always follow airline and airport instructions.</span></div></div>'
-            . $slot
             . '<section class="panel sheet noprint" aria-labelledby="ck-how"><div class="sheet-head"><h2 id="ck-how">How to use it</h2></div><ol class="ck-steps"><li><span class="n num">1</span><b>Start days ahead</b><span>The first section holds the things that take time: visas, insurance and vaccinations.</span></li><li><span class="n num">2</span><b>Pack by section</b><span>Clothes, then the bathroom bag, then accessories, so nothing is forgotten halfway through.</span></li><li><span class="n num">3</span><b>Make it yours</b><span>Cross out what you never need and add what you always forget. In Flightdeck your edits are saved for every trip.</span></li><li><span class="n num">4</span><b>Finish with the last lists</b><span>The night-before and last-minute sections catch the keys, the charger and the back door.</span></li></ol>'
             . '<div class="prose"><p>For entry requirements, visas and health advice for your destination, use the official <a href="https://www.gov.uk/foreign-travel-advice" rel="noopener">GOV.UK foreign travel advice</a>. Planning the day itself? Read the <a href="/guides/departure-day-airport-timeline/">departure day timeline</a> and the guide to <a href="/guides/pack-your-cabin-bag-for-a-long-flight/">packing your cabin bag</a>.</p></div></section>'
             . $this->cta('Keep this list for every trip', 'Create a free account to tick items off on your phone, add your own, keep several trips, and use it offline at the airport.', '/app/#/checklist', 'Open Flightdeck') . '</div>';
         $url = $this->url($p['slug']);
         return $this->layout(['title' => $p['title'], 'description' => $p['description'], 'url' => $url, 'here' => '/travel-checklist/', 'main' => $main, 'ld' => [$this->webPage($p, $url)],
-            'scripts' => '<script src="' . self::e($this->assets['checklistJs']) . '" defer></script>', 'ads' => $slot !== '']);
+            'scripts' => '<script src="' . self::e($this->assets['checklistJs']) . '" defer></script>']);
     }
 
     /** The real contact form (posts to /api/contact through contact.js). Used on /contact/ and in the home page's message dialog. */

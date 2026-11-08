@@ -1,4 +1,4 @@
-// Public pages. Plain HTML strings so they can be rendered to static files (search engines and AdSense cannot run the app).
+// Public pages. Plain HTML strings so they can be rendered to static files (search engines cannot run the app).
 // Rules for everything written here: describe only what the app really does; never state a legal right, entry rule or flight fact that
 // is not certain; link to the official source instead. Dated facts carry the review date from site.config.json.
 

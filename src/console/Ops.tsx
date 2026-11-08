@@ -690,7 +690,6 @@ export function SystemView({ sys }: { sys: any }) {
     ['Google Analytics numbers', sys.googleAnalyticsApi],
     ['Email for new enquiries', sys.emailNotifications],
     ['AI features', sys.ai],
-    ['Adverts', sys.ads],
     ['Per-visitor limits behind Cloudflare', sys.trustCloudflareIp],
   ];
   const on = flags.filter(([, v]) => v).length;

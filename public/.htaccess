@@ -20,7 +20,7 @@ RewriteRule \.(bak|old|orig|save|swp|tmp|log|sql|sqlite|db|env|ini|conf|cfg|sh|m
 # Site pages BEFORE the real-file check: releases are additive, so the old static copies of these pages may still be on the server.
 RewriteRule ^(index\.html)?$ site.php [L]
 RewriteRule ^(about|contact|privacy|cookies|terms|travel-checklist|guides|help|coverage|how-it-works|accessibility)(/.*)?$ site.php [L]
-RewriteRule ^(sitemap\.xml|ads\.txt|404\.html)$ site.php [L]
+RewriteRule ^(sitemap\.xml|404\.html)$ site.php [L]
 RewriteRule ^media/ site.php [L]
 
 # The app: its own files are served as they are; anything else under /app/ gets the app shell (hash routes).

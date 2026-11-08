@@ -1,5 +1,5 @@
 // The public website as PHP renders it (php/private/src/Site) from the CMS seed. Replaces the old static-build tests, with the same
-// guarantees: proper documents, nothing from third parties, safe links, honest legal text, the ads gate, one shared link list.
+// guarantees: proper documents, nothing from third parties, safe links, honest legal text, no ads, one shared link list.
 
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -298,58 +298,28 @@ test('the guides are real articles, not thin pages', () => {
   );
 });
 
-test('ADS DEFAULT OFF: no ad code anywhere and no ads.txt', () => {
+test('NO ADS: no ad code on any page and no ads.txt', () => {
   for (const [p, h] of docs())
-    assert.ok(!/adsbygoogle|googlesyndication|pagead|data-ad-client/.test(h), p);
+    assert.ok(!/adsbygoogle|googlesyndication|pagead|data-ad-client|class="ad-slot"/.test(h), p);
   assert.equal(site['/ads.txt'].status, 404);
 });
 
-test('ADS GATE: every condition is required; a half-open gate renders without ads', () => {
-  const open = {
+test('NO ADS: the old ads settings in a server config change nothing (the ads path was removed, Phase 4)', () => {
+  // These are the four keys that used to open the AdSense gate. A config that still carries them must render exactly
+  // like one that does not: no script, no slot, no ads.txt.
+  const old = {
     ads_enabled: true,
     ads_licence_cleared: true,
     ads_cmp_ready: true,
     ads_pub_id: 'pub-1234567890123456',
     ads_slots: { guide: '1234567890', checklist: '0987654321' },
   };
-  for (const missing of ['ads_enabled', 'ads_licence_cleared', 'ads_cmp_ready']) {
-    const r = render(['/guides/flight-status-explained/', '/ads.txt'], {
-      config: { ...open, [missing]: false },
-    });
-    assert.ok(
-      !/adsbygoogle/.test(r['/guides/flight-status-explained/'].html) &&
-        r['/ads.txt'].status === 404,
-      missing,
-    );
+  const r = render([...ALL, '/ads.txt'], { config: old });
+  assert.equal(r['/ads.txt'].status, 404);
+  for (const p of ALL) {
+    assert.ok(!/adsbygoogle|googlesyndication|data-ad-|ad-slot/.test(r[p].html), p);
+    assert.equal(r[p].html, site[p].html, `${p} must not depend on the old ads keys`);
   }
-  for (const id of ['', 'ca-pub-123', 'pub-12', 'pub-<script>']) {
-    const r = render(['/guides/flight-status-explained/', '/ads.txt'], {
-      config: { ...open, ads_pub_id: id },
-    });
-    assert.ok(
-      !/adsbygoogle/.test(r['/guides/flight-status-explained/'].html) &&
-        r['/ads.txt'].status === 404,
-      id,
-    );
-  }
-});
-
-test('ADS OPEN: ads only on guides and the packing list, never on legal, contact, about, home, help or the guide index', () => {
-  const open = {
-    ads_enabled: true,
-    ads_licence_cleared: true,
-    ads_cmp_ready: true,
-    ads_pub_id: 'pub-1234567890123456',
-    ads_slots: { guide: '1234567890', checklist: '0987654321' },
-  };
-  const r = render([...ALL, '/ads.txt'], { config: open });
-  assert.equal(r['/ads.txt'].html, 'google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0\n');
-  const withAds = ALL.filter((p) => /adsbygoogle/.test(r[p].html));
-  assert.deepEqual(withAds.sort(), [...GUIDES.map((g) => `/${g}/`), '/travel-checklist/'].sort());
-  assert.ok(
-    r['/travel-checklist/'].html.includes('data-ad-slot="0987654321"') &&
-      r['/guides/flight-status-explained/'].html.includes('data-ad-slot="1234567890"'),
-  );
 });
 
 test('Google Analytics ID: the build value reaches every page as a meta tag', () => {

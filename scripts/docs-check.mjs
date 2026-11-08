@@ -30,8 +30,8 @@ export function bannedHits(file, text, rules) {
   const out = [];
   text.split('\n').forEach((line, i) => {
     if (RETIRED.test(line)) return;
-    for (const { re, why, files } of rules)
-      if ((!files || files.includes(file)) && re.test(line))
+    for (const { re, why, files, except } of rules)
+      if ((!files || files.includes(file)) && !except?.includes(file) && re.test(line))
         out.push({ file, line: i + 1, message: `${file}:${i + 1}: ${why} (matched ${re})` });
   });
   return out;
@@ -96,6 +96,11 @@ export const STALE_PHRASES = [
     why: 'Discover works for any city (Wikivoyage/Wikipedia)',
   },
   { re: /Live lookup is callsign-based/i, why: 'AeroDataBox gives schedules, gates and dates' },
+  {
+    re: /\bads\\?\.txt\b|adsbygoogle|ads gate|ad slots?\b/i,
+    why: 'the ads path was removed (Phase 4); only docs/MONETISATION.md may explain that',
+    except: ['docs/MONETISATION.md'],
+  },
 ];
 
 /** Dead references in code comments and config (not in docs): the old Node server folder. */
@@ -105,6 +110,15 @@ export const DEAD_CODE_REFS = [
     why: 'the Node server was archived (ADR-018); there is no server/ folder',
   },
   { re: /!!\*\*\/server/, why: 'there is no server/ folder to ignore' },
+  // The ads path was removed in Phase 4 (personal, non-commercial app). None of it may come back by accident.
+  {
+    re: /adsbygoogle|googlesyndication|ads_(enabled|licence_cleared|cmp_ready|pub_id|slots)|\bads\\?\.txt\b|\bad-slot\b|AdSense|"ads"\s*:\s*\{/,
+    why: 'the ads path was removed (Phase 4); the app is personal and non-commercial',
+  },
+  {
+    re: /<b>Adverts<\/b>|\['Adverts'/,
+    why: 'the console no longer has an Adverts row (Phase 4)',
+  },
 ];
 
 const HISTORY = new Set(['docs/AUDIT.md', 'docs/CHANGELOG.md', 'docs/DECISIONS.md']);
@@ -154,9 +168,14 @@ export function checkRepo() {
   }
 
   const codeFiles = [
-    ...walk('php/private/src', ['.php']),
+    ...walk('php/private/src', ['.php', '.json']),
     'php/tests/run.php',
     ...walk('scripts', ['.mjs', '.sh']).filter((f) => f !== 'scripts/docs-check.mjs'),
+    ...walk('src', ['.ts', '.tsx', '.js', '.css']),
+    ...walk('content', ['.mjs', '.json']),
+    'public/.htaccess',
+    'public/consent.js',
+    'site.config.json',
     'biome.json',
   ].filter(exists);
   for (const f of codeFiles)

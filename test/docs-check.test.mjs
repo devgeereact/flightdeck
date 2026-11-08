@@ -5,6 +5,7 @@ import test from 'node:test';
 import {
   bannedHits,
   checkRepo,
+  DEAD_CODE_REFS,
   deadPathHits,
   missingRoutes,
   routesFromPhp,
@@ -83,6 +84,37 @@ test('a rule with a files list only applies to those files', () => {
   const rules = [{ re: /development instance/i, why: 'x', files: ['docs/INTEGRATIONS.md'] }];
   assert.equal(bannedHits('docs/INTEGRATIONS.md', 'a development instance', rules).length, 1);
   assert.equal(bannedHits('docs/LOCAL-LIVE-LOGIN.md', 'a development instance', rules).length, 0);
+});
+
+test('the code rules catch every part of the removed ads path and leave honest wording alone', () => {
+  const hit = (line) => bannedHits('src/x.ts', line, DEAD_CODE_REFS).length > 0;
+  for (const bad of [
+    '<script src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js">',
+    "if (!empty($c['ads_enabled'])) {}",
+    "$config['ads_pub_id']",
+    "if ($path === '/ads.txt') {",
+    '.ad-slot { margin-top: 20px; }',
+    '  "ads": {',
+    'RewriteRule ^(sitemap\\.xml|ads\\.txt|404\\.html)$ site.php [L]',
+    '<b>Adverts</b>',
+    "['Adverts', sys.ads],",
+    '// search engines and AdSense cannot run the app',
+  ])
+    assert.ok(hit(bad), bad);
+  for (const fine of [
+    'Free, with no adverts, and clear about anything not known yet.',
+    'We do not sell your data and we do not show advertising.',
+    'Do not advertise the server stack (PHP and LiteSpeed add these).',
+    'Live ADS-B position only',
+    '<ProviderRow abbr="ADS" name="adsbdb" plan="Usual routes">',
+  ])
+    assert.ok(!hit(fine), fine);
+});
+
+test('a rule with an except list skips those files', () => {
+  const rules = [{ re: /ads\.txt/, why: 'x', except: ['docs/MONETISATION.md'] }];
+  assert.equal(bannedHits('docs/MONETISATION.md', 'no ads.txt exists', rules).length, 0);
+  assert.equal(bannedHits('docs/API.md', 'serves /ads.txt', rules).length, 1);
 });
 
 test('this repository: docs, comments and code agree (pnpm docs:check)', () => {

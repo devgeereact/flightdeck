@@ -91,8 +91,7 @@ export default function Editor({
   const [preview, setPreview] = useState<string | null>(null),
     [allHistory, setAllHistory] = useState(false),
     [viewRev, setViewRev] = useState<{ name: string; data: any } | null>(null),
-    [confirm, setConfirm] = useState<'discard' | 'unpublish' | 'delete' | null>(null),
-    [ads, setAds] = useState<boolean | null>(null);
+    [confirm, setConfirm] = useState<'discard' | 'unpublish' | 'delete' | null>(null);
   const base = `/api/admin/content/${type}/${type === 'page' ? id.split('/').map(encodeURIComponent).join('/') : encodeURIComponent(id)}`;
   const load = useCallback(async () => {
     setMsg(null);
@@ -117,13 +116,6 @@ export default function Editor({
   useEffect(() => {
     void load();
   }, [load]);
-  // Site settings show whether adverts are on. That is set on the server only, so it is read, never changed, here.
-  useEffect(() => {
-    if (type !== 'settings') return;
-    call<{ ads: boolean }>('/api/admin/system')
-      .then((s) => setAds(!!s.ads))
-      .catch(() => setAds(null));
-  }, [type]);
   // Leaving with unsaved changes asks first (closing the tab, or going back to the list).
   useEffect(() => {
     if (!dirty) return;
@@ -501,19 +493,6 @@ export default function Editor({
                     label="Maintenance page"
                     onChange={() => set({ ...data, maintenance: !data?.maintenance })}
                   />
-                </div>
-                <div className="cs-swrow">
-                  <div>
-                    <b>Adverts</b>
-                    <small>
-                      {ads === null
-                        ? 'Set in the private server config, not here.'
-                        : ads
-                          ? 'On. Set in the private server config, not here.'
-                          : 'Locked off. Flightdeck is free and non-commercial; this is set on the server.'}
-                    </small>
-                  </div>
-                  <Switch checked={!!ads} label="Adverts, set on the server" disabled />
                 </div>
               </div>
             </Panel>

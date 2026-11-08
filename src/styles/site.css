@@ -2376,10 +2376,6 @@ details[open] > .acc-btn .pm {
 .related .cards a {
   background: var(--surface-2);
 }
-.ad-slot {
-  margin-top: 20px;
-  min-height: 120px;
-}
 
 /* Contact */
 .contact-grid {
@@ -2984,7 +2980,6 @@ details[open] > .acc-btn .pm {
   .tools,
   .cta-box,
   .noprint,
-  .ad-slot,
   .band-photo,
   .fd-cc,
   dialog {
