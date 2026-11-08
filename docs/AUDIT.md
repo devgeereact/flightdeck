@@ -2,12 +2,13 @@
 
 Newest first. Each entry says what was checked, how, and what was not.
 
-## 8 November 2026: Phase 2, gate the deploy (branch `phase-2/gate-the-deploy`, not pushed)
+## 8 November 2026: Phase 2, gate the deploy (branch `phase-2/gate-the-deploy`, PR #7)
 - **Why:** `deploy.yml` ran only `pnpm test`, `pnpm test:php` and the build, in parallel with CI, and the smoke test checked three status codes. A deploy could ship with the UI or console smoke tests red, and could not tell that every signed-in route answered 503.
 - **Change (ADR-023):** `deploy.yml` = `check` (calls `ci.yml`) then `deploy` (`needs: check`, `if: github.ref == 'refs/heads/main'`); `ci.yml` = `pull_request` + `workflow_call`, PHP 8.4 via setup-php, no push trigger; all actions pinned by SHA; `pnpm check` runs `tsc` once; console smoke test on port 3995; `release.json` smoke list has content checks, `signInRequired:true` and anonymous `/api/weather` = 401.
 - **Test first:** `test/release-gate.test.mjs` (10 tests) was written and run red (8 of 9 failed for the intended reasons) before the changes, then green. One of my own assertions was wrong (it matched the word "secrets." in a comment) and was tightened, not loosened.
 - **Results (local, PASS):** `npm run verify` exit 0 (node 126/126, PHP "All passed", build, upload guard); `pnpm lint`; `pnpm test:ui`; `pnpm test:console` (new port); both workflow files parse as YAML (PyYAML, run through `uv`); the new smoke list was run read-only against the live site: all 5 entries PASS.
-- **NOT tested:** the workflows themselves have not run on GitHub. A pull request will exercise `ci.yml` (including PHP 8.4 and the pinned actions for the first time). `deploy.yml` (reusable-workflow call, `needs`, the `if`) only runs on a push to `main` or a manual run, so its first real run is the merge itself; a mistake there fails before any upload, so production is not touched. The PHP suite has so far run on PHP 8.5.12 only; CI on 8.4 is its first run there. No `actionlint` was available.
+- **Pull request #7 (head eae496e):** `check` PASS in 1m14s and Semgrep PASS. The run had only the `check` job (no deploy job, no Deploy workflow for the branch). It installed PHP 8.4.27 and the whole gate passed on it: the first time the PHP suite has run on 8.4 (locally it runs on 8.5.12). All four actions ran by their pinned SHAs.
+- **NOT tested:** `deploy.yml` itself (the reusable-workflow call, `needs: check`, the main-only `if`) runs only on a push to `main` or a manual run, so its first real run is the merge; a mistake there fails before any upload, so production is not touched. Not verified on GitHub: that a docs-only push still skips Deploy (the `paths-ignore` is unchanged and guarded by a test). No `actionlint` was available.
 - **Known side effects:** a push to `main` takes roughly one to two minutes longer. The deploy job still repeats the tests and build inside `release.mjs` (kept on purpose, ADR-023). `semgrep.yml` and `uptime.yml` are separate workflows and were not changed (their actions are not pinned by SHA; left for a later phase).
 
 ## 8 November 2026: post-deploy check of the security release (`main` at 3db0b73)

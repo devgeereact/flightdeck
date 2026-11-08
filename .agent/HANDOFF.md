@@ -2,8 +2,8 @@
 
 Newest first. Moved out of `.agent/CURRENT-TASK.md` on 1 Nov 2026; earlier entries describe the project at the time (paths and release steps may since have changed).
 
-## 8 November 2026 (later): Phase 2, gate the deploy (branch `phase-2/gate-the-deploy`, not pushed)
-- Deploy now waits for the full CI gate (ADR-023); smoke test checks sign-in; actions pinned; PHP 8.4 in CI. 126/126 tests, verify, lint, UI and console smoke PASS locally. Workflows not yet run on GitHub: open a PR first. See `.agent/CURRENT-TASK.md` and docs/AUDIT.md.
+## 8 November 2026 (later): Phase 2, gate the deploy (branch `phase-2/gate-the-deploy`, PR #7 green, not merged)
+- Deploy now waits for the full CI gate (ADR-023); smoke test checks sign-in; actions pinned; PHP 8.4 in CI. 126/126 tests, verify, lint, UI and console smoke PASS locally. PR #7 green (CI on PHP 8.4.27); `deploy.yml` first runs on the merge. See `.agent/CURRENT-TASK.md` and docs/AUDIT.md.
 
 ## 8 November 2026: security release landed on `main` (GSD Phase 1)
 - Gate re-run on 971ce58, PR #6 with green CI, `main` fast-forwarded to `3db0b73`, deployed (run 42523620903). Public post-deploy checks pass except two open items: `X-Turbo-Charged-By` still sent (LiteSpeed adds it after `.htaccess`) and Bright Data not live (`webCheck: false`). `origin/production` and `golive/2026-11` deleted. Owner still to do: Clerk sign-up restriction, a signed-in check with one real flight lookup, the bare `.env` line. See `.agent/CURRENT-TASK.md` and docs/AUDIT.md. The 1 Nov "Not pushed" entries below are now out of date.

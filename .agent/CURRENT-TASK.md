@@ -19,9 +19,9 @@ Phase 1 of the GSD roadmap: land the go-live security release on `main` safely. 
 7. Planned tasks: major upgrades (vite 8, plugin-react 6, vite-plugin-pwa 2, TypeScript 7, lucide 1, concurrently 10; Dependabot PRs for vite and lucide are open); self-host gtag to drop GTM from the CSP.
 8. Still open from 31 Oct: console with the production account, a real phone, a screen reader, a paper print, Firefox (BLOCKED here).
 
-## Phase 2 of 9: gate the deploy. Built on branch `phase-2/gate-the-deploy`, NOT pushed (needs the owner's "approved: push")
+## Phase 2 of 9: gate the deploy. Branch `phase-2/gate-the-deploy`, PR #7, NOT merged
 - Done and checked locally (details in docs/AUDIT.md, ADR-023): `deploy.yml` = `check` (calls `ci.yml`) then `deploy` (`needs: check`, main only); `ci.yml` on pull requests and `workflow_call`, PHP 8.4, no push trigger; actions pinned by SHA; `pnpm check` runs `tsc` once; console test on port 3995; smoke list adds content checks, `signInRequired:true` and anonymous `/api/weather` = 401. Guard tests: `test/release-gate.test.mjs`. `npm run verify` PASS (126/126), lint, `test:ui`, `test:console` PASS.
-- **Not tested:** the workflows have not run on GitHub. Order to land it: (1) push the branch and open a PR, which runs `ci.yml` (first run on PHP 8.4); (2) once green, merge. The merge push is the first real run of `deploy.yml` (a mistake fails before any upload). Merging touches workflow files, so it deploys; ask before it.
+- **PR #7 is open and green** (`check` and Semgrep PASS; CI ran PHP 8.4.27 and the whole gate passed on it; no deploy job in the PR run). **Not tested:** `deploy.yml` itself, which first runs on the merge push (a mistake fails before any upload). Merging touches workflow files, so it deploys; it needs the owner's "approved: push main" (fast-forward merge).
 - Left for later phases: `semgrep.yml`/`uptime.yml` actions not pinned by SHA; the Dependabot PRs for vite and lucide.
 
 ## Checks run
