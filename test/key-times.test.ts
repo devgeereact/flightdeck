@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { journeySteps } from '../src/features/flight/flightFormat';
 import {
   gatePlace,
   gateTile,
@@ -125,4 +126,52 @@ test('position card: before departure and while airborne without a position keep
   assert.match(before.text, /does not guess/i);
   const air = positionCard(f({ actualOut: '2026-11-01T08:50:00Z', position: null }));
   assert.match(air.title, /not transmitting yet/i);
+});
+
+// ---- the Journey tab said "Boarding: Not reported" and "Landing: Not reported" while the Key times card above it showed Typical times for
+// the same moments (owner's screenshot of BA75, 9 Nov 2026). Both now come from the same logic, and provider-reported values still win.
+
+const stepBy = (steps: any[], k: string) => steps.find((x) => x.key === k);
+
+test('journey: boarding, take-off and landing show the same Typical times as the Key times card, labelled Typical', () => {
+  const flight = f({ actualOut: '2026-11-01T08:50:00Z', estimatedOut: '2026-11-01T08:50:00Z' });
+  const kt = keyTimes(flight);
+  const steps = journeySteps(flight);
+  for (const [stepKey, ktKey] of [
+    ['boarding', 'boarding'],
+    ['landing', 'landing'],
+  ] as const) {
+    const s = stepBy(steps, stepKey);
+    const k = by(kt, ktKey);
+    assert.equal(k.kind, 'Typical', `${ktKey} should be a Typical time in this fixture`);
+    assert.equal(s.t, k.t, `${stepKey}: the Journey and the Key times card must agree`);
+    assert.equal(
+      s.kind,
+      'Typical',
+      `${stepKey}: the Journey must label it Typical, not "Not reported"`,
+    );
+  }
+});
+
+test('journey: values the provider reported are used as before and are not called Typical', () => {
+  const steps = journeySteps(
+    f({
+      boarding: '2026-11-01T07:55:00Z',
+      takeoff: '2026-11-01T08:51:00Z',
+      landing: '2026-11-01T16:02:00Z',
+    }),
+  );
+  assert.equal(stepBy(steps, 'boarding').kind, 'Reported by the airline');
+  assert.equal(stepBy(steps, 'boarding').t, '2026-11-01T07:55:00Z');
+  assert.equal(stepBy(steps, 'takeoff').kind, 'Actual');
+  assert.equal(stepBy(steps, 'landing').kind, 'Actual');
+  assert.equal(stepBy(steps, 'landing').t, '2026-11-01T16:02:00Z');
+});
+
+test('journey: with no times at all nothing is invented', () => {
+  const steps = journeySteps(f({ scheduledOut: null, scheduledIn: null }));
+  for (const k of ['boarding', 'takeoff', 'landing']) {
+    assert.equal(stepBy(steps, k).t, null, k);
+    assert.equal(stepBy(steps, k).kind, 'Not reported', k);
+  }
 });

@@ -1,5 +1,6 @@
 // Small helpers for showing a flight. Plain functions, no React, so the tests and the views can share them.
 import type { Flight } from '../../types';
+import { keyTimes } from './keyTimes';
 
 // Every time is an instant (ISO with Z or an offset) shown in a named IANA zone, so BST/GMT and other clock changes come from the
 // time zone database, never from arithmetic. No zone means UTC (callers label it). A time or zone that cannot be read gives null:
@@ -119,6 +120,14 @@ export function journeySteps(f: Flight): Step[] {
   const st = f.providerStatus ? STAGE[f.providerStatus] : undefined;
   const o = f.origin.timezone,
     d = f.destination.timezone;
+  // The Key times card already works out Typical boarding, take-off and landing times (labelled as such) when the provider has none. The
+  // Journey uses the same answers, so the two cards no longer disagree ("Typical 09:56" above, "Not reported" below).
+  const keyTimeFor = (key: string): { t: string | null; kind: string } => {
+    const k = keyTimes(f).find((x) => x.key === key);
+    return k ? { t: k.t, kind: k.kind } : { t: null, kind: 'Not reported' };
+  };
+  const reportedOr = (p: { t: string | null; kind: string }, key: string) =>
+    p.t ? p : keyTimeFor(key);
   const at = (
     key: string,
     label: string,
@@ -148,9 +157,7 @@ export function journeySteps(f: Flight): Step[] {
       'boarding',
       'Boarding',
       'Called to the aircraft',
-      f.boarding
-        ? { t: f.boarding, kind: 'Reported by the airline' }
-        : { t: null, kind: 'Not reported' },
+      f.boarding ? { t: f.boarding, kind: 'Reported by the airline' } : keyTimeFor('boarding'),
       o,
       !!f.boarding || (st !== undefined && st > 2),
     ),
@@ -166,7 +173,7 @@ export function journeySteps(f: Flight): Step[] {
       'takeoff',
       'Take-off',
       'Wheels leave the runway',
-      pick(f.takeoff, f.estimatedTakeoff, null),
+      reportedOr(pick(f.takeoff, f.estimatedTakeoff, null), 'takeoff'),
       o,
       !!f.takeoff || (st !== undefined && st >= 4),
     ),
@@ -174,7 +181,7 @@ export function journeySteps(f: Flight): Step[] {
       'landing',
       'Landing',
       'Wheels touch down',
-      pick(f.landing, f.estimatedLanding, null),
+      reportedOr(pick(f.landing, f.estimatedLanding, null), 'landing'),
       d,
       !!f.landing || st === 7,
     ),

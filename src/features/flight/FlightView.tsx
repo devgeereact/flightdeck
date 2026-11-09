@@ -148,7 +148,9 @@ const badgeFor = (kind: string) =>
       ? 'badge blue'
       : kind === 'Scheduled'
         ? 'badge plain'
-        : 'badge warn';
+        : kind === 'Typical'
+          ? 'badge violet plain'
+          : 'badge warn';
 
 export default function FlightView({
   flight,
