@@ -13,7 +13,6 @@ final class Validator
     public const RESERVED = ['app', 'api', 'assets', 'fonts', 'js', 'media', 'home', 'index', 'sitemap', 'robots', 'ads', 'site', 'sw', 'workbox', 'manifest', 'sign-in', 'sign-up', 'sso-callback', 'v1', '__clerk', 'consent', '404'];
     /** Pages the site cannot run without. They can be edited but not unpublished or deleted. */
     public const REQUIRED = ['home', 'privacy', 'cookies', 'terms', 'contact', 'help', 'guides', 'travel-checklist', 'about'];
-    public const PAGE_KINDS = ['page', 'about', 'legal', 'guide', 'help', 'contact', 'checklist', 'index', 'home'];
 
     private $errors = [];
 

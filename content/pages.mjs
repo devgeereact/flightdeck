@@ -198,32 +198,7 @@ export const pages = (s) => [
     title: 'Contact us',
     description: 'Send a question, a problem report or feedback about Flightdeck.',
     body: `
-<p>${s.contactEmail ? `You can email <a href="mailto:${s.contactEmail}">${s.contactEmail}</a> or use` : 'Use'} the form below. We read every message. Please do not include passwords or payment details.</p>
-<form id="contact-form" class="pub-form" novalidate>
- <div class="pub-kinds" role="radiogroup" aria-label="What is this about?">
-  <label><input type="radio" name="kind" value="contact" checked> A question</label>
-  <label><input type="radio" name="kind" value="bug"> A problem</label>
-  <label><input type="radio" name="kind" value="feedback"> Feedback</label>
- </div>
- <label class="pub-f"><span>Your message</span><textarea name="message" rows="6" minlength="5" maxlength="4000" required></textarea></label>
- <div class="pub-row">
-  <label class="pub-f"><span>Your name (optional)</span><input name="name" maxlength="80" autocomplete="name"></label>
-  <label class="pub-f"><span>Your email (needed for a reply)</span><input name="email" type="email" maxlength="254" autocomplete="email" required></label>
- </div>
- <input class="pub-trap" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
- <p id="contact-msg" role="status" aria-live="polite"></p>
- <button class="btn btn-primary" type="submit">Send message</button>
- <p class="pub-small">We use your details only to reply. See the <a href="/privacy/">privacy policy</a>.</p>
-</form>
-<script>
-(function(){var f=document.getElementById('contact-form'),m=document.getElementById('contact-msg'),t0=Date.now();
-f.addEventListener('submit',function(e){e.preventDefault();m.textContent='';var d=new FormData(f);
-var body={kind:d.get('kind'),message:d.get('message'),name:d.get('name'),email:d.get('email'),website:d.get('website'),elapsed:Date.now()-t0};
-if(!f.checkValidity()){m.textContent='Please write your message and add a valid email address.';return}
-f.querySelector('button').disabled=true;
-fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})}).then(function(x){
-if(!x.ok)throw new Error(x.j.error||'Your message could not be sent.');f.reset();m.textContent='Thank you. Your message has been sent.'}).catch(function(err){m.textContent=err.message||'Your message could not be sent. Please try again.'}).then(function(){f.querySelector('button').disabled=false})});})();
-</script>`,
+<p>${s.contactEmail ? `You can email <a href="mailto:${s.contactEmail}">${s.contactEmail}</a> or use` : 'Use'} the form below. We read every message. Please do not include passwords or payment details.</p>`,
   },
 
   /* ----------------------------------------------------------------- packing list (built from the app's template) */

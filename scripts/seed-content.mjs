@@ -87,7 +87,6 @@ export const htmlToMarkdown = (html) =>
 const converted = {};
 for (const p of pages(P)) {
   let body = p.body;
-  if (p.kind === 'contact') body = body.replace(/<form[\s\S]*<\/script>/, ''); // the form is part of the page template
   if (p.kind === 'checklist') body = ''; // the board is generated from the template; the intro is in site-content
   body = body.replace(/\$\{[^}]*\}/g, (m) => {
     throw new Error(`Unresolved template in ${p.slug}: ${m}`);
