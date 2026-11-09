@@ -319,7 +319,7 @@ test('sync: a trip deleted on one device is deleted on the other, and not resurr
 });
 
 test('expanded template retains original item IDs and existing user customisations', () => {
-  const oldCounts = {
+  const oldCounts: Record<string, number> = {
     advance: 5,
     clothes: 20,
     bathroom: 8,

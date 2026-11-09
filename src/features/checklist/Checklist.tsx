@@ -281,7 +281,6 @@ export default function Checklist({
     visible.find((s) => s.id === act) ||
     visible.find((s) => s.doneCount < s.items.length) ||
     visible[0];
-  const activeIdx = activeSec ? visible.indexOf(activeSec) : -1;
   const boardRef = useRef<HTMLDivElement>(null),
     railRef = useRef<HTMLElement>(null);
   const [tipsOpen, setTipsOpen] = useState(false),

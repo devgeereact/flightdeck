@@ -5,39 +5,22 @@ import {
   Bookmark,
   CalendarPlus,
   Clock,
-  CloudSun,
-  Compass,
   Info,
   Luggage,
-  MapPin,
   PlaneLanding,
   PlaneTakeoff,
   Radio,
   RefreshCw,
   Share2,
-  Timer,
-  Wind,
 } from 'lucide-react';
-import { type ReactNode, useEffect, useRef, useState } from 'react';
-import { CodeTile } from '../../app/SavedFlightCollection';
-import { DEST_PHOTO, flightTime, zoneAbbr } from '../../app/zone';
-import { apiFetch } from '../../shared/api';
+import { type ReactNode, useRef, useState } from 'react';
+import { flightTime, zoneAbbr } from '../../app/zone';
 import { fromAny, withMotion } from '../../shared/motion';
 import { nextTabIndex } from '../../shared/tabKeys';
 import type { Airport, Flight, FlightResponse } from '../../types';
 import { countdown } from './countdown';
 import { DiscoverCard, KeyTimesPanel, WeatherCard, WebCheckCard } from './DestinationPanels';
-import {
-  airlines,
-  day,
-  directionText,
-  inZone,
-  journeySteps,
-  regionName,
-  time,
-  weatherLabel,
-  withHint,
-} from './flightFormat';
+import { airlines, day, directionText, inZone, journeySteps, time, withHint } from './flightFormat';
 import { flightIcs } from './ics';
 import { positionCard } from './keyTimes';
 import { summarise } from './summary';
