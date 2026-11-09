@@ -9,6 +9,16 @@ Work through the GSD roadmap (9 phases, local plan in `.planning/`). Personal-us
 - **Phase 6 (the trip-day home) is NEXT and not started.** It changes what users see, so it needs the owner's go-ahead, a written proposal and a mockup first.
 - Everything is merged: only `main` and two Dependabot PRs (#3 lucide-react 1, #4 vite 8, planned major upgrades) remain.
 
+## Latest (9 Nov 2026, afternoon): picture, sizes and Journey fixed on branch `fix/discover-image-and-journey`, NOT pushed
+- From the owner's BA75 screenshots: (1) the Discover picture was broken for every city using a Wikimedia photo (we asked for 640 px, Wikimedia answers HTTP 400; now 960 px, cache key versioned, and a failing picture falls back to the airport tile); (2) controls are now 36 px with a mouse (were 44 px), sidebar 40 px, touch keeps 44 px; the cramped Departure/Arrival time cells are fixed; (3) the Journey tab now agrees with the Key times card (Typical boarding/take-off/landing times). All with tests first. 190/190 node tests, PHP, verify, lint, docs:check, UI and console smoke PASS locally; CI not run. Before and after pictures: `.local-test/density/shots/`. Details: docs/AUDIT.md (top entry).
+- To land: "approved: push branch", then "approved: push main" (deploys PHP, CSS and the app bundle).
+
+## DECISIONS NEEDED: live web or AI information on the Journey page (the owner's third request, not built yet)
+The owner asked for the right information on the Journey page, found by AI or Bright Data and updated in real time. What I know: Bright Data works, but the search results in the BA75 screenshot were for 7 and 8 November, not 9 November, so values copied straight from snippets would be wrong; tracker sites (FlightAware and similar) forbid scraping and are skipped; airline and airport pages are mostly JavaScript pages. Proposed design: Bright Data finds candidate pages; an extractor reads only that text and returns a value only if the page states this flight's own number and date; accepted values appear on the Journey and Key times as "From the web" rows with the source link and the time checked, never replacing AeroDataBox or airline-reported values; refreshed every 5 minutes (shared by all users, cached, inside the Bright Data daily cap) while a gate or belt is still missing and the flight is within about 3 hours of departure or 1 hour of landing. Decisions:
+1. **Amend ADR-003** ("web results are links to check, never copied into gate or time fields") to allow labelled web-sourced values: yes or no?
+2. **The extractor:** (a) AI (a small Claude model through the Anthropic API: needs your API key in the private server config, costs a fraction of a penny per flight at normal sizes (check your account's prices) and needs the privacy page to name Anthropic as a processor of public search text; no personal data is sent), or (b) rules only (free, but breaks when a page changes). My recommendation: (a) with the date-and-number check, because (b) will mostly find nothing.
+3. **Cost caps:** keep Bright Data at 150 searches a day and 20 per user, or raise them for refreshing every 5 minutes?
+
 ## Owner decisions (8 Nov 2026)
 - Clerk sign-up: leave it open (owner). Per-user allowances cap the cost; the provider-terms concern (ADR-008) stays open.
 - `.planning/` stays local, untracked (excluded through `.git/info/exclude`).

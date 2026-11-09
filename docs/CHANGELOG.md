@@ -2,6 +2,11 @@
 
 Newest first. Dates are UK dates.
 
+## 9 November 2026 (afternoon): picture, sizes and the Journey
+- **Fixed the broken picture on the Discover card.** Photos from Wikipedia and Wikivoyage failed for every city except New York, Dubai and Paris (the picture size we asked for is one Wikimedia does not serve). They now load, and if a picture ever fails the card shows the airport tile instead of a broken-image icon.
+- **Controls are standard size with a mouse.** Buttons are 36 px (were 44 px), menu items and the search box 40 px; touch screens keep the full 44 px. The Departure and Arrival time cells no longer crowd each other.
+- **The Journey tab agrees with the Key times card:** Boarding, Take-off and Landing show the same Typical times (labelled) instead of "Not reported".
+
 ## 9 November 2026 (morning): checks and housekeeping
 - A release that finds nothing new to upload now still checks that the live site is healthy; this ran for real today and passed. The nightly backup is confirmed working again (a backup from 02:23 today exists and restores cleanly).
 
