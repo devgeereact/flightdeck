@@ -20,11 +20,10 @@ Work through the GSD roadmap (9 phases, local plan in `.planning/`). Personal-us
 - Cloudflare header rule: DONE and live (rule `fdbcc345d3c245d693244a62da1203f8` in zone gakinz.com, host-scoped).
 - Off-server backup drill and Dependabot: delegated to me; done, see docs/AUDIT.md (8 Nov, owner items).
 
-## Latest (9 Nov 2026): Phase 5 is live (PR #10, `main` at 243247f); crash guard built, NOT pushed
-- Phase 5 deployed with run 42541387673 (smoke 5 passed) and checked live: retired events 422, contact form intact, console and flight pages work after a genuine reload. Details: docs/AUDIT.md.
-- **Crash seen once in the owner's browser after the deploy** ("Sign-in could not load" over a console crash, `reading 'totals'`). Trigger unknown and not reproducible; the live API was healthy. Branch `fix/boundary-and-console-guard` (local) makes the console check the overview answer before drawing it, and makes the catch-all screen say "Something went wrong" instead of blaming sign-in. Proved by tests that reproduce the exact error without the guard. 187/187 node tests, PHP, verify, lint, docs:check, UI smoke and console smoke PASS locally; CI not run.
-- To land: "approved: push branch" then "approved: push main" (the merge deploys the app bundle only; no server files change).
-- The no-op-release smoke fix (Phase 5) is still only proven by a structure test; it needs a real no-op deploy.
+## Latest (9 Nov 2026, night): crash guard live (PR #11, `main` at f59b04a); root-cause fix built, NOT pushed
+- The crash guard is live and its text is in the bundle. Walking the crash path again found the **root cause**: an old request loop in the owner console (parent hands a new callback each render and stores the count as a new object, so every answer restarts the fetch; about 1 request a second live). Fixed on local branch `fix/console-request-loop` with a console check (C22: failed with 434 requests in 2.5 s, passes now). 187/187 node tests, verify, lint, docs:check, UI smoke and console smoke PASS locally; CI not run. Details: docs/AUDIT.md (top entry).
+- To land: "approved: push branch", then "approved: push main" (app bundle only). Users get it through the update banner: Reload.
+- Owners' browsers still on an older cached build can crash or stick until they press Reload on the banner. (This browser needed the waiting worker told to take over before it picked up the new build.)
 
 ## Open (yours, in order)
 1. **Backup cron: installed; check that a backup file appeared (tonight 02:23 server time)** (DONE earlier) (installed by the owner's run on 8 Nov; first backup due 02:23 server time on 9 Nov). Check tomorrow: `bash scripts/pull-server-backup.sh` copies the newest backup to this Mac and warns if it is more than two days old. Weekly after that.
@@ -42,7 +41,7 @@ Work through the GSD roadmap (9 phases, local plan in `.planning/`). Personal-us
 If sign-in or the app breaks after a deploy: `pnpm release --rollback --go` (needs approval; restores code files, not server config).
 
 ## Next
-After the crash guard lands: Phase 6, the trip-day home (needs the owner's go-ahead; this one changes what users see). Roadmap in `.planning/ROADMAP.md` (local only).
+After the loop fix lands: Phase 6, the trip-day home (needs the owner's go-ahead; this one changes what users see). Roadmap in `.planning/ROADMAP.md` (local only).
 
 ## Checks run (8 Nov 2026)
 Owner-items branch (includes Phase 4): `npm run verify` PASS (node 153/153, PHP "All passed", build, upload guard); `pnpm lint`; `pnpm docs:check`; `pnpm test:ui`; `pnpm test:console`. Earlier phases: see docs/AUDIT.md.

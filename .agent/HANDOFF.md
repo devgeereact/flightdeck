@@ -2,7 +2,10 @@
 
 Newest first. Moved out of `.agent/CURRENT-TASK.md` on 1 Nov 2026; earlier entries describe the project at the time (paths and release steps may since have changed).
 
-## 9 November 2026 (later): crash guard (branch `fix/boundary-and-console-guard`, not pushed)
+## 9 November 2026 (night): root cause of the console crash found (branch `fix/console-request-loop`, not pushed)
+- The owner console re-requested its data in an endless loop (unstable parent callback plus a new state object each time). Fixed with a ref and a parent check; check C22 and a harness parent that mirrors the real one. Crash guard (PR #11) is live. See docs/AUDIT.md.
+
+## 9 November 2026 (later): crash guard (PR #11, live)
 - After the Phase 5 deploy the owner's browser showed "Sign-in could not load" over a console crash (`reading 'totals'`); trigger unknown. Console now validates the overview answer; the catch-all screen says "Something went wrong". Mutation-checked. See docs/AUDIT.md.
 
 ## 9 November 2026: Phase 5, cleanup and a safety net (PR #10, live)

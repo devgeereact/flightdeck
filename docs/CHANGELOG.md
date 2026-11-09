@@ -2,7 +2,10 @@
 
 Newest first. Dates are UK dates.
 
-## 9 November 2026 (later): crash guard
+## 9 November 2026 (later still): the owner console stops hammering the server
+- The owner console used to re-request its data about once a second for as long as it was open (a hidden loop that also made screens slow to appear or stick on "Loading…" when you came back to them, and could trip the rate limit). It now loads each screen once. Crash guard and the "Something went wrong" screen (below) are live.
+
+## 9 November 2026 (later): crash guard (live)
 - If the owner console ever receives an overview answer it cannot read, it now shows its own "could not load" panel with a retry, instead of crashing the whole app.
 - The app's catch-all error screen no longer says "Sign-in could not load" for every problem. It says "Something went wrong"; the sign-in wording is kept for a real sign-in failure.
 
