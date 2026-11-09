@@ -351,11 +351,14 @@ export function DiscoverCard({ airport }: { airport: Airport }) {
     : w?.image
       ? { src: w.image, alt: `${w.title}` }
       : null;
+  // A picture that fails to load (a bad URL, a blocked host) must never show the browser's broken-image icon: fall back to the airport tile.
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const showImg = img && failedSrc !== img.src;
   return (
     <section className="panel side-card discover" aria-labelledby="disc-h">
       <div className="disc-ph">
-        {img ? (
-          <img src={img.src} alt={img.alt} loading="lazy" />
+        {showImg ? (
+          <img src={img.src} alt={img.alt} loading="lazy" onError={() => setFailedSrc(img.src)} />
         ) : (
           <CodeTile code={airport.code} />
         )}

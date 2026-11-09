@@ -192,7 +192,7 @@ async function boot({ config, storedMode, hash = '', storage = {}, fixtures = fa
         JSON.stringify({
           title: 'Cape Town',
           summary: 'Cape Town is the oldest city in South Africa, under Table Mountain.',
-          image: null,
+          image: 'https://thumb.wikimedia.org/a/960px-Cape_Town.jpg',
           url: 'https://en.wikivoyage.org/wiki/Cape_Town',
           source: 'Wikivoyage',
           licence: 'CC BY-SA 4.0',
@@ -400,6 +400,20 @@ try {
         /Wikivoyage/.test(d.querySelector('.discover')?.textContent || '') &&
         /CC BY-SA/.test(d.querySelector('.discover')?.textContent || ''),
       d.querySelector('.discover')?.textContent,
+    );
+    check(
+      'B11e the Discover picture is shown, and one that fails to load falls back to the airport tile instead of a broken-image icon',
+      await (async () => {
+        const img = d.querySelector('.discover .disc-ph img');
+        if (!img || !/960px-/.test(img.getAttribute('src') || '')) return false;
+        img.dispatchEvent(new a.w.Event('error')); // what a browser does when the URL answers 400
+        await sleep(100);
+        return (
+          !d.querySelector('.discover .disc-ph img') &&
+          !!d.querySelector('.discover .disc-ph .code-tile, .discover .disc-ph [class*="tile"]')
+        );
+      })(),
+      d.querySelector('.discover .disc-ph')?.innerHTML,
     );
     check(
       'B11c gates and key times: boarding, gate closes, take-off and landing are on the page; typical times are labelled, a terminal is never called a gate, unknown gates say so',
