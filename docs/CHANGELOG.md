@@ -2,6 +2,11 @@
 
 Newest first. Dates are UK dates.
 
+## 9 November 2026: cleanup and a safety net
+- No change you can see in the app. Unused code was removed (about a dozen unused imports, dead leftovers in the page sources and the settings file), and the compiler now refuses unused variables.
+- The retired event names `cta_click` and `signup_started` are no longer accepted by the anonymous event counter (nothing sent them), and two permanently-zero numbers are gone from the owner overview data.
+- New tests that start the real server and check every route's rules (sign-in, owner-only, wrong method, rate limit, fail-closed when sign-in is not configured) and the packing-list sync, event counter and contact form. A real release with nothing to upload now still runs the live health checks.
+
 ## 8 November 2026 (after the live smoke test): fixes (live)
 - **Web links:** "Latest from the web" now retries once when Google's answer is not usable (it failed about half the time on its first try), skips Facebook, Instagram and similar, and shows one link per site.
 - **Gates:** when an airport has published only a terminal, the tile says "Departure terminal" or "Arrival terminal" with "Gate not published yet", instead of calling a terminal a gate. For a flight that has already left or landed, the note no longer promises a gate for later.
