@@ -7,7 +7,7 @@ namespace Flightdeck;
 final class Admin
 {
     /** Client-reported events that are allowed to be counted (counters only, no personal data). */
-    public const EVENTS = ['landing_view', 'cta_click', 'pwa_install', 'consent_accept', 'consent_reject', 'checklist_created', 'checklist_completed', 'feedback_opened', 'signup_started'];
+    public const EVENTS = ['landing_view', 'pwa_install', 'consent_accept', 'consent_reject', 'checklist_created', 'checklist_completed', 'feedback_opened'];
 
     /** Only the exact Clerk user ids listed in the private config. Everyone else is refused, whatever they type in the address bar. */
     public static function isAdmin(?string $sub, array $config): bool
@@ -91,9 +91,9 @@ final class Admin
                 'searches' => $searches, 'found' => $found, 'usualRoute' => $usual, 'notFound' => $notFound, 'errors' => $errors,
                 'successRate' => $searches > 0 ? round(($found + $usual) / $searches * 100, 1) : null,
                 'activeUserDays' => array_sum($users), 'peakUsers' => $users ? max($users) : 0,
-                'landingViews' => self::sum($days, 'landing_view'), 'ctaClicks' => self::sum($days, 'cta_click'),
+                'landingViews' => self::sum($days, 'landing_view'),
                 'pwaInstalls' => self::sum($days, 'pwa_install'), 'checklistsCreated' => self::sum($days, 'checklist_created'),
-                'checklistsCompleted' => self::sum($days, 'checklist_completed'), 'checklistSaves' => self::sum($days, 'checklist_save'),
+                'checklistsCompleted' => self::sum($days, 'checklist_completed'),
                 'feedbackOpened' => self::sum($days, 'feedback_opened'), 'enquiries' => self::sum($days, 'enquiry_received'),
                 'consentAccept' => $accept, 'consentReject' => $reject, 'consentOptIn' => ($accept + $reject) > 0 ? round($accept / ($accept + $reject) * 100, 1) : null,
                 'rateLimited' => self::sum($days, 'rate_limited'), 'authDenied' => self::sum($days, 'auth_denied'),

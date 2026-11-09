@@ -2,14 +2,12 @@
 // no flight numbers. The server only accepts a fixed list of names.
 export type EventName =
   | 'landing_view'
-  | 'cta_click'
   | 'pwa_install'
   | 'consent_accept'
   | 'consent_reject'
   | 'checklist_created'
   | 'checklist_completed'
-  | 'feedback_opened'
-  | 'signup_started';
+  | 'feedback_opened';
 export function track(name: EventName) {
   try {
     void fetch('/api/event', {
