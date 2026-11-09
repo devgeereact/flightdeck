@@ -20,10 +20,10 @@ Work through the GSD roadmap (9 phases, local plan in `.planning/`). Personal-us
 - Cloudflare header rule: DONE and live (rule `fdbcc345d3c245d693244a62da1203f8` in zone gakinz.com, host-scoped).
 - Off-server backup drill and Dependabot: delegated to me; done, see docs/AUDIT.md (8 Nov, owner items).
 
-## Latest (9 Nov 2026, night): crash guard live (PR #11, `main` at f59b04a); root-cause fix built, NOT pushed
-- The crash guard is live and its text is in the bundle. Walking the crash path again found the **root cause**: an old request loop in the owner console (parent hands a new callback each render and stores the count as a new object, so every answer restarts the fetch; about 1 request a second live). Fixed on local branch `fix/console-request-loop` with a console check (C22: failed with 434 requests in 2.5 s, passes now). 187/187 node tests, verify, lint, docs:check, UI smoke and console smoke PASS locally; CI not run. Details: docs/AUDIT.md (top entry).
-- To land: "approved: push branch", then "approved: push main" (app bundle only). Users get it through the update banner: Reload.
-- Owners' browsers still on an older cached build can crash or stick until they press Reload on the banner. (This browser needed the waiting worker told to take over before it picked up the new build.)
+## Latest (9 Nov 2026): the console request-loop fix is live (`main` at e6fa909)
+- Deployed with run 42625658806 (smoke 5 passed, app files only). **Not verified in a browser** (the Chrome extension was disconnected): check by opening the console's Usage screen and watching the Network tab; after the first `/api/admin/overview` there should be no more calls. Press Reload on the update banner first.
+- Another Claude session added a commit `9d9e95c` (one comment line in `deploy.yml`, tagged `[skip ci]`) to the PR branch after CI had passed; I first merged only `e6fa909`, then merged it too on the owner's instruction.
+- Another session shares this checkout and commits to it; check `git log` before relying on a branch.
 
 ## Open (yours, in order)
 1. **Backup cron: installed; check that a backup file appeared (tonight 02:23 server time)** (DONE earlier) (installed by the owner's run on 8 Nov; first backup due 02:23 server time on 9 Nov). Check tomorrow: `bash scripts/pull-server-backup.sh` copies the newest backup to this Mac and warns if it is more than two days old. Weekly after that.

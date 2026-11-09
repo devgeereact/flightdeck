@@ -2,7 +2,10 @@
 
 Newest first. Moved out of `.agent/CURRENT-TASK.md` on 1 Nov 2026; earlier entries describe the project at the time (paths and release steps may since have changed).
 
-## 9 November 2026 (night): root cause of the console crash found (branch `fix/console-request-loop`, not pushed)
+## 9 November 2026 (morning): request-loop fix live (PR #12, `main` at e6fa909)
+- Merged the reviewed commit first; an unreviewed `[skip ci]` commit from another session (9d9e95c) was merged afterwards on the owner's instruction. Live browser check not done (extension disconnected). See docs/AUDIT.md.
+
+## 9 November 2026 (night): root cause of the console crash found (PR #12)
 - The owner console re-requested its data in an endless loop (unstable parent callback plus a new state object each time). Fixed with a ref and a parent check; check C22 and a harness parent that mirrors the real one. Crash guard (PR #11) is live. See docs/AUDIT.md.
 
 ## 9 November 2026 (later): crash guard (PR #11, live)
