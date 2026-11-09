@@ -2,7 +2,11 @@
 
 Newest first. Dates are UK dates.
 
-## 9 November 2026: cleanup and a safety net
+## 9 November 2026 (later): crash guard
+- If the owner console ever receives an overview answer it cannot read, it now shows its own "could not load" panel with a retry, instead of crashing the whole app.
+- The app's catch-all error screen no longer says "Sign-in could not load" for every problem. It says "Something went wrong"; the sign-in wording is kept for a real sign-in failure.
+
+## 9 November 2026: cleanup and a safety net (live)
 - No change you can see in the app. Unused code was removed (about a dozen unused imports, dead leftovers in the page sources and the settings file), and the compiler now refuses unused variables.
 - The retired event names `cta_click` and `signup_started` are no longer accepted by the anonymous event counter (nothing sent them), and two permanently-zero numbers are gone from the owner overview data.
 - New tests that start the real server and check every route's rules (sign-in, owner-only, wrong method, rate limit, fail-closed when sign-in is not configured) and the packing-list sync, event counter and contact form. A real release with nothing to upload now still runs the live health checks.

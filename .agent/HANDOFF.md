@@ -2,7 +2,10 @@
 
 Newest first. Moved out of `.agent/CURRENT-TASK.md` on 1 Nov 2026; earlier entries describe the project at the time (paths and release steps may since have changed).
 
-## 9 November 2026: Phase 5, cleanup and a safety net (branch `phase-5/cleanup-safety-net`, not pushed)
+## 9 November 2026 (later): crash guard (branch `fix/boundary-and-console-guard`, not pushed)
+- After the Phase 5 deploy the owner's browser showed "Sign-in could not load" over a console crash (`reading 'totals'`); trigger unknown. Console now validates the overview answer; the catch-all screen says "Something went wrong". Mutation-checked. See docs/AUDIT.md.
+
+## 9 November 2026: Phase 5, cleanup and a safety net (PR #10, live)
 - Strict `noUnusedLocals`, dead code and dead metrics removed, 17 route tests on three throwaway servers, no-op release still smoke-tests. Audit corrections: `sg.laundry` kept; the contact inline script was load-bearing for the seed generator (removed with its regex). See docs/AUDIT.md.
 
 ## 8 November 2026 (after the owner items): live smoke test in Chrome and fixes (PR #9 merged and live, `main` at b499407)

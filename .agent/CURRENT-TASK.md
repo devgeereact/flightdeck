@@ -20,10 +20,11 @@ Work through the GSD roadmap (9 phases, local plan in `.planning/`). Personal-us
 - Cloudflare header rule: DONE and live (rule `fdbcc345d3c245d693244a62da1203f8` in zone gakinz.com, host-scoped).
 - Off-server backup drill and Dependabot: delegated to me; done, see docs/AUDIT.md (8 Nov, owner items).
 
-## Latest (9 Nov 2026): Phase 5 built on branch `phase-5/cleanup-safety-net`, NOT pushed
-- Stricter compiler (`noUnusedLocals`, TypeScript tests included), dead code removed, dead event names removed (drift test), 17 HTTP-level route tests on three throwaway servers (proved to fail when a route is broken), and a real release with nothing to upload now still runs the live smoke checks. Corrections to my baseline audit: `sg.laundry` is not dead (left in), and the contact page's inline script was coupled to the seed generator (removed together; seed byte-identical). Full detail: docs/AUDIT.md (top entry). 183/183 node tests, PHP suite, verify, lint, docs:check, UI smoke, console smoke PASS locally; CI not run.
-- To land: "approved: push branch" (PR, CI) then "approved: push main". The merge deploys (PHP files and the app bundle change); it is also the first chance to see the no-op smoke fix, which needs a real no-op deploy to prove.
-- PR #9 (8 Nov) is merged and live (`main` at b499407); the docs commit after it is pushed.
+## Latest (9 Nov 2026): Phase 5 is live (PR #10, `main` at 243247f); crash guard built, NOT pushed
+- Phase 5 deployed with run 42541387673 (smoke 5 passed) and checked live: retired events 422, contact form intact, console and flight pages work after a genuine reload. Details: docs/AUDIT.md.
+- **Crash seen once in the owner's browser after the deploy** ("Sign-in could not load" over a console crash, `reading 'totals'`). Trigger unknown and not reproducible; the live API was healthy. Branch `fix/boundary-and-console-guard` (local) makes the console check the overview answer before drawing it, and makes the catch-all screen say "Something went wrong" instead of blaming sign-in. Proved by tests that reproduce the exact error without the guard. 187/187 node tests, PHP, verify, lint, docs:check, UI smoke and console smoke PASS locally; CI not run.
+- To land: "approved: push branch" then "approved: push main" (the merge deploys the app bundle only; no server files change).
+- The no-op-release smoke fix (Phase 5) is still only proven by a structure test; it needs a real no-op deploy.
 
 ## Open (yours, in order)
 1. **Backup cron: installed; check that a backup file appeared (tonight 02:23 server time)** (DONE earlier) (installed by the owner's run on 8 Nov; first backup due 02:23 server time on 9 Nov). Check tomorrow: `bash scripts/pull-server-backup.sh` copies the newest backup to this Mac and warns if it is more than two days old. Weekly after that.
@@ -41,7 +42,7 @@ Work through the GSD roadmap (9 phases, local plan in `.planning/`). Personal-us
 If sign-in or the app breaks after a deploy: `pnpm release --rollback --go` (needs approval; restores code files, not server config).
 
 ## Next
-After Phase 5 lands: Phase 6, the trip-day home (needs the owner's go-ahead; this one changes what users see). Roadmap in `.planning/ROADMAP.md` (local only).
+After the crash guard lands: Phase 6, the trip-day home (needs the owner's go-ahead; this one changes what users see). Roadmap in `.planning/ROADMAP.md` (local only).
 
 ## Checks run (8 Nov 2026)
 Owner-items branch (includes Phase 4): `npm run verify` PASS (node 153/153, PHP "All passed", build, upload guard); `pnpm lint`; `pnpm docs:check`; `pnpm test:ui`; `pnpm test:console`. Earlier phases: see docs/AUDIT.md.
