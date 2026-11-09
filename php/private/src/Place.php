@@ -19,7 +19,8 @@ final class Place
         if ($city === '' || mb_strlen($city) > 80 || mb_strlen($country) > 80) {
             return null;
         }
-        $key = 'place-' . substr(sha1(mb_strtolower($city . '|' . $country)), 0, 20);
+        // 'place2-': the version of the cached shape. Bumped on 9 Nov 2026 so answers cached with the broken 640 px picture URL are not served.
+        $key = 'place2-' . substr(sha1(mb_strtolower($city . '|' . $country)), 0, 20);
         $hit = $store->get($key);
         if (is_array($hit)) {
             return $hit;
@@ -80,8 +81,10 @@ final class Place
         if (!preg_match('#^https://(upload|thumb)\.wikimedia\.org/#', $src)) {
             return null;
         }
-        // The summary thumbnail is 330 px wide; ask for 640 px for the card, and drop the tracking query.
-        return preg_replace('#/330px-#', '/640px-', strtok($src, '?') ?: $src);
+        // The summary thumbnail is 330 px wide. The card is about 470 px wide, so ask for 960 px (sharp on a phone or a retina screen),
+        // and drop the tracking query. Wikimedia only serves its standard thumbnail widths (20, 40, 60, 120, 250, 330, 500, 960, 1280,
+        // 1920, 3840) and answers HTTP 400 for any other: the 640 px this used to ask for broke every picture.
+        return preg_replace('#/330px-#', '/960px-', strtok($src, '?') ?: $src);
     }
 
     private static function trimText(string $t, int $max): string

@@ -801,13 +801,25 @@ $fakeGet = static function (string $url) use (&$calls): array {
     return [404, ''];
 };
 $pl = \Flightdeck\Place::lookup($pstore, 'Lagos', 'Nigeria', $fakeGet);
-check('place: a Wikivoyage guide comes back with summary, 640px Wikimedia image, link, licence and section links', is_array($pl) && $pl['source'] === 'Wikivoyage' && $pl['image'] === 'https://thumb.wikimedia.org/a/640px-Lagos.jpg' && $pl['licence'] === 'CC BY-SA 4.0' && $pl['sections'][2]['url'] === 'https://en.wikivoyage.org/wiki/Lagos_City#See');
+// Live finding, 9 Nov 2026: the card's picture was broken for every city that uses a Wikimedia photo. Wikimedia only serves thumbnails at its
+// standard widths (20, 40, 60, 120, 250, 330, 500, 960, 1280, 1920, 3840) and answers HTTP 400 for anything else; 640 px, which this code
+// asked for, is not one of them (checked against the real Lagos picture: 330/500/960 gave 200, 640 gave 400).
+$stdWidths = [20, 40, 60, 120, 250, 330, 500, 960, 1280, 1920, 3840];
+preg_match('#/(\d+)px-#', (string) ($pl['image'] ?? ''), $wm);
+check('place: the Wikimedia picture is requested at a width Wikimedia actually serves', in_array((int) ($wm[1] ?? 0), $stdWidths, true));
+check('place: a Wikivoyage guide comes back with summary, a 960px Wikimedia image, link, licence and section links', is_array($pl) && $pl['source'] === 'Wikivoyage' && $pl['image'] === 'https://thumb.wikimedia.org/a/960px-Lagos.jpg' && $pl['licence'] === 'CC BY-SA 4.0' && $pl['sections'][2]['url'] === 'https://en.wikivoyage.org/wiki/Lagos_City#See');
+// An answer cached before the fix (kept for a week) still holds the broken 640 px URL. It sits under the old cache key and must not be served.
+$staleStore = new \Flightdeck\Store($pdir . '-stale');
+$oldKey = 'place-' . substr(sha1(mb_strtolower('Lagos|Nigeria')), 0, 20);
+$staleStore->put($oldKey, ['title' => 'Lagos City', 'summary' => 'old', 'image' => 'https://thumb.wikimedia.org/a/640px-Lagos.jpg', 'url' => 'https://en.wikivoyage.org/wiki/Lagos_City', 'source' => 'Wikivoyage', 'licence' => 'CC BY-SA 4.0', 'sections' => []], 7 * 86400000);
+$afterFix = \Flightdeck\Place::lookup($staleStore, 'Lagos', 'Nigeria', $fakeGet);
+check('place: an answer cached before the picture fix (old 640px URL) is not served', is_array($afterFix) && strpos((string) ($afterFix['image'] ?? ''), '/960px-') !== false);
 $n = count($calls);
 \Flightdeck\Place::lookup($pstore, 'Lagos', 'Nigeria', $fakeGet);
 check('place: the second look-up is served from the cache', count($calls) === $n);
 check('place: an empty or over-long city is refused without a request', \Flightdeck\Place::lookup($pstore, '', '', $fakeGet) === null && \Flightdeck\Place::lookup($pstore, str_repeat('a', 81), '', $fakeGet) === null);
 $miss = \Flightdeck\Place::lookup($pstore, 'Nowhere', '', static fn () => [404, '']);
-check('place: an unknown city returns nothing (and the miss is cached)', $miss === null && is_array($pstore->get('place-' . substr(sha1('nowhere|'), 0, 20))));
+check('place: an unknown city returns nothing (and the miss is cached)', $miss === null && is_array($pstore->get('place2-' . substr(sha1('nowhere|'), 0, 20))));
 
 check('web check: off unless both the Bright Data key and zone are set', \Flightdeck\WebCheck::lookup([], $pstore, 'BA117', '2026-11-01', 'LHR', 'JFK')['status'] === 'off' && !\Flightdeck\WebCheck::enabled(['brightdata_key' => 'k']));
 $posts = 0;
