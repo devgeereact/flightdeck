@@ -184,7 +184,8 @@ main#main {
 .topsearch svg {
   position: absolute;
   left: 16px;
-  top: 14px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--fd-muted);
   pointer-events: none;
 }
@@ -1047,9 +1048,10 @@ main#main {
   color: var(--fd-heading);
 }
 .tbox dd small {
+  display: block;
   font: 500 13px var(--fd-font-body);
   color: var(--fd-muted);
-  margin-left: 4px;
+  margin: 0;
 }
 .tbox dd.nr,
 .nr {
@@ -1058,6 +1060,7 @@ main#main {
 }
 .tbox dd.nr {
   padding-top: 6px;
+  font-size: 13px;
 }
 .fv-facts {
   margin-top: 22px;
@@ -2974,5 +2977,23 @@ main#main {
     flex-direction: row;
     justify-content: flex-start;
     padding: 10px 14px;
+  }
+}
+
+/* Compact app chrome for mouse screens (touch screens keep the 44px targets). */
+@media (hover: hover) and (pointer: fine) {
+  .side-nav .nav,
+  .owner-link,
+  .signout {
+    min-height: 40px;
+    gap: 12px;
+    font-size: 15px;
+  }
+  .topsearch input {
+    height: 40px;
+  }
+  .avatar {
+    width: 40px;
+    height: 40px;
   }
 }

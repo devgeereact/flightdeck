@@ -34,7 +34,7 @@ The owner approved this design from a prototype and asked for it to stay "high-e
 - **Calm type.** Inter Tight for display (600, tracking −0.02 to −0.035em), Inter for reading (400 body, 500 labels). Console never goes above 600 weight; body 15px there. Tabular figures (`.num` / `.fd-data`) for anything numeric that lines up.
 - **Radii by role:** 10 inputs, 14 fields, 20 panels/cards, 28 hero and big bands, pill for buttons and chips. Shadows by level (`--fd-shadow-1..4`, `--fd-shadow-blue` under the primary button only).
 - **Icons:** one stroke family (lucide in React; the matching `Site::ICONS` set in PHP), 16/18/20/24px, never emoji.
-- **Accessible by default.** Visible 2px blue focus ring, labelled controls, `aria-current` on navigation, keyboard tabs, dialogs that trap and return focus, 44px tap targets, scrollable regions focusable. Target WCAG 2.2 AA; run the audit (see verification).
+- **Accessible by default.** Visible 2px blue focus ring, labelled controls, `aria-current` on navigation, keyboard tabs, dialogs that trap and return focus, 44px tap targets on touch (36px with a mouse, from `--fd-tap`), scrollable regions focusable. Target WCAG 2.2 AA; run the audit (see verification).
 - **Motion is optional.** GSAP only through `withMotion` / `motionAllowed` (app, console) or the deferred `motion-<hash>.js` bundle (site home). Nothing animates under `prefers-reduced-motion`, and every page is complete with JavaScript off — never leave content at opacity 0 waiting for an observer.
 - **Plain UK English.** Specific, active, short. Buttons say what happens ("Save and publish", "Look up a flight"). Errors say what went wrong and how to fix it. No "seamless", "unlock", "Less X. More Y.", em-dash asides or invented labels.
 

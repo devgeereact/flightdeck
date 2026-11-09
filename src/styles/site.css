@@ -34,7 +34,7 @@
   --sh-blue: var(--fd-shadow-blue);
   --ease: var(--fd-ease);
   --dur: var(--fd-dur);
-  --tap: 44px;
+  --tap: var(--fd-tap);
   --shell: 1360px;
   --gut: clamp(12px, 2.4vw, 28px);
 }
@@ -234,6 +234,19 @@ section {
   min-height: 36px;
   padding: 0 14px;
   font-size: 14px;
+}
+/* Compact buttons for mouse screens (the height comes from --fd-tap, see tokens.css): smaller text and padding, and a 30px small button. */
+@media (hover: hover) and (pointer: fine) {
+  .btn {
+    gap: 6px;
+    padding: 0 16px;
+    font-size: 14px;
+  }
+  .btn-sm {
+    min-height: 30px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
 }
 .btn[disabled] {
   opacity: 0.45;

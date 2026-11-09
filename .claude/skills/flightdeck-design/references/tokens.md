@@ -42,7 +42,7 @@ Status colours always come with a label or icon, never colour alone.
 
 - Scale `--fd-space-1..9`: 4, 8, 12, 16, 24, 32, 48, 72, 120 (8-point grid, 4 for fine detail).
 - Page width `--fd-page-w` 1360 (site 1600 above 2200px); app view 1480 (1680 above 2200px); reading width 760.
-- Gutter clamp(12px, 2.4vw, 28px). Tap target `--fd-tap` 44px.
+- Gutter clamp(12px, 2.4vw, 28px). Tap target `--fd-tap`: 44px on touch screens, 36px with a mouse (`@media (hover: hover) and (pointer: fine)` at the end of `tokens.css`). Never hard-code 44px for a control; use the token.
 
 ## Motion
 

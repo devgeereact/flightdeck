@@ -23,7 +23,7 @@ One file for the app, the console and the public site. Component CSS uses `var(-
 | Status | ok, warn, danger pairs, always with text |
 | Type | Inter (body) and Inter Tight (display), self-hosted in `public/fonts` (OFL, no Google requests). Hero clamp(42px, 6.4vw, 84px); headings tracked -0.02 to -0.035em; `.fd-data` tabular figures |
 | Shape | radii 10 / 14 / 20 / 28px, pills for buttons and chips · shadows 1–4 plus `--fd-shadow-blue` under the primary button |
-| Space | 4 to 120px scale, page width 1360px, gutter clamp(12px, 2.4vw, 28px), tap targets 44px |
+| Space | 4 to 120px scale, page width 1360px, gutter clamp(12px, 2.4vw, 28px), tap targets 44px on touch screens and 36px with a mouse (`--fd-tap`; sidebar items 40px, search box 40px) |
 | Motion | `--fd-ease` cubic-bezier(.22, 1, .36, 1), `--fd-dur` .22s (0 under reduced motion) |
 
 Measured contrast (WCAG formula, 31 Oct 2026): blue on white 4.79:1 (so blue text sits only on white), blue-600 on the canvas 6.0:1, muted on white 5.78:1 and on the canvas 5.11:1, ink on amber 10.2:1, violet badge text on violet-50 above 4.5:1. Chart palette blue + #d97706 passed the colour-blind validator (protan ΔE 33); blue + violet failed (deutan ΔE 1.4), so violet is never a chart colour.

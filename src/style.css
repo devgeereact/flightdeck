@@ -110,7 +110,7 @@ svg.lucide {
   display: none;
 }
 
-/* Buttons: pill shape, 44px tall. One .btn-primary per screen. */
+/* Buttons: pill shape, 44px tall on touch and 36px with a mouse (see the end of tokens.css). One .btn-primary per screen. */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -195,6 +195,19 @@ svg.lucide {
   min-height: 36px;
   padding: 0 14px;
   font-size: 14px;
+}
+/* Mouse screens: the height follows --fd-tap (36px, tokens.css); here the text and padding, and a 30px small button. */
+@media (hover: hover) and (pointer: fine) {
+  .btn {
+    gap: 6px;
+    padding: 0 16px;
+    font-size: 14px;
+  }
+  .btn-sm {
+    min-height: 30px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
 }
 .btn-icon {
   padding: 0;

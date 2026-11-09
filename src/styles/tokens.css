@@ -138,3 +138,11 @@
 .fd-brand.on-photo {
   color: #fff;
 }
+
+/* Tap target. 44px is the touch minimum (WCAG 2.2 and docs/DESIGN.md) and stays on touch screens. With a mouse it reads as oversized,
+   so mouse screens use 36px for buttons, fields and icon buttons. Everything that sizes itself with --fd-tap follows. */
+@media (hover: hover) and (pointer: fine) {
+  :root {
+    --fd-tap: 36px;
+  }
+}
