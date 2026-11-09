@@ -660,7 +660,9 @@ function Dashboard() {
                   </div>
                 }
               >
-                <AdminView onUnread={(n: number) => setMe((m) => ({ ...m, unread: n }))} />
+                <AdminView
+                  onUnread={(n: number) => setMe((m) => (m.unread === n ? m : { ...m, unread: n }))}
+                />
               </Suspense>
             ) : (
               <div className="panel state">

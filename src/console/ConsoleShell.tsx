@@ -149,13 +149,15 @@ export default function ConsoleShell({ onUnread }: { onUnread: (n: number) => vo
     if (location.hash !== h) location.hash = h;
     else setRoute([s, id]);
   };
-  const noteUnread = useCallback(
-    (n: number) => {
-      setUnread(n);
-      onUnread(n);
-    },
-    [onUnread],
-  );
+  // The parent hands in a new callback on every render, so it is read through a ref: `noteUnread` must keep one identity, because it
+  // is a dependency of the data effect below. When it changed with every render, each answer re-rendered the parent, which restarted
+  // the request, in an endless loop (hundreds of requests a second locally; about one a second live, and a rate-limit risk).
+  const onUnreadRef = useRef(onUnread);
+  onUnreadRef.current = onUnread;
+  const noteUnread = useCallback((n: number) => {
+    setUnread(n);
+    onUnreadRef.current(n);
+  }, []);
   // Operations data. A newer request (another range, another section) cancels the one still in flight.
   // biome-ignore lint/correctness/useExhaustiveDependencies: tick is the Refresh button
   useEffect(() => {

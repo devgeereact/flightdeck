@@ -31,7 +31,9 @@ function boot(sub, hash, { overview } = {}) {
     pretendToBeVisual: true,
   });
   const w = dom.window;
+  const calls = [];
   w.fetch = (input, init) => {
+    calls.push(String(input));
     // `overview` lets a check feed the console a malformed /api/admin/overview answer.
     if (overview !== undefined && String(input).includes('/api/admin/overview'))
       return Promise.resolve(
@@ -70,7 +72,7 @@ function boot(sub, hash, { overview } = {}) {
     [...d.querySelectorAll('.cn-field')]
       .find((f) => f.querySelector('label')?.textContent.startsWith(label))
       ?.querySelector('input,textarea,select');
-  return { w, d, errors, until, button, click, type, field, text: () => d.body.textContent };
+  return { w, d, errors, calls, until, button, click, type, field, text: () => d.body.textContent };
 }
 const page = async (p) => (await fetch(h.base + p)).text();
 
@@ -260,6 +262,20 @@ for (const [label, bad] of [
     `${c.text().slice(0, 200)} | ${c.errors.join(' | ').slice(0, 200)}`,
   );
 }
+
+// Live finding, 9 Nov 2026: the console re-requested its data in an endless abort-and-restart loop (every answer re-rendered the parent,
+// which handed the shell a new callback, which restarted the fetch). Once the screen has loaded, it must go quiet.
+c = boot('user_owner', '#/admin/usage');
+await c.until(() => c.text().includes('Sign-in screen views'));
+await sleep(500);
+const settled = c.calls.length;
+await sleep(2500);
+const later = c.calls.slice(settled).filter((u) => u.includes('/api/admin/'));
+check(
+  'C22 once the Usage screen has loaded, the console stops asking the server for the same data',
+  later.length === 0,
+  `${later.length} more requests in 2.5 s after load: ${later.slice(0, 4).join(', ')}`,
+);
 
 // ---------------------------------------------------------------- not the owner
 c = boot('user_other', '#/admin/pages');
