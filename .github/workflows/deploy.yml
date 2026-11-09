@@ -5,7 +5,7 @@
 # Docs-only pushes do not deploy. A commit message with [skip ci] does not deploy.
 # A manual run (workflow_dispatch) runs the same gate and deploys only from main.
 # Pull requests run ci.yml directly and never reach this file.
-# Secrets (set by ~/Backups/scripts/setup-github-deploy.zsh): CPANEL_SSH_KEY, CPANEL_KNOWN_HOSTS.
+# Secrets (set by ~/Developer/build-kit/scripts/setup-github-deploy.zsh): CPANEL_SSH_KEY, CPANEL_KNOWN_HOSTS.
 name: Deploy
 
 on:
