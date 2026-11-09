@@ -24,14 +24,24 @@ const code = fs.readFileSync(path.join(root, '.local-test/build/console-smoke/co
 const h = await startHarness({ port: 3995 });
 process.on('exit', () => h.stop());
 
-function boot(sub, hash) {
+function boot(sub, hash, { overview } = {}) {
   const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
     url: `${h.base}/app/console.html?t=${h.token(sub)}${hash}`,
     runScripts: 'outside-only',
     pretendToBeVisual: true,
   });
   const w = dom.window;
-  w.fetch = (input, init) => fetch(new URL(String(input), h.base), { ...init, signal: undefined });
+  w.fetch = (input, init) => {
+    // `overview` lets a check feed the console a malformed /api/admin/overview answer.
+    if (overview !== undefined && String(input).includes('/api/admin/overview'))
+      return Promise.resolve(
+        new Response(JSON.stringify(overview), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+    return fetch(new URL(String(input), h.base), { ...init, signal: undefined });
+  };
   w.scrollTo = () => {};
   w.confirm = () => true;
   const errors = [];
@@ -232,6 +242,24 @@ check(
     !/\d+ signed up/.test(c.text()) &&
     !/\d+ saved/.test(c.text()),
 );
+
+// Live finding, 9 Nov 2026: a malformed overview answer crashed the whole app ("reading 'totals'") behind a "Sign-in could not load" screen.
+for (const [label, bad] of [
+  ['an error object', { error: 'Too many requests.' }],
+  ['an empty object', {}],
+  ['no totals', { overview: { series: {} } }],
+]) {
+  c = boot('user_owner', '#/admin/overview', { overview: bad });
+  check(
+    `C21 a malformed overview answer (${label}) shows the console's own "could not load" panel, not a crash`,
+    !!(await c.until(() =>
+      /could not|couldn.t|unexpected format|does not understand/i.test(c.text()),
+    )) &&
+      !c.text().includes('Sign-in could not load') &&
+      !c.errors.some((e) => /totals|undefined/.test(e)),
+    `${c.text().slice(0, 200)} | ${c.errors.join(' | ').slice(0, 200)}`,
+  );
+}
 
 // ---------------------------------------------------------------- not the owner
 c = boot('user_other', '#/admin/pages');

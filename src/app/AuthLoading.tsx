@@ -2,7 +2,14 @@ import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Brand } from '../shared/Logo';
 
 // While Clerk loads (and when it cannot): the brand, one sentence and, on failure, the way out. Also the error boundary's screen.
-export default function AuthLoading({ failed = false }: { failed?: boolean }) {
+export default function AuthLoading({
+  failed = false,
+  kind = 'signin',
+}: {
+  failed?: boolean;
+  /** 'signin': Clerk could not load. 'app': something in the app itself crashed (the error boundary's screen). */
+  kind?: 'signin' | 'app';
+}) {
   return (
     <div className="auth-loading" role="status">
       <Brand href="/" />
@@ -14,10 +21,18 @@ export default function AuthLoading({ failed = false }: { failed?: boolean }) {
             <RefreshCw size={28} className="spin" aria-hidden="true" />
           )}
         </span>
-        <h1>{failed ? 'Sign-in could not load' : 'Opening Flightdeck'}</h1>
+        <h1>
+          {failed
+            ? kind === 'app'
+              ? 'Something went wrong'
+              : 'Sign-in could not load'
+            : 'Opening Flightdeck'}
+        </h1>
         <p>
           {failed
-            ? 'Flightdeck could not connect to its sign-in service. Reload to try again, or use the live site.'
+            ? kind === 'app'
+              ? 'Flightdeck hit an unexpected problem. Reload to try again, or use the live site.'
+              : 'Flightdeck could not connect to its sign-in service. Reload to try again, or use the live site.'
             : 'Connecting securely to your account…'}
         </p>
         {failed && (

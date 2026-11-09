@@ -30,6 +30,7 @@ import { Brand } from '../shared/Logo';
 import AuditView from './AuditView';
 import { call } from './api';
 import ContentSection, { type Section as ContentSectionId } from './content/ContentSection';
+import { hasOverview } from './guards';
 import HealthView from './HealthView';
 import Inbox from './Inbox';
 import { Analytics, Costs, Overview, SystemView, Usage, UsersView } from './Ops';
@@ -166,6 +167,8 @@ export default function ConsoleShell({ onUnread }: { onUnread: (n: number) => vo
       try {
         if (RANGED.includes(section)) {
           const d = await call(`/api/admin/overview?days=${days}`, { signal: ctl.signal });
+          if (!hasOverview(d))
+            throw new Error('The server answered in a format this screen does not understand.');
           setOv(d);
           noteUnread(d.unread);
         } else if (section === 'users')
