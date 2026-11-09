@@ -2,7 +2,10 @@
 
 Newest first. Dates are UK dates.
 
-## 9 November 2026 (later still): the owner console stops hammering the server
+## 9 November 2026 (morning): checks and housekeeping
+- A release that finds nothing new to upload now still checks that the live site is healthy; this ran for real today and passed. The nightly backup is confirmed working again (a backup from 02:23 today exists and restores cleanly).
+
+## 9 November 2026 (later still): the owner console stops hammering the server (live)
 - The owner console used to re-request its data about once a second for as long as it was open (a hidden loop that also made screens slow to appear or stick on "Loading…" when you came back to them, and could trip the rate limit). It now loads each screen once. Crash guard and the "Something went wrong" screen (below) are live.
 
 ## 9 November 2026 (later): crash guard (live)

@@ -4,11 +4,10 @@
 Work through the GSD roadmap (9 phases, local plan in `.planning/`). Personal-use direction; the ads path is removed in Phase 4.
 
 ## Status
-- **Phase 1 (security release): DONE and live.** `main` at 3db0b73 deployed 8 Nov 2026; branches `production` and `golive/2026-11` deleted.
-- **Phase 2 (gate the deploy): DONE and live** (PR #7, `main` at 5184493, ADR-023). `deploy.yml` = `check` (calls `ci.yml`) then `deploy`; PHP 8.4 in CI; actions pinned by SHA; richer smoke list. First gated deploy run 42526313819 PASS. A docs-only push (87ef5fb) correctly started no Deploy and no CI.
-- **Phase 3 (docs match the code): DONE and live** (PR #8, `main` at f8653a2, Deploy run 42528085001 PASS, smoke checks 5 passed). `pnpm docs:check` (in `pnpm check`, so CI runs it) plus fixes to API, INTEGRATIONS, PRD, CMS, PRIVACY, SECURITY, SCHEMA, RUNBOOK, TESTING, ARCHITECTURE, ACCESSIBILITY, ROADMAP, PROJECT-MEMORY, ADR statuses and three code comments. Details: docs/AUDIT.md (8 Nov, Phase 3). Local checks PASS: `npm run verify` (135/135, PHP, build), lint, `test:ui`, `test:console`. CI ran `docs:check` on PHP 8.4.27 and passed. To do with approval: delete branch `phase-3/docs-match-code` (the remote copy may already be gone).
-
-- **Phase 4 (remove the ads path): BUILT on branch `phase-4/remove-ads-path`, NOT pushed** (ADR-024). Local checks PASS (136/136, verify, lint, UI, console). NOT tested: CI, the deploy, and `/ads.txt` on the live host. To land: push the branch, open a PR, wait for green, then the owner says "approved: push main". The merge deploys real code (PHP, the site script, the console bundle and `.htaccess`).
+- **Phases 1 to 5 of 9: DONE and live** (`main` at 0744308, 9 Nov 2026): 1 the security release, 2 the deploy waits for the full CI gate (ADR-023), 3 docs match the code (`pnpm docs:check`), 4 the ads path removed (ADR-024), 5 cleanup and a safety net (strict `noUnusedLocals`, 17 route tests on three throwaway servers, dead code and metrics removed). Details of each: docs/AUDIT.md.
+- **Also live since:** the owner-app fixes from the live smoke test (terminal-vs-gate labels, landed-flight position card, Bright Data retry and link filtering, console rows), the console crash guard and the "Something went wrong" screen, and the fix for the owner console's endless request loop.
+- **Phase 6 (the trip-day home) is NEXT and not started.** It changes what users see, so it needs the owner's go-ahead, a written proposal and a mockup first.
+- Everything is merged: only `main` and two Dependabot PRs (#3 lucide-react 1, #4 vite 8, planned major upgrades) remain.
 
 ## Owner decisions (8 Nov 2026)
 - Clerk sign-up: leave it open (owner). Per-user allowances cap the cost; the provider-terms concern (ADR-008) stays open.
@@ -20,19 +19,19 @@ Work through the GSD roadmap (9 phases, local plan in `.planning/`). Personal-us
 - Cloudflare header rule: DONE and live (rule `fdbcc345d3c245d693244a62da1203f8` in zone gakinz.com, host-scoped).
 - Off-server backup drill and Dependabot: delegated to me; done, see docs/AUDIT.md (8 Nov, owner items).
 
-## Latest (9 Nov 2026): the console request-loop fix is live (`main` at e6fa909)
+## Latest (9 Nov 2026): console request-loop fix live; extra commit merged; no-op deploy and backup verified (`main` at 0744308)
 - Deployed with run 42625658806 (smoke 5 passed, app files only). **Not verified in a browser** (the Chrome extension was disconnected): check by opening the console's Usage screen and watching the Network tab; after the first `/api/admin/overview` there should be no more calls. Press Reload on the update banner first.
 - Another Claude session added a commit `9d9e95c` (one comment line in `deploy.yml`, tagged `[skip ci]`) to the PR branch after CI had passed; I first merged only `e6fa909`, then merged it too on the owner's instruction.
 - Another session shares this checkout and commits to it; check `git log` before relying on a branch.
 
 ## Open (yours, in order)
-1. **Backup cron: installed; check that a backup file appeared (tonight 02:23 server time)** (DONE earlier) (installed by the owner's run on 8 Nov; first backup due 02:23 server time on 9 Nov). Check tomorrow: `bash scripts/pull-server-backup.sh` copies the newest backup to this Mac and warns if it is more than two days old. Weekly after that.
+1. ~~Backup~~ **VERIFIED (9 Nov 2026):** the cron entry works. The 02:23 run made `flightdeck-var-20261109.tar.gz` (3,476 bytes, 29 entries, gzip OK); `scripts/pull-server-backup.sh` copied it to `.local-test/restore-drill/` and a restore test parsed all 22 JSON files (3 enquiries, 1 packing list, no `var/content`). Gap: no nightly backup existed from 2 to 8 Nov. Run `bash scripts/pull-server-backup.sh` weekly (it writes to `~/Backups/projects/flightdeck/` when run from your own Terminal).
 2. **Bright Data: ENABLED on the live server** (8 Nov 2026, zone `mcp_serp`, `/api/config` reports `webCheck:true`, verified read-only; the script's first run refused safely because the server config uses the older `array (` style, since fixed and tested). **Still to check by you:** open a flight page while signed in and look for "Latest from the web" links. If they are empty, look at Provider health (Bright Data) and tell me: Google returned non-JSON twice in my connector test, and the next step would be a small code change (`parsed_light`, or Bing). Each search costs money; caps default to 150 a day and 20 per user.
 3. **Run `bash .local-test/fix-env-bare-line.sh`** for the bare line in `.env` (it never prints a value; I was not allowed to read `.env`). It refuses anything it cannot identify.
-4. ~~Approve pushing~~ DONE: PR #9 merged and deployed. The merge deploys real code (PHP site, seed content, console bundle, `.htaccess`).
-5. Server settings unverified: `trust_cf_connecting_ip`, PHP GD. (`published.json`: the 1 Nov backup had none.)
+4. ~~Approve pushing~~ DONE: everything is merged and deployed; only `main` and two Dependabot PRs remain.
+5. Server facts known: per-visitor limits behind Cloudflare are ON, server PHP 8.4.27, no `var/content/published.json` (the CMS has never been published). Still unverified: PHP GD.
 6. Clerk sign-up restriction: left open by choice.
-7. Gap: a deploy with nothing to upload exits before the smoke checks (candidate fix in Phase 5 or 7, test first).
+7. ~~Gap: a deploy with nothing to upload skipped the smoke checks~~ FIXED and PROVEN live on 9 Nov 2026: Deploy run 42626795807 printed "Nothing to upload" and then ran the smoke checks (5 passed).
 8. Dependabot minimatch security job fails on every push: build-time only, needs vite-plugin-pwa 2 (Phase 9). Left on purpose.
 9. Access to `~/Backups/` and `.local-state/` was denied to me; the drill's tarball is in `.local-test/restore-drill/` (mode 600). Move it to `~/Backups/projects/flightdeck/` if you want to keep it.
 10. Still open from 31 Oct: console with the production account, a real phone, a screen reader, a paper print, Firefox (BLOCKED here).
