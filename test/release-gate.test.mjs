@@ -102,3 +102,22 @@ test('post-deploy smoke checks catch a broken sign-in, not just a dead site', ()
 test('the console smoke test does not use the live-account preview port (3993)', () => {
   assert.doesNotMatch(read('test/console-smoke.mjs'), /port:\s*3993/);
 });
+
+test('a real release with nothing to upload still runs the live smoke checks before it exits', () => {
+  // Found live on 8 Nov 2026: the Phase 2 deploy printed "Nothing to upload" and exited before the smoke checks, so the new checks never ran.
+  const script = read('scripts/release.mjs');
+  const i = script.indexOf('if (!total) {');
+  assert.ok(i > 0, 'the nothing-to-upload branch is gone; update this test');
+  const branch = script.slice(i, script.indexOf('\n}\n', i));
+  assert.match(
+    branch,
+    /if \(go\)/,
+    'only a real release (--go) runs the checks; a dry run stays offline',
+  );
+  assert.match(
+    branch,
+    /await smoke\(\)/,
+    'the smoke checks must run even though nothing was uploaded',
+  );
+  assert.match(branch, /fail\(/, 'an unhealthy site must fail the release');
+});

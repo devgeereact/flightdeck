@@ -301,6 +301,17 @@ for (const { part, items } of plans) {
 }
 if (!total) {
   console.log('\nNothing to upload: the server already matches.');
+  if (go) {
+    // Nothing changes, but the live site can still be unhealthy (a broken server setting, an expired certificate). A real release still
+    // checks it: on 8 Nov 2026 a no-op deploy exited here and the new smoke checks never ran. There is nothing to restore.
+    step('Smoke checks (nothing was uploaded, so there is nothing to restore)');
+    const problems = await smoke();
+    if (problems.length)
+      fail(
+        `the live site fails its checks although nothing was changed:\n  ${problems.join('\n  ')}`,
+      );
+    console.log(`  ${(cfg.smoke ?? []).length} passed`);
+  }
   process.exit(0);
 }
 if (!go) {
