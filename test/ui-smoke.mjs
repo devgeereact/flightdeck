@@ -79,7 +79,32 @@ const baseFlight = {
   dataSource: 'AeroDataBox',
   direction: { type: 'outbound', basis: 'route', home: 'GB', place: 'London' },
 };
-const fixtureFlights = (date) => {
+const HOUR = 3600000;
+// A flight that always leaves three hours from now, so the web facts (asked for from five hours before departure) are due whenever
+// the test runs. Nothing about it is real; the airline and the data are sample values.
+const soonFlight = () => ({
+  ...baseFlight,
+  id: 'ba75-fixture',
+  number: 'BA75',
+  scheduledOut: new Date(Date.now() + 3 * HOUR).toISOString(),
+  estimatedOut: new Date(Date.now() + 3 * HOUR).toISOString(),
+  scheduledIn: new Date(Date.now() + 14 * HOUR).toISOString(),
+  estimatedIn: new Date(Date.now() + 14 * HOUR).toISOString(),
+  terminalOut: null,
+  baggage: null,
+});
+const fixtureFlights = (date, number) => {
+  if (number === 'BA75')
+    return {
+      mode: 'live',
+      flights: [soonFlight()],
+      fetchedAt: new Date().toISOString(),
+      cached: false,
+      source: 'AeroDataBox · OpenSky Network',
+      sources: ['AeroDataBox', 'OpenSky Network'],
+      refreshSeconds: 60,
+      notes: [],
+    };
   const far = (new Date(date + 'T00:00:00Z') - Date.now()) / 86400000 > 4;
   const f = far
     ? {
@@ -108,6 +133,9 @@ const fixtureFlights = (date) => {
       : [],
   };
 };
+// What the fixture /api/web-check answers, and the requests it received (ADR-025).
+let webAnswer = { status: 'off' };
+const webCalls = [];
 const check = (name, ok, extra = '') => {
   console.log((ok ? 'PASS ' : 'FAIL ') + name + (ok ? '' : '  -> ' + extra));
   if (!ok) failed++;
@@ -163,9 +191,12 @@ async function boot({ config, storedMode, hash = '', storage = {}, fixtures = fa
         headers: { 'content-type': 'application/json' },
       });
     if (fixtures && u.pathname === '/api/flights')
-      return new Response(JSON.stringify(fixtureFlights(u.searchParams.get('date'))), {
-        headers: { 'content-type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify(fixtureFlights(u.searchParams.get('date'), u.searchParams.get('number'))),
+        {
+          headers: { 'content-type': 'application/json' },
+        },
+      );
     if (fixtures && u.pathname === '/api/weather')
       return new Response(
         JSON.stringify({
@@ -200,10 +231,12 @@ async function boot({ config, storedMode, hash = '', storage = {}, fixtures = fa
         }),
         { headers: { 'content-type': 'application/json' } },
       );
-    if (fixtures && u.pathname === '/api/web-check')
-      return new Response(JSON.stringify({ status: 'off' }), {
+    if (fixtures && u.pathname === '/api/web-check') {
+      webCalls.push(u.search);
+      return new Response(JSON.stringify(webAnswer), {
         headers: { 'content-type': 'application/json' },
       });
+    }
     if (config && u.pathname === '/api/config')
       return new Response(JSON.stringify(config), {
         headers: { 'content-type': 'application/json' },
@@ -583,6 +616,139 @@ try {
     Object.defineProperty(a.w.navigator, 'onLine', { get: () => true, configurable: true });
     check('B7 no runtime errors', a.errors.length === 0, a.errors.join(' | '));
     a.w.close();
+    check(
+      'W0 a flight that is long over makes no web search at all',
+      webCalls.length === 0,
+      webCalls.join(' | '),
+    );
+    {
+      // Web facts (ADR-025): gate, terminal and boarding time read from the web are shown where the provider has nothing, always labelled
+      // with their source, and never silently. The same facts must appear on Key times, the Journey and the Airport tab.
+      const today = new Date().toISOString().slice(0, 10);
+      const boardsAt = new Date(Date.now() + 3 * HOUR - 35 * 60000).toLocaleTimeString('en-GB', {
+        timeZone: 'Europe/London',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
+      const item = (value) => ({
+        value,
+        site: 'heathrow.com',
+        url: 'https://www.heathrow.com/x',
+        quote: 'q',
+      });
+      webAnswer = {
+        status: 'ok',
+        query: 'BA75 LHR CPT flight status',
+        fetchedAt: new Date().toISOString(),
+        results: [
+          {
+            title: 'Flight BA75',
+            snippet: 'Latest status',
+            url: 'https://www.heathrow.com/x',
+            site: 'heathrow.com',
+          },
+        ],
+        facts: {
+          status: 'ok',
+          checkedAt: new Date().toISOString(),
+          items: {
+            departureGate: item('12'),
+            departureTerminal: item('5'),
+            boardingTime: item(boardsAt),
+          },
+        },
+      };
+      webCalls.length = 0;
+      const w1 = await boot({ fixtures: true, hash: '#/flight/BA75/' + today });
+      await sleep(2000);
+      const d1 = w1.w.document;
+      const kt1 = () => d1.querySelector('.keytimes')?.textContent || '';
+      check(
+        'W1 the app asks for the facts once, with both local days and the airports',
+        webCalls.length === 1 &&
+          /facts=1/.test(webCalls[0]) &&
+          /adate=\d{4}-\d{2}-\d{2}/.test(webCalls[0]) &&
+          /from=LHR&to=CPT/.test(webCalls[0]),
+        webCalls.join(' | '),
+      );
+      check(
+        'W2 Key times shows the web gate and terminal with a From the web label, the source site and when it was checked',
+        /T5 · Gate 12/.test(kt1()) &&
+          /From the web/.test(kt1()) &&
+          /heathrow\.com/.test(kt1()) &&
+          /checked \d{2}:\d{2}/.test(kt1()) &&
+          /Not confirmed by the airport/.test(kt1()) &&
+          [...d1.querySelectorAll('.keytimes a')].some(
+            (x) =>
+              x.getAttribute('href') === 'https://www.heathrow.com/x' &&
+              x.getAttribute('rel') === 'noreferrer',
+          ),
+        kt1(),
+      );
+      check(
+        'W3 a web boarding time is labelled From the web, not Typical, and Key times explains what that means',
+        /Boarding starts/.test(kt1()) &&
+          !![...d1.querySelectorAll('.kt-tile')]
+            .find((t) => /Boarding starts/.test(t.textContent))
+            ?.textContent.includes('From the web') &&
+          /public web pages/.test(kt1()),
+        kt1(),
+      );
+      const rows1 = () =>
+        [...d1.querySelectorAll('.timeline-row')].map((r) => ({
+          label: r.querySelector('strong')?.textContent,
+          kind: r.querySelector('small')?.textContent,
+          done: r.classList.contains('done'),
+        }));
+      check(
+        'W4 the Journey agrees: Boarding says From the web and is not marked done',
+        rows1().find((r) => r.label === 'Boarding')?.kind === 'From the web' &&
+          rows1().find((r) => r.label === 'Boarding')?.done === false,
+        JSON.stringify(rows1()),
+      );
+      await (async () => {
+        [...d1.querySelectorAll('.fv-tablist button')]
+          .find((b) => b.textContent === 'Airport')
+          .dispatchEvent(new w1.w.MouseEvent('click', { bubbles: true }));
+        await sleep(300);
+      })();
+      const ap = d1.querySelector('.fv-airport')?.textContent || '';
+      check(
+        'W5 the Airport tab agrees: the web gate and terminal are there, labelled',
+        /Departure gate12/.test(ap) &&
+          /Departure terminal5/.test(ap) &&
+          (ap.match(/From the web/g) || []).length >= 2,
+        ap.slice(0, 300),
+      );
+      check(
+        'W6 the Latest from the web card still lists the links',
+        !!d1.querySelector('.webcheck') &&
+          /heathrow\.com/.test(d1.querySelector('.webcheck').textContent),
+      );
+      check(
+        'W7 no runtime errors with web facts on',
+        w1.errors.length === 0,
+        w1.errors.join(' | '),
+      );
+      w1.w.close();
+
+      // The server declines (daily cap): nothing from the web is shown and nothing breaks.
+      webAnswer = { ...webAnswer, facts: { status: 'cap' } };
+      const w2 = await boot({ fixtures: true, hash: '#/flight/BA75/' + today });
+      await sleep(2000);
+      const kt2 = w2.w.document.querySelector('.keytimes')?.textContent || '';
+      check(
+        'W8 when the server declines the facts, no web value is shown and the page is unchanged',
+        !/From the web/.test(kt2) &&
+          /Departure gate/.test(kt2) &&
+          /Usually shown 45–90 min before departure/.test(kt2) &&
+          /Typical/.test(kt2) &&
+          w2.errors.length === 0,
+        kt2 + ' | ' + w2.errors.join(' | '),
+      );
+      w2.w.close();
+    }
     // Usual-route fallback: a date far beyond the schedule window still says what the flight normally flies
     const far = new Date(Date.now() + 25 * 86400000).toISOString().slice(0, 10);
     const f = await boot({ fixtures: true });

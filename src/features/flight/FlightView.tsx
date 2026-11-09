@@ -19,11 +19,18 @@ import { fromAny, withMotion } from '../../shared/motion';
 import { nextTabIndex } from '../../shared/tabKeys';
 import type { Airport, Flight, FlightResponse } from '../../types';
 import { countdown } from './countdown';
-import { DiscoverCard, KeyTimesPanel, WeatherCard, WebCheckCard } from './DestinationPanels';
+import {
+  DiscoverCard,
+  KeyTimesPanel,
+  useWebCheck,
+  WeatherCard,
+  WebCheckCard,
+} from './DestinationPanels';
 import { airlines, day, directionText, inZone, journeySteps, time, withHint } from './flightFormat';
 import { flightIcs } from './ics';
 import { positionCard } from './keyTimes';
 import { summarise } from './summary';
+import { type WebFactItem, webOverlay } from './webFacts';
 
 gsap.registerPlugin(useGSAP);
 
@@ -100,11 +107,19 @@ function RouteArc({ progress, label }: { progress: number; label: string | null 
   );
 }
 
-function Detail({ label, value }: { label: string; value: string | null }) {
+function Detail({ label, value, web }: { label: string; value: string | null; web?: WebFactItem }) {
   return (
     <div className="detail">
       <span>{label}</span>
-      <b className={value ? 'fd-data' : 'nr'}>{value || NR}</b>
+      <b className={value || web ? 'fd-data' : 'nr'}>{value || web?.value || NR}</b>
+      {!value && web && (
+        <small className="badge blue plain">
+          From the web:{' '}
+          <a href={web.url} target="_blank" rel="noreferrer">
+            {web.site}
+          </a>
+        </small>
+      )}
     </div>
   );
 }
@@ -150,7 +165,9 @@ const badgeFor = (kind: string) =>
         ? 'badge plain'
         : kind === 'Typical'
           ? 'badge violet plain'
-          : 'badge warn';
+          : kind === 'From the web'
+            ? 'badge blue plain'
+            : 'badge warn';
 
 export default function FlightView({
   flight,
@@ -178,7 +195,11 @@ export default function FlightView({
     setPanel(PANELS[j].id);
     tabRefs.current[j]?.focus();
   };
-  const steps = journeySteps(flight);
+  // Gate, terminal, belt and boarding facts read from the web near departure and arrival (ADR-025): checked by the server, used only
+  // where the provider has nothing, and labelled wherever they appear.
+  const web = useWebCheck(flight, data.mode === 'live' && !offline, now.getTime());
+  const overlay = webOverlay(flight, web?.facts, now.getTime());
+  const steps = journeySteps(flight, overlay);
   const o = flight.origin,
     d = flight.destination;
   const flightDate = (flight.scheduledOut || flight.estimatedOut || '').slice(0, 10);
@@ -467,7 +488,7 @@ export default function FlightView({
           </span>
         </div>
       </section>
-      <KeyTimesPanel flight={flight} />
+      <KeyTimesPanel flight={flight} web={overlay} />
       <aside className="fv-side" aria-label={`Your destination, ${d.city || d.code}`}>
         <WeatherCard
           airport={d}
@@ -478,7 +499,7 @@ export default function FlightView({
           }
         />
         <DiscoverCard airport={d} />
-        {data.mode === 'live' && <WebCheckCard flight={flight} />}
+        {data.mode === 'live' && <WebCheckCard answer={web} />}
       </aside>
       <section className="panel position" aria-label="Aircraft position">
         <span className="tile">
@@ -572,9 +593,14 @@ export default function FlightView({
                   <div className="kv">
                     <Detail
                       label="Departure terminal"
-                      value={withHint(flight.terminalOut, flight.terminalOutHint)}
+                      value={
+                        overlay.terminalOut
+                          ? null
+                          : withHint(flight.terminalOut, flight.terminalOutHint)
+                      }
+                      web={overlay.terminalOut}
                     />
-                    <Detail label="Departure gate" value={flight.gateOut} />
+                    <Detail label="Departure gate" value={flight.gateOut} web={overlay.gateOut} />
                     <Detail label="Aircraft type" value={flight.aircraft} />
                   </div>
                 </div>
@@ -588,10 +614,15 @@ export default function FlightView({
                   <div className="kv">
                     <Detail
                       label="Arrival terminal"
-                      value={withHint(flight.terminalIn, flight.terminalInHint)}
+                      value={
+                        overlay.terminalIn
+                          ? null
+                          : withHint(flight.terminalIn, flight.terminalInHint)
+                      }
+                      web={overlay.terminalIn}
                     />
-                    <Detail label="Arrival gate" value={flight.gateIn} />
-                    <Detail label="Baggage belt" value={flight.baggage} />
+                    <Detail label="Arrival gate" value={flight.gateIn} web={overlay.gateIn} />
+                    <Detail label="Baggage belt" value={flight.baggage} web={overlay.baggage} />
                   </div>
                 </div>
               </div>

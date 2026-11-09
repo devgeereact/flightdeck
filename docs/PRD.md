@@ -29,7 +29,7 @@ Proposed targets, not measured outcomes: user finds a supported flight without a
 Bookings, ticket sales, check-in, immigration advice, predicted gates/boarding, background push alerts, offline mutations, live map tracking without source, universal attraction rankings, a SQL database and payments. Accounts exist only through Clerk sign-in (ADR-009, ADR-010); MariaDB is not used (ADR-016).
 
 ## Constraints and release blockers
-Data: AeroDataBox (schedules, gates, belts; free allowance), OpenSky (positions), adsbdb (routes), Open-Meteo (weather), Wikivoyage/Wikipedia (travel guides for any city), Bright Data search links (built, off until the owner adds a key). Hand-written guides cover New York, Dubai and Paris.
+Data: AeroDataBox (schedules, gates, belts; free allowance), OpenSky (positions), adsbdb (routes), Open-Meteo (weather), Wikivoyage/Wikipedia (travel guides for any city), Bright Data search links (live), and gate, terminal, belt and boarding facts read from them by Claude (built, labelled "From the web", off until the owner adds the Anthropic key; ADR-025). Hand-written guides cover New York, Dubai and Paris.
 
 ## Website and CMS (approved 25 Oct 2026, live)
 Audience: personal and free (the owner, friends and family, anyone who finds it), non-commercial, not promoted, in line with the free data plans (ADR-008). Public pages: home with flight lookup and a labelled sample, how it works, data and coverage, help/FAQ, 11 guides, printable packing list, about, contact, privacy, cookies, terms, accessibility. Owner CMS: pages, guides, FAQs, announcements, menus, settings and branding image, with draft, preview, publish, history, restore and audit; inbox with resolution and notes; provider health. Evidence: docs/AUDIT.md.

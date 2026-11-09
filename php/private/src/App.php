@@ -80,6 +80,7 @@ final class App
                     'providers' => ['opensky' => $opensky->configured(), 'aerodatabox' => $adb->configured(), 'routes' => true],
                     'signInRequired' => self::signInRequired($auth->enabled(), $config),
                     'webCheck' => WebCheck::enabled($config),
+                    'webFacts' => WebFacts::enabled($config),
                 ]);
                 return;
             case $route === '/flights':
@@ -623,6 +624,20 @@ final class App
             Http::json(400, ['error' => 'A flight number and date are required.']);
             return;
         }
-        Http::json(200, WebCheck::lookup($config, $store, $number, $date, $from, $to, null, $who));
+        // The arrival day (local) is the day belt and arrival-gate facts must be for; it falls back to the departure day.
+        $adate = self::param('adate');
+        if ($adate === '') {
+            $adate = $date;
+        }
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $adate)) {
+            Http::json(400, ['error' => 'A flight number and date are required.']);
+            return;
+        }
+        $r = WebCheck::lookup($config, $store, $number, $date, $from, $to, null, $who);
+        // facts=1 asks Claude to read gate, terminal, belt and boarding facts out of the same results (ADR-025). No extra search.
+        if (self::param('facts') === '1' && ($r['status'] ?? '') === 'ok' && WebFacts::enabled($config)) {
+            $r['facts'] = WebFacts::forResults($config, $store, $r['results'] ?? [], ['number' => $number, 'date' => $date, 'adate' => $adate, 'from' => $from, 'to' => $to]);
+        }
+        Http::json(200, WebCheck::forClient($r));
     }
 }

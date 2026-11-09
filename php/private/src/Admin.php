@@ -121,9 +121,12 @@ final class Admin
         $daysLeft = $perDay > 0 ? (int) floor($left / $perDay) : null;
         // Bright Data bills per search, so today's count against the daily caps is shown next to the AeroDataBox units.
         $web = ['enabled' => WebCheck::enabled($config), 'usedToday' => (int) ($store->get('web-count-' . gmdate('Y-m-d', $now)) ?? 0),
-            'cap' => max(0, (int) ($config['brightdata_daily_cap'] ?? 150)), 'userCap' => max(0, (int) ($config['brightdata_user_daily_cap'] ?? 20))];
+            'cap' => max(0, (int) ($config['brightdata_daily_cap'] ?? 200)), 'userCap' => max(0, (int) ($config['brightdata_user_daily_cap'] ?? 40))];
+        // Claude reads the web results into gate/belt facts (ADR-025); it is billed per call, so today's count is shown too.
+        $ai = ['enabled' => WebFacts::enabled($config), 'usedToday' => (int) ($store->get('ai-count-' . gmdate('Y-m-d', $now)) ?? 0),
+            'cap' => max(0, (int) ($config['anthropic_daily_cap'] ?? 150)), 'model' => trim((string) ($config['anthropic_model'] ?? '')) ?: WebFacts::DEFAULT_MODEL];
         return ['used' => $used, 'cap' => $cap, 'left' => $left, 'perDay' => round($perDay, 1), 'daysUntilEmpty' => $daysLeft,
-            'runsOutBeforeMonthEnd' => $daysLeft !== null && $daysLeft < ($daysInMonth - $dayOfMonth), 'month' => gmdate('Y-m', $now), 'web' => $web];
+            'runsOutBeforeMonthEnd' => $daysLeft !== null && $daysLeft < ($daysInMonth - $dayOfMonth), 'month' => gmdate('Y-m', $now), 'web' => $web, 'ai' => $ai];
     }
 
     public static function system(array $config, Store $store, bool $clerkApi, bool $ga): array
@@ -132,7 +135,7 @@ final class Admin
             'phpVersion' => PHP_VERSION, 'serverTime' => gmdate('c'),
             'signInEnforced' => !empty($config['clerk_issuer']), 'aerodatabox' => !empty($config['aerodatabox_key']),
             'opensky' => !empty($config['opensky_client_id']), 'clerkApi' => $clerkApi, 'googleAnalyticsApi' => $ga,
-            'emailNotifications' => !empty($config['owner_email']), 'webCheck' => WebCheck::enabled($config),
+            'emailNotifications' => !empty($config['owner_email']), 'webCheck' => WebCheck::enabled($config), 'webFacts' => WebFacts::enabled($config),
             'trustCloudflareIp' => !empty($config['trust_cf_connecting_ip']),
         ];
     }

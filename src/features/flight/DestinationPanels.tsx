@@ -21,6 +21,13 @@ import type { Airport, Flight } from '../../types';
 import { destinations } from './destinations';
 import { regionName, time, weatherLabel } from './flightFormat';
 import { gatePlace, gateTile, type KeyTime, keyTimes } from './keyTimes';
+import {
+  type WebFactItem,
+  type WebFactsAnswer,
+  type WebOverlay,
+  webNeeds,
+  webQuery,
+} from './webFacts';
 
 const NR = 'Not reported yet';
 
@@ -59,7 +66,9 @@ const kindClass = (k: KeyTime['kind']) =>
         ? 'badge plain'
         : k === 'Typical'
           ? 'badge violet plain'
-          : 'badge warn';
+          : k === 'From the web'
+            ? 'badge blue plain'
+            : 'badge warn';
 
 function TimeTile({ k }: { k: KeyTime }) {
   const t = k.t ? time(k.t, k.tz) : null;
@@ -82,16 +91,38 @@ function TimeTile({ k }: { k: KeyTime }) {
   );
 }
 
+const here = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+/** Where a value read from the web came from: the page, and when it was checked. Shown on every web-sourced value (ADR-025). */
+function FromWeb({ item, checkedAt }: { item: WebFactItem; checkedAt?: string }) {
+  return (
+    <span className="kt-foot">
+      <small className="badge blue plain">From the web</small>
+      <span>
+        <a href={item.url} target="_blank" rel="noreferrer">
+          {item.site}
+        </a>
+        {checkedAt ? ` · checked ${time(checkedAt, here())}` : ''}. Not confirmed by the airport:
+        follow its screens.
+      </span>
+    </span>
+  );
+}
+
 function PlaceTile({
   label,
   value,
   note,
   icon: Icon,
+  web,
+  checkedAt,
 }: {
   label: string;
   value: string | null;
   note: string;
   icon: typeof DoorClosed;
+  web?: WebFactItem;
+  checkedAt?: string;
 }) {
   return (
     <div className={'kt-tile kt-place' + (value ? '' : ' empty')}>
@@ -100,22 +131,37 @@ function PlaceTile({
         {label}
       </span>
       <b className={value ? 'fd-data' : 'nr'}>{value || NR}</b>
-      <span className="kt-foot">
-        <span>{note}</span>
-      </span>
+      {web && value ? (
+        <FromWeb item={web} checkedAt={checkedAt} />
+      ) : (
+        <span className="kt-foot">
+          <span>{note}</span>
+        </span>
+      )}
     </div>
   );
 }
 
 /** Two equal rows of four: the departure side, then the arrival side. */
-export function KeyTimesPanel({ flight }: { flight: Flight }) {
-  const k = keyTimes(flight);
+export function KeyTimesPanel({ flight, web }: { flight: Flight; web?: WebOverlay }) {
+  const k = keyTimes(flight, web);
   const by = (key: string) => k.find((x) => x.key === key) as KeyTime;
-  const out = gatePlace(flight.terminalOut, flight.gateOut, flight.terminalOutHint);
-  const inn = gatePlace(flight.terminalIn, flight.gateIn, flight.terminalInHint);
-  const outTile = gateTile('out', flight);
-  const inTile = gateTile('in', flight);
+  // The provider's value always wins; a checked value from the web only fills a gap, and says so on the tile (ADR-025).
+  const gateOut = flight.gateOut ?? web?.gateOut?.value ?? null;
+  const terminalOut = flight.terminalOut ?? web?.terminalOut?.value ?? null;
+  const gateIn = flight.gateIn ?? web?.gateIn?.value ?? null;
+  const terminalIn = flight.terminalIn ?? web?.terminalIn?.value ?? null;
+  const belt = flight.baggage ?? web?.baggage?.value ?? null;
+  const out = gatePlace(terminalOut, gateOut, flight.terminalOutHint);
+  const inn = gatePlace(terminalIn, gateIn, flight.terminalInHint);
+  const outTile = gateTile('out', { ...flight, gateOut, terminalOut });
+  const inTile = gateTile('in', { ...flight, gateIn, terminalIn });
+  const outWeb =
+    (!flight.gateOut && web?.gateOut) || (!flight.terminalOut && web?.terminalOut) || undefined;
+  const inWeb =
+    (!flight.gateIn && web?.gateIn) || (!flight.terminalIn && web?.terminalIn) || undefined;
   const typical = k.some((x) => x.kind === 'Typical');
+  const fromWeb = !!(web && Object.keys(web).some((x) => x !== 'checkedAt'));
   return (
     <section className="panel keytimes" aria-labelledby="kt-h">
       <div className="kt-head">
@@ -128,7 +174,14 @@ export function KeyTimesPanel({ flight }: { flight: Flight }) {
           <span className="sr-only">Departure from </span>
           {flight.origin.code}
         </span>
-        <PlaceTile label={outTile.label} value={out} icon={DoorClosed} note={outTile.note} />
+        <PlaceTile
+          label={outTile.label}
+          value={out}
+          icon={DoorClosed}
+          note={outTile.note}
+          web={outWeb || undefined}
+          checkedAt={web?.checkedAt}
+        />
         <TimeTile k={by('boarding')} />
         <TimeTile k={by('gateclose')} />
         <TimeTile k={by('takeoff')} />
@@ -141,18 +194,30 @@ export function KeyTimesPanel({ flight }: { flight: Flight }) {
         </span>
         <TimeTile k={by('landing')} />
         <TimeTile k={by('gatein')} />
-        <PlaceTile label={inTile.label} value={inn} icon={DoorClosed} note={inTile.note} />
+        <PlaceTile
+          label={inTile.label}
+          value={inn}
+          icon={DoorClosed}
+          note={inTile.note}
+          web={inWeb || undefined}
+          checkedAt={web?.checkedAt}
+        />
         <PlaceTile
           label="Baggage belt"
-          value={flight.baggage ? `Belt ${flight.baggage}` : null}
+          value={belt ? `Belt ${belt}` : null}
           icon={Luggage}
-          note={
-            flight.baggage
-              ? 'Belts can change: check the hall screens'
-              : 'Usually shown after landing'
-          }
+          note={belt ? 'Belts can change: check the hall screens' : 'Usually shown after landing'}
+          web={!flight.baggage ? web?.baggage : undefined}
+          checkedAt={web?.checkedAt}
         />
       </div>
+      {fromWeb && (
+        <p className="kt-note">
+          <b>From the web</b> values were read from public web pages and checked against this
+          flight’s number, date and airport. They are not from the airline or the airport’s own
+          systems, so the airport screens and your boarding pass are the final word.
+        </p>
+      )}
       {typical && (
         <p className="kt-note">
           <b>Typical</b> times are worked out from the departure time, because airlines rarely
@@ -443,19 +508,58 @@ export function DiscoverCard({ airport }: { airport: Airport }) {
 
 // ---------------------------------------------------------------- latest from the web (Bright Data, off unless configured)
 
-type WebData = {
+export type WebCheckAnswer = {
   status: 'ok' | 'off' | 'cap' | 'error';
   results?: { title: string; snippet: string; url: string; site: string }[];
   fetchedAt?: string;
+  facts?: WebFactsAnswer;
 };
 
-export function WebCheckCard({ flight }: { flight: Flight }) {
-  const date = (flight.scheduledOut || flight.estimatedOut || '').slice(0, 10);
-  // Only worth a search while the gate is still missing.
-  const want = !flight.gateOut && /^\d{4}-\d{2}-\d{2}$/.test(date);
-  const q = `number=${encodeURIComponent(flight.number)}&date=${date}&from=${flight.origin.code}&to=${flight.destination.code}`;
-  const r = useJson<WebData>(want ? `/api/web-check?${q}` : null, want ? q : 'none');
-  if (!r || r === 'failed' || r.status !== 'ok' || !r.results?.length) return null;
+const WEB_REFRESH_MS = 5 * 60000;
+
+/**
+ * Asks /api/web-check for the links and, near departure or arrival, for the gate, terminal, belt and boarding facts read from them
+ * (ADR-025). One shared answer per flight page, so the card, Key times, the Journey and the Airport tab always agree. It asks only
+ * while a search is worth paying for (webNeeds) and the page is open, again every five minutes (the server caches ten, and a
+ * repeat inside that costs nothing), and shows nothing when the server has the feature off, is capped or fails.
+ */
+export function useWebCheck(flight: Flight, live: boolean, nowMs: number): WebCheckAnswer | null {
+  const [answer, setAnswer] = useState<WebCheckAnswer | null>(null);
+  const q = live ? webQuery(flight) : null;
+  const need = q ? webNeeds(flight, nowMs) : { links: false, facts: false };
+  const key =
+    !q || (!need.links && !need.facts) ? 'none' : `${q}|${need.facts ? 'facts' : 'links'}`;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the key names the request; q and need are derived from it
+  useEffect(() => {
+    if (key === 'none') {
+      setAnswer(null);
+      return;
+    }
+    const url = `/api/web-check?${q}${need.facts ? '&facts=1' : ''}`;
+    const c = new AbortController();
+    const load = () =>
+      apiFetch(url, { signal: c.signal })
+        .then(async (r) => {
+          if (!r.ok) throw Error(String(r.status));
+          setAnswer((await r.json()) as WebCheckAnswer);
+        })
+        .catch(() => {});
+    setAnswer(null);
+    load();
+    const t = setInterval(() => {
+      if (document.visibilityState === 'visible') load();
+    }, WEB_REFRESH_MS);
+    return () => {
+      c.abort();
+      clearInterval(t);
+    };
+  }, [key]);
+  return key === 'none' ? null : answer;
+}
+
+export function WebCheckCard({ answer }: { answer: WebCheckAnswer | null }) {
+  const r = answer;
+  if (!r || r.status !== 'ok' || !r.results?.length) return null;
   return (
     <section className="panel side-card webcheck" aria-labelledby="web-h">
       <h2 id="web-h" className="side-h">

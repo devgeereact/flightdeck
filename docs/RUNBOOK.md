@@ -16,7 +16,7 @@ See docs/DEPLOYMENT.md. Watch a run with `gh run watch`. Undo the last release w
 - **A release looks wrong after deploy:** the deploy restores the previous files by itself when the smoke checks fail. If it passed but the app is wrong, `pnpm release --rollback --go` (code files only; server config is not restored).
 
 ## Providers
-- Owner console → Operations → Provider health shows when each source last answered and why it failed: AeroDataBox, OpenSky, adsbdb, Open-Meteo, Wikimedia (travel guides), Bright Data (if on).
+- Owner console → Operations → Provider health shows when each source last answered and why it failed: AeroDataBox, OpenSky, adsbdb, Open-Meteo, Wikimedia (travel guides), Bright Data and Anthropic (if on).
 - Flights 503 / "not available": the provider key is missing or the monthly allowance is used. Never fake live data.
 - Weather or travel guide missing: the page says so; the next view tries again (weather cached 10 minutes, guides a week, misses a day).
 
@@ -41,5 +41,7 @@ See docs/DEPLOYMENT.md. Watch a run with `gh run watch`. Undo the last release w
 
 ## Secrets
 To switch on the web links (Bright Data), run `bash scripts/set-bright-data.sh` yourself (zone name `mcp_serp`, the SERP API zone; not the Web Unlocker zone `mcp_unlocker`): it asks for the zone name and the API token (typed hidden), sends them to the server over your SSH login and sets `brightdata_key` and `brightdata_zone` in `config.php` (backup kept, file checked before it is used). Afterwards `/api/config` reports `webCheck:true`. There is no separate on/off switch. Then open a flight page while signed in: "Latest from the web" should list up to four links. If it stays empty, check Provider health for Bright Data (a Google answer that is not JSON shows as a failure).
+
+To switch on the gate, terminal, belt and boarding facts (ADR-025), run `bash scripts/set-anthropic-key.sh` yourself after the release that contains them: it asks for your Anthropic API key (typed hidden), sends it over your SSH login and sets `anthropic_key` in `config.php` (backup kept, file checked first). Afterwards `/api/config` reports `webFacts:true`. Then open a flight within five hours of departure while signed in: found values show on Key times, the Journey and the Airport tab marked "From the web" with the site and the time checked. Costs page: "Anthropic (Claude)" shows calls used today against the cap of 150. To pause it without removing the key, add `'web_facts' => false,` to `config.php` (or remove the key). If Provider health shows Anthropic failing with "Rejected credentials", the key is wrong or revoked; run the script again.
 
 Rotate in the provider's dashboard, update `config.php` on the server (or the GitHub secret), then check the app. Never paste keys into docs, logs or chat.

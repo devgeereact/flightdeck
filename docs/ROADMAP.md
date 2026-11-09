@@ -5,7 +5,7 @@ Foundations, PHP API on cPanel, live data (AeroDataBox, OpenSky, adsbdb), deploy
 
 ## Next
 - Owner checks: console with the production account, a real phone, a screen reader, a paper print, Firefox.
-- Bright Data web links: the owner chose ON (8 Nov 2026) but the live site reports `webCheck: false`; needs `brightdata_key` and `brightdata_zone` in config.php (run `bash scripts/set-bright-data.sh`; there is no other switch) (cost per search; caps 150 a day, 20 per user a day).
+- Bright Data web links: the owner chose ON (8 Nov 2026) but the live site reports `webCheck: false`; needs `brightdata_key` and `brightdata_zone` in config.php (run `bash scripts/set-bright-data.sh`; there is no other switch) (cost per search; caps 200 a day, 40 per user a day since ADR-025). Gate, terminal, belt and boarding facts read from those results by Claude (ADR-025) are built and tested; they switch on when the owner runs `bash scripts/set-anthropic-key.sh` after the release.
 - Push notifications for gate and delay changes (needs a background job; cPanel cron could poll saved flights).
 - External uptime monitor with fast alerts.
 

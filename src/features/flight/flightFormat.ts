@@ -1,6 +1,7 @@
 // Small helpers for showing a flight. Plain functions, no React, so the tests and the views can share them.
 import type { Flight } from '../../types';
 import { keyTimes } from './keyTimes';
+import type { WebOverlay } from './webFacts';
 
 // Every time is an instant (ISO with Z or an offset) shown in a named IANA zone, so BST/GMT and other clock changes come from the
 // time zone database, never from arithmetic. No zone means UTC (callers label it). A time or zone that cannot be read gives null:
@@ -116,14 +117,15 @@ export type Step = {
 };
 
 // The journey in the order it happens: check-in, boarding, leaving the gate, take-off, landing, reaching the gate, bags.
-export function journeySteps(f: Flight): Step[] {
+// `web` holds checked facts read from the web (ADR-025); they are used only where the provider has nothing, and labelled "From the web".
+export function journeySteps(f: Flight, web?: WebOverlay): Step[] {
   const st = f.providerStatus ? STAGE[f.providerStatus] : undefined;
   const o = f.origin.timezone,
     d = f.destination.timezone;
   // The Key times card already works out Typical boarding, take-off and landing times (labelled as such) when the provider has none. The
   // Journey uses the same answers, so the two cards no longer disagree ("Typical 09:56" above, "Not reported" below).
   const keyTimeFor = (key: string): { t: string | null; kind: string } => {
-    const k = keyTimes(f).find((x) => x.key === key);
+    const k = keyTimes(f, web).find((x) => x.key === key);
     return k ? { t: k.t, kind: k.kind } : { t: null, kind: 'Not reported' };
   };
   const reportedOr = (p: { t: string | null; kind: string }, key: string) =>
@@ -196,10 +198,14 @@ export function journeySteps(f: Flight): Step[] {
     {
       key: 'bags',
       label: 'Bags on the belt',
-      note: f.baggage ? `Belt ${f.baggage}` : 'Belt not assigned yet',
+      note: f.baggage
+        ? `Belt ${f.baggage}`
+        : web?.baggage
+          ? `Belt ${web.baggage.value}`
+          : 'Belt not assigned yet',
       t: null,
       tz: d,
-      kind: f.baggage ? 'Belt reported' : 'Not reported yet',
+      kind: f.baggage ? 'Belt reported' : web?.baggage ? 'From the web' : 'Not reported yet',
       done: st === 7 && !!f.baggage,
     },
   ];

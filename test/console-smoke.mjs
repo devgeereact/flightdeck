@@ -231,6 +231,19 @@ check(
   'C18 Costs shows the Bright Data web searches next to the AeroDataBox units',
   !!(await c.until(() => c.text().includes('Bright Data') && c.text().includes('searches a day'))),
 );
+c = boot('user_owner', '#/admin/costs');
+check(
+  'C23 Costs shows the Claude calls next to the Bright Data searches, and says it is off until the key is set (ADR-025)',
+  !!(await c.until(
+    () => c.text().includes('Anthropic (Claude)') && c.text().includes('calls a day'),
+  )) && c.text().includes('Not set up on the server yet'),
+);
+c = boot('user_owner', '#/admin/system');
+check(
+  'C24 System has a row for the gate and belt facts from the web (Claude)',
+  !!(await c.until(() => c.text().includes('What is switched on'))) &&
+    c.text().includes('Gate and belt facts from the web (Claude)'),
+);
 c = boot('user_owner', '#/admin/health');
 check(
   'C19 Provider health no longer calls a provider "off unless configured"',

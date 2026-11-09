@@ -280,13 +280,17 @@ test('owner routes: what the owner gets back', async () => {
   assert.equal(overview.status, 200);
   assert.ok(overview.json?.overview && overview.json?.allowance, 'overview and allowance');
   assert.equal(overview.json.allowance.web.enabled, false, 'web links are off on this server');
-  assert.equal(overview.json.allowance.web.cap, 150);
+  assert.equal(overview.json.allowance.web.cap, 200, 'default Bright Data cap since ADR-025');
+  assert.equal(overview.json.allowance.web.userCap, 40);
+  assert.equal(overview.json.allowance.ai.enabled, false, 'Claude facts are off without a key');
+  assert.equal(overview.json.allowance.ai.cap, 150);
   const totals = overview.json.overview.totals;
   assert.ok(!('ctaClicks' in totals) && !('checklistSaves' in totals), 'dead totals are gone');
 
   const system = await call(A, 'GET', '/api/admin/system', { auth: OWNER() });
   assert.equal(system.json?.signInEnforced, true);
   assert.equal(system.json?.webCheck, false);
+  assert.equal(system.json?.webFacts, false);
   assert.ok(!('ai' in system.json) && !('ads' in system.json), 'no dead flags');
 
   const users = await call(A, 'GET', '/api/admin/users', { auth: OWNER() });
@@ -333,6 +337,27 @@ test('/api/web-check: off without Bright Data settings, and bad input is refused
     auth: OWNER(),
   });
   assert.ok(bad.status >= 400 && bad.status < 500, `expected a 4xx, got ${bad.status}`);
+});
+
+test('/api/web-check: facts need the Anthropic key; the arrival day is checked; nothing leaks when off (ADR-025)', async () => {
+  const cfg = await call(A, 'GET', '/api/config');
+  assert.equal(cfg.json?.webFacts, false, 'web facts are off without an Anthropic key');
+  const off = await call(
+    A,
+    'GET',
+    '/api/web-check?number=BA75&date=2026-11-09&adate=2026-11-10&from=LHR&to=LOS&facts=1',
+    { auth: OWNER() },
+  );
+  assert.equal(off.status, 200);
+  assert.equal(off.json?.status, 'off');
+  assert.equal(off.json && 'facts' in off.json, false, 'no facts block when the feature is off');
+  const badDay = await call(
+    A,
+    'GET',
+    '/api/web-check?number=BA75&date=2026-11-09&adate=tomorrow&facts=1',
+    { auth: OWNER() },
+  );
+  assert.equal(badDay.status, 400, 'an arrival day that is not a date is refused');
 });
 
 // ---------------------------------------------------------------------------------------------- packing list sync

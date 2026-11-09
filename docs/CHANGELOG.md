@@ -2,6 +2,13 @@
 
 Newest first. Dates are UK dates.
 
+## 9 November 2026 (evening): gate, terminal, belt and boarding time from the web (built, switches on when the Anthropic key is set)
+- **New, off until switched on:** near departure and landing, the app can now fill a missing gate, terminal, baggage belt or boarding time from the "Latest from the web" search results. Claude (Sonnet 5.5) reads the results, then the server checks every value before it is shown: the exact words must be in a page that names this flight, this date, this airport and this side of the flight, with the value right next to its label. Anything doubtful is dropped. Values are marked **From the web** with the site, a link and the time checked, look the same on Key times, the Journey and the Airport tab, never replace what the airline or airport reported, and are never used for take-off, landing or arrival times. Decision: ADR-025.
+- **Refreshes every 5 minutes** while the page is open and a gate or belt is still missing, from 5 hours before departure to take-off and from 2 hours before landing to 2 hours after. The same results are never sent to Claude twice.
+- **Search links** now appear from a day before departure to 3 hours after arrival (they were shown for any flight whose gate was missing), use the airport's local date, and are cached 10 minutes (was 15). Daily caps rise to 200 searches (40 per user) from 150 (20), and Claude is capped at 150 calls a day. The owner console's Costs page shows both.
+- **Privacy page** now names Anthropic and no longer says web results are never copied into the flight details (it needs your approval to go live; see CURRENT-TASK).
+- New owner-run script `scripts/set-anthropic-key.sh` (hidden prompt, backup, never printed). Not yet run.
+
 ## 9 November 2026 (afternoon): picture, sizes and the Journey
 - **Fixed the broken picture on the Discover card.** Photos from Wikipedia and Wikivoyage failed for every city except New York, Dubai and Paris (the picture size we asked for is one Wikimedia does not serve). They now load, and if a picture ever fails the card shows the airport tile instead of a broken-image icon.
 - **Controls are standard size with a mouse.** Buttons are 36 px (were 44 px), menu items and the search box 40 px; touch screens keep the full 44 px. The Departure and Arrival time cells no longer crowd each other.

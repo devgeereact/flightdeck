@@ -405,6 +405,32 @@ export function Costs({ ov }: { ov: any }) {
             )}
           </ProviderRow>
         )}
+        {al.ai && (
+          <ProviderRow
+            abbr="AI"
+            name="Anthropic (Claude)"
+            plan={`Reads web results into gate and belt facts, ${nf.format(al.ai.cap)} calls a day`}
+            value={
+              al.ai.enabled
+                ? `${nf.format(al.ai.usedToday)} of ${nf.format(al.ai.cap)} today`
+                : 'Off'
+            }
+          >
+            {al.ai.enabled ? (
+              <>
+                <Meter
+                  used={al.ai.usedToday}
+                  cap={al.ai.cap}
+                  label="Claude calls used today"
+                  stopLabel={`Stop at ${al.ai.cap} calls`}
+                />
+                <small>Model {al.ai.model}. The same web results are never sent twice.</small>
+              </>
+            ) : (
+              <small>Not set up on the server yet.</small>
+            )}
+          </ProviderRow>
+        )}
       </Panel>
       <div className="cs-kpis">
         <Kpi
@@ -709,6 +735,7 @@ export function SystemView({ sys }: { sys: any }) {
     ['Google Analytics numbers', sys.googleAnalyticsApi],
     ['Email for new enquiries', sys.emailNotifications],
     ['Web search links (Bright Data)', sys.webCheck],
+    ['Gate and belt facts from the web (Claude)', sys.webFacts],
     ['Per-visitor limits behind Cloudflare', sys.trustCloudflareIp],
   ];
   const on = flags.filter(([, v]) => v).length;

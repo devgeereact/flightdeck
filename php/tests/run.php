@@ -4,7 +4,7 @@ declare(strict_types=1);
 foreach (['Http', 'DevEnv', 'ClerkAuth', 'Checklists', 'Metrics', 'Mailer', 'Enquiries', 'ClerkApi', 'Admin', 'GoogleAnalytics', 'Store', 'CloudflareIps', 'Geo', 'Flight', 'OpenSky', 'RouteLookup', 'AeroDataBox', 'App'] as $f) {
     require __DIR__ . '/../private/src/' . $f . '.php';
 }
-foreach (['Health', 'Content/Markdown', 'Content/Validator', 'Content/ContentStore', 'Content/Media', 'Site/Site', 'Cms', 'Place', 'WebCheck'] as $f) {
+foreach (['Health', 'Content/Markdown', 'Content/Validator', 'Content/ContentStore', 'Content/Media', 'Site/Site', 'Cms', 'Place', 'WebCheck', 'WebFacts'] as $f) {
     require __DIR__ . '/../private/src/' . $f . '.php';
 }
 
@@ -582,7 +582,13 @@ $store2->put('web-count-' . gmdate('Y-m-d', $nowSec), 7, 86400000);
 $wal = Admin::allowance($store2, ['brightdata_key' => 'k', 'brightdata_zone' => 'z', 'brightdata_daily_cap' => 40, 'brightdata_user_daily_cap' => 5], $nowSec)['web'] ?? [];
 check('admin: the allowance shows today\'s web searches against the daily cap', ($wal['enabled'] ?? null) === true && ($wal['usedToday'] ?? null) === 7 && ($wal['cap'] ?? null) === 40 && ($wal['userCap'] ?? null) === 5);
 $wdef = Admin::allowance($store2, [], $nowSec)['web'] ?? [];
-check('admin: with no Bright Data settings the web allowance is off and shows the default caps', ($wdef['enabled'] ?? null) === false && ($wdef['cap'] ?? null) === 150 && ($wdef['userCap'] ?? null) === 20);
+check('admin: with no Bright Data settings the web allowance is off and shows the default caps (200 a day, 40 a user)', ($wdef['enabled'] ?? null) === false && ($wdef['cap'] ?? null) === 200 && ($wdef['userCap'] ?? null) === 40);
+$store2->put('ai-count-' . gmdate('Y-m-d', $nowSec), 3, 86400000);
+$aiAl = Admin::allowance($store2, ['brightdata_key' => 'k', 'brightdata_zone' => 'z', 'anthropic_key' => 'sk-ant-test-key-aaaaaaaaaaaaaaaaaaaa', 'anthropic_daily_cap' => 50], $nowSec)['ai'] ?? [];
+check('admin: the allowance shows today\'s Claude calls against their cap, and the model in use', ($aiAl['enabled'] ?? null) === true && ($aiAl['usedToday'] ?? null) === 3 && ($aiAl['cap'] ?? null) === 50 && ($aiAl['model'] ?? '') === 'claude-sonnet-5-5');
+$aiOff = Admin::allowance($store2, [], $nowSec)['ai'] ?? [];
+check('admin: with no Anthropic key the Claude allowance is off and shows the default cap (150 a day)', ($aiOff['enabled'] ?? null) === false && ($aiOff['cap'] ?? null) === 150);
+check('admin: the system list says whether web facts are on', (Admin::system(['brightdata_key' => 'k', 'brightdata_zone' => 'z', 'anthropic_key' => 'sk-ant-test-key-aaaaaaaaaaaaaaaaaaaa'], $store2, false, false)['webFacts'] ?? null) === true && (Admin::system([], $store2, false, false)['webFacts'] ?? null) === false);
 check('admin: the event whitelist contains only counter names', in_array('landing_view', Admin::EVENTS, true) && !in_array('search_total', Admin::EVENTS, true) && !in_array('admin_denied', Admin::EVENTS, true));
 
 // ---- Checklist erasure and Google Analytics numbers ----
@@ -1037,6 +1043,8 @@ check('place: a provider page link that is not on the guide site is replaced by 
 
 array_map('unlink', glob($pdir . '/*') ?: []);
 @rmdir($pdir);
+
+require __DIR__ . '/web-facts.php';
 
 echo $failed ? "\n$failed FAILED\n" : "\nAll passed\n";
 exit($failed ? 1 : 0);

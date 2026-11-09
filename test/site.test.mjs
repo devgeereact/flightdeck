@@ -368,6 +368,16 @@ test('COOKIES PAGE: says what the rate limiter and the web links do with data, i
     'rate limiting keeps only a one-way hash of the network address',
   );
   assert.match(html, /Bright Data/i, 'web links go through Bright Data when switched on');
+  assert.match(
+    html,
+    /Anthropic/i,
+    'the privacy page names Anthropic as the processor of the web-fact text (ADR-025)',
+  );
+  assert.doesNotMatch(
+    html,
+    /never copied into the flight details/i,
+    'the old promise no longer holds',
+  );
 });
 
 test('Google Analytics ID: the build value reaches every page as a meta tag', () => {

@@ -1,4 +1,5 @@
 import type { Flight } from '../../types';
+import type { WebOverlay } from './webFacts';
 
 /**
  * The times and places a traveller asks about first: boarding, gate closing, take-off, landing, gates and belt.
@@ -11,6 +12,7 @@ export type TimeKind =
   | 'Scheduled'
   | 'Reported'
   | 'Typical'
+  | 'From the web'
   | 'Not reported';
 export type KeyTime = {
   key: string;
@@ -43,7 +45,7 @@ export function leadTimes(block: number | null): { boarding: number; gateClose: 
   return { boarding: 30, gateClose: 15 };
 }
 
-export function keyTimes(f: Flight): KeyTime[] {
+export function keyTimes(f: Flight, web?: WebOverlay): KeyTime[] {
   const o = f.origin.timezone,
     d = f.destination.timezone;
   const dep = [f.actualOut, f.estimatedOut, f.scheduledOut].find(valid) ?? null;
@@ -63,11 +65,13 @@ export function keyTimes(f: Flight): KeyTime[] {
   const kindOr = (t: string | null, k: TimeKind): TimeKind => (t ? k : 'Not reported');
   const boarding = valid(f.boarding)
     ? { t: f.boarding, kind: 'Reported' as TimeKind, note: 'From the airline' }
-    : {
-        t: typical(dep, -lead.boarding),
-        kind: kindOr(dep, 'Typical'),
-        note: `Usually ${lead.boarding} min before departure`,
-      };
+    : web?.boarding
+      ? { t: web.boarding.iso, kind: 'From the web' as TimeKind, note: `From ${web.boarding.site}` }
+      : {
+          t: typical(dep, -lead.boarding),
+          kind: kindOr(dep, 'Typical'),
+          note: `Usually ${lead.boarding} min before departure`,
+        };
   const takeoff = valid(f.takeoff)
     ? { t: f.takeoff, kind: 'Actual' as TimeKind, note: 'Wheels off the runway' }
     : valid(f.estimatedTakeoff)

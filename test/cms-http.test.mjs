@@ -476,6 +476,7 @@ test('operations: health and cache show real state only; media lists uploads and
   assert.deepEqual(Object.keys(h.providers).sort(), [
     'adsbdb',
     'aerodatabox',
+    'anthropic',
     'brightdata',
     'openmeteo',
     'opensky',

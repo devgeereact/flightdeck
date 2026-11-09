@@ -1,8 +1,9 @@
 <?php
-// Sets `brightdata_key` and/or `brightdata_zone` in the private config.php. Run on the server by scripts/set-bright-data.sh
-// (sent as base64 through `php -r`, so nothing is left on the server) with the new values as JSON on STDIN:
-//   {"brightdata_key": "...", "brightdata_zone": "..."}      argv[1] = path to config.php
-// Rules: only those two keys; values must be plain tokens (no quotes, spaces or backslashes); the previous file is kept as
+// Sets `brightdata_key`, `brightdata_zone` and/or `anthropic_key` in the private config.php. Run on the server by
+// scripts/set-bright-data.sh and scripts/set-anthropic-key.sh (sent as base64 through `php -r`, so nothing is left on the server)
+// with the new values as JSON on STDIN:
+//   {"brightdata_key": "...", "brightdata_zone": "..."}  or  {"anthropic_key": "..."}      argv[1] = path to config.php
+// Rules: only those three keys; values must be plain tokens (no quotes, spaces or backslashes); the previous file is kept as
 // config.php.bak-<time> (mode 600); the new file must pass `php -l` before it replaces the old one; the secret is never printed.
 // Written for `eval()`, so: no declare(), no namespace, no output of values.
 
@@ -23,10 +24,12 @@ if (!is_array($in) || $in === []) {
 $rules = [
     'brightdata_key' => '/^[A-Za-z0-9._~+\/=:-]{16,255}$/D',
     'brightdata_zone' => '/^[A-Za-z0-9_-]{1,64}$/D',
+    // Anthropic keys use letters, digits, - and _ (sk-ant-...). Same plain-token rule: no quotes, spaces or backslashes.
+    'anthropic_key' => '/^[A-Za-z0-9._~+\/=:_-]{20,255}$/D',
 ];
 foreach ($in as $k => $v) {
     if (!isset($rules[$k])) {
-        $fail('only brightdata_key and brightdata_zone may be set');
+        $fail('only brightdata_key, brightdata_zone and anthropic_key may be set');
     }
     if (!is_string($v) || preg_match($rules[$k], $v) !== 1) {
         $fail("the value for $k is not valid (plain token, no spaces, quotes or backslashes)");

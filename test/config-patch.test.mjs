@@ -1,6 +1,6 @@
-// Tests for scripts/lib/config-patch.php: the small PHP program scripts/set-bright-data.sh runs on the server to set
-// `brightdata_key` and `brightdata_zone` in the private config.php. It must never print or log the secret, must keep a
-// backup, must refuse to leave a file that does not lint, and may only touch the two allowed keys.
+// Tests for scripts/lib/config-patch.php: the small PHP program scripts/set-bright-data.sh and scripts/set-anthropic-key.sh run on
+// the server to set `brightdata_key`, `brightdata_zone` and `anthropic_key` in the private config.php. It must never print or log
+// the secret, must keep a backup, must refuse to leave a file that does not lint, and may only touch the three allowed keys.
 // The tests use the exact transport the shell script uses (PHP source base64-encoded into `php -r`), on a temp copy.
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -45,7 +45,7 @@ test('sets the key and zone in a config that has them empty, and the file still 
   assert.equal(c.brightdata_key, KEY);
   assert.equal(c.brightdata_zone, 'serp_api1');
   assert.equal(c.aerodatabox_monthly_units, 360, 'other settings are untouched');
-  assert.equal(c.brightdata_daily_cap, 150);
+  assert.equal(c.brightdata_daily_cap, 200);
 });
 
 test('never prints or logs the secret', () => {
@@ -214,4 +214,87 @@ test('a short-array config with nested ); inside strings is still patched at the
   const c = load(file);
   assert.equal(c.note, 'see foo(); bar);');
   assert.equal(c.brightdata_zone, 'z1');
+});
+
+// ---- the Anthropic key (ADR-025)
+const AKEY = `sk-ant-TEST-${'a'.repeat(32)}_-`; // obviously fake and low-entropy; has the underscore and dash real keys use
+
+test('sets the Anthropic key alone, keeps the other keys, never prints it', () => {
+  const { file } = tmpConfig();
+  run(file, { brightdata_key: KEY, brightdata_zone: 'serp_api1' });
+  const r = run(file, { anthropic_key: AKEY });
+  assert.equal(r.status, 0, r.stderr);
+  assert.ok(!r.stdout.includes(AKEY) && !r.stderr.includes(AKEY), 'the key appeared in the output');
+  assert.match(r.stdout, /anthropic_key/);
+  const c = load(file);
+  assert.equal(c.anthropic_key, AKEY);
+  assert.equal(c.brightdata_key, KEY, 'the Bright Data settings are untouched');
+});
+
+test('the example config carries an empty anthropic_key line that the patch replaces in place', () => {
+  assert.match(example, /'anthropic_key' => '',/);
+  const { file } = tmpConfig();
+  run(file, { anthropic_key: AKEY });
+  const text = fs.readFileSync(file, 'utf8');
+  assert.equal(text.match(/'anthropic_key'/g)?.length, 1, 'one line, replaced, not appended');
+});
+
+test('refuses an Anthropic key with spaces, quotes, a backslash or a short value, and changes nothing', () => {
+  const { file } = tmpConfig();
+  const before = fs.readFileSync(file, 'utf8');
+  for (const bad of [`${AKEY} x`, `${AKEY}'`, `${AKEY}\\`, 'sk-ant-short', `"${AKEY}"`]) {
+    const r = run(file, { anthropic_key: bad });
+    assert.notEqual(r.status, 0, `accepted ${JSON.stringify(bad)}`);
+  }
+  assert.equal(fs.readFileSync(file, 'utf8'), before);
+});
+
+test('still refuses any other key, such as the Clerk secret', () => {
+  const { file } = tmpConfig();
+  const r = run(file, { anthropic_key: AKEY, clerk_secret_key: 'x'.repeat(30) });
+  assert.notEqual(r.status, 0);
+  assert.match(r.stderr, /only brightdata_key, brightdata_zone and anthropic_key/);
+});
+
+test('scripts/set-anthropic-key.sh works end to end with a fake ssh and curl, on the older config style, and never echoes the key', () => {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'fd-fakehome-'));
+  fs.mkdirSync(path.join(home, 'flightdeck-private'));
+  fs.writeFileSync(path.join(home, 'flightdeck-private/config.php'), OLD_STYLE, { mode: 0o600 });
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'fd-fakebin-'));
+  const argsLog = path.join(bin, 'ssh-args.txt');
+  fs.writeFileSync(
+    path.join(bin, 'ssh'),
+    `#!/bin/bash\nprintf '%s\\n' "$@" > '${argsLog}'\nshift\nexec bash -c "$1"\n`,
+    { mode: 0o755 },
+  );
+  fs.writeFileSync(path.join(bin, 'curl'), '#!/bin/bash\necho \'{"webFacts":true}\'\n', {
+    mode: 0o755,
+  });
+  fs.writeFileSync(path.join(bin, 'sleep'), '#!/bin/bash\nexit 0\n', { mode: 0o755 });
+  const r = spawnSync('bash', [path.join(root, 'scripts/set-anthropic-key.sh')], {
+    input: `${AKEY}\n`,
+    encoding: 'utf8',
+    env: { ...process.env, HOME: home, PATH: `${bin}:${process.env.PATH}` },
+  });
+  assert.equal(r.status, 0, `${r.stdout}\n${r.stderr}`);
+  assert.ok(!r.stdout.includes(AKEY) && !r.stderr.includes(AKEY), 'the key was echoed');
+  assert.ok(!fs.readFileSync(argsLog, 'utf8').includes(AKEY), 'the key was put on a command line');
+  assert.match(r.stdout, /webFacts:true/);
+  const c = load(path.join(home, 'flightdeck-private/config.php'));
+  assert.equal(c.anthropic_key, AKEY);
+  assert.equal(c.owner_email, 'a@b.example', 'the rest of the older-style config is kept');
+});
+
+test('scripts/set-anthropic-key.sh refuses a key with a space before sending anything', () => {
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'fd-fakebin-'));
+  fs.writeFileSync(path.join(bin, 'ssh'), '#!/bin/bash\necho SSH-WAS-CALLED >&2\nexit 9\n', {
+    mode: 0o755,
+  });
+  const r = spawnSync('bash', [path.join(root, 'scripts/set-anthropic-key.sh')], {
+    input: `${AKEY} with space\n`,
+    encoding: 'utf8',
+    env: { ...process.env, PATH: `${bin}:${process.env.PATH}` },
+  });
+  assert.notEqual(r.status, 0);
+  assert.ok(!r.stderr.includes('SSH-WAS-CALLED'));
 });

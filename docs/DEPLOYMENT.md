@@ -16,7 +16,8 @@ Reviewed 1 November 2026. Status: LIVE at https://flightdeck.gakinz.com.
 
 ## Optional paid features (off until the owner adds keys)
 - AeroDataBox (`aerodatabox_key`): schedules, gates, terminals, belts. Monthly, hourly and per-user hourly caps in config.
-- Bright Data (`brightdata_key`, `brightdata_zone`, `brightdata_daily_cap`, optional `brightdata_user_daily_cap`): "Latest from the web" links on a flight while the gate is unknown. Costs per search; cached 15 minutes per flight; capped per day.
+- Bright Data (`brightdata_key`, `brightdata_zone`, `brightdata_daily_cap` default 200, optional `brightdata_user_daily_cap` default 40): "Latest from the web" links on a flight while something is still missing. Costs per search; cached 10 minutes per flight; capped per day.
+- Anthropic (`anthropic_key`, optional `anthropic_model` default `claude-sonnet-5-5`, `anthropic_daily_cap` default 150, `web_facts` set to `false` to switch it off): reads the Bright Data results into gate, terminal, belt and boarding-time facts, checked by code and labelled "From the web" (ADR-025). Needs Bright Data. Costs per call; the same results are never sent twice. Set the key with `bash scripts/set-anthropic-key.sh`.
 
 ## Retired
 FTPS uploads, the `production` branch, `release.yml`, `release-static.py`, the hosting probe and the manual staging script (all in git history; evidence in docs/AUDIT.md).

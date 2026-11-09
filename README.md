@@ -5,7 +5,7 @@ Personal flight tracker at [flightdeck.gakinz.com](https://flightdeck.gakinz.com
 - **Public website** (server-rendered PHP, content from the owner console): home with flight look-up, travel guides, help, packing list, about.
 - **App** at `/app/` (React 19 + TypeScript + Vite PWA, Clerk sign-in): tracker, flight page, saved flights, packing room.
 - **Owner console** at `/app/#/admin`: pages, guides, FAQ, menus, announcements, inbox, usage, provider health, site settings.
-- **API** (PHP 8.4, file store, no database): `public/api/index.php` → `php/private/src`. Data from AeroDataBox, OpenSky Network, adsbdb, Open-Meteo, Wikivoyage/Wikipedia, and optionally Bright Data search links.
+- **API** (PHP 8.4, file store, no database): `public/api/index.php` → `php/private/src`. Data from AeroDataBox, OpenSky Network, adsbdb, Open-Meteo, Wikivoyage/Wikipedia, and optionally Bright Data search links with gate, terminal, belt and boarding facts that Claude reads from them and the server checks (ADR-025).
 
 ## Run locally
 

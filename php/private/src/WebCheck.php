@@ -7,10 +7,11 @@ namespace Flightdeck;
  * "Latest from the web" for a flight, through the Bright Data SERP API. OFF unless the private server config has
  * brightdata_key and brightdata_zone (it costs money per search, so the owner switches it on).
  *
- * Results are search-result links (title, snippet, site) shown as links to check. They are never parsed into the flight's gate,
- * terminal or time fields: snippets mix dates and sources, and a wrong gate is worse than none. Cached 15 minutes per flight, date
- * and airports, and capped per day (brightdata_daily_cap, default 150 searches; brightdata_user_daily_cap, default 20 per signed-in
- * user) so a busy day cannot run up a bill. The counts are taken under a lock, so simultaneous searches cannot slip past the cap.
+ * Results are search-result links (title, snippet, site) shown as links to check. Since ADR-025 the same results are also read by
+ * WebFacts, which may lift a gate, terminal, belt or boarding time out of them, but only after checking the flight number, the date,
+ * the airport and the exact wording (see WebFacts). Cached 10 minutes per flight, date and airports, and capped per day
+ * (brightdata_daily_cap, default 200 searches; brightdata_user_daily_cap, default 40 per signed-in user) so a busy day cannot run up
+ * a bill. The counts are taken under a lock, so simultaneous searches cannot slip past the cap.
  */
 final class WebCheck
 {
@@ -18,6 +19,30 @@ final class WebCheck
     private const SKIP = ['flightaware.com', 'flightradar24.com', 'planefinder.net', 'radarbox.com', 'flightstats.com',
         // Social networks are not flight information (a Facebook page appeared among the first live results).
         'facebook.com', 'instagram.com', 'twitter.com', 'x.com', 'tiktok.com', 'linkedin.com'];
+
+    /** True when a host is one of the skipped flight trackers or social networks (also used by WebFacts as a second line of defence). */
+    public static function skipped(string $host): bool
+    {
+        $host = strtolower($host);
+        foreach (self::SKIP as $s) {
+            if ($host === $s || substr($host, -strlen('.' . $s)) === '.' . $s) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** The answer for the app: the longer `text` of each result is for the server only (WebFacts) and is not sent. */
+    public static function forClient(array $r): array
+    {
+        if (isset($r['results']) && is_array($r['results'])) {
+            $r['results'] = array_map(static function ($x) {
+                unset($x['text']);
+                return $x;
+            }, $r['results']);
+        }
+        return $r;
+    }
 
     public static function enabled(array $config): bool
     {
@@ -45,7 +70,7 @@ final class WebCheck
             $used = (int) ($store->get($day) ?? 0);
             $userDay = $who !== null && $who !== '' ? 'web-user-' . substr(hash('sha256', $who), 0, 24) . '-' . $today : null;
             $userUsed = $userDay !== null ? (int) ($store->get($userDay) ?? 0) : 0;
-            if ($used >= max(0, (int) ($config['brightdata_daily_cap'] ?? 150)) || ($userDay !== null && $userUsed >= max(0, (int) ($config['brightdata_user_daily_cap'] ?? 20)))) {
+            if ($used >= max(0, (int) ($config['brightdata_daily_cap'] ?? 200)) || ($userDay !== null && $userUsed >= max(0, (int) ($config['brightdata_user_daily_cap'] ?? 40)))) {
                 return false;
             }
             $store->put($day, $used + 1, 2 * 86400000);
@@ -83,7 +108,7 @@ final class WebCheck
             return ['status' => 'error'];
         }
         $out = ['status' => 'ok', 'results' => self::results($d['organic'] ?? []), 'query' => $q, 'fetchedAt' => Flight::iso(Store::nowMs())];
-        $store->put($key, $out, 900000);
+        $store->put($key, $out, 600000);
         return $out;
     }
 
@@ -97,10 +122,8 @@ final class WebCheck
             if (strpos($link, 'https://') !== 0 || $host === '') {
                 continue;
             }
-            foreach (self::SKIP as $s) {
-                if ($host === $s || substr($host, -strlen('.' . $s)) === '.' . $s) {
-                    continue 2;
-                }
+            if (self::skipped($host)) {
+                continue;
             }
             $site = preg_replace('/^www\./', '', $host);
             if (in_array($site, array_column($out, 'site'), true)) {
@@ -109,6 +132,8 @@ final class WebCheck
             $out[] = [
                 'title' => mb_substr(trim((string) ($r['title'] ?? $host)), 0, 120),
                 'snippet' => mb_substr(trim((string) ($r['description'] ?? '')), 0, 240),
+                // The longer text is only for WebFacts on the server; forClient() removes it before the answer leaves.
+                'text' => mb_substr(trim((string) ($r['description'] ?? '')), 0, 600),
                 'url' => $link,
                 'site' => $site,
             ];
